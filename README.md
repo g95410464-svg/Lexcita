@@ -8,7 +8,7 @@ LexCita es una aplicación web integral desarrollada para la automatización, ag
 
 * **Backend Framework:** Laravel 11 (PHP >= 8.2)
 * **Base de Datos:** MySQL 8 (Estructura relacional optimizada)
-* **Pasarela de Pagos:** Stripe API (Integración nativa mediante Checkout Sessions)
+* **Pasarela de Pagos:** Pay Pal API
 * **Mensajería:** Twilio API (Protocolo WhatsApp Business para confirmaciones)
 * **Frontend:** Tailwind CSS & JavaScript Asíncrono (Fetch API / FullCalendar / AJAX)
 
