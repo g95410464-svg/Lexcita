@@ -4,7 +4,7 @@
 @push('styles')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
 <style>
-    /* Override FullCalendar para tema oscuro Laureti */
+    /* Override FullCalendar para tema oscuro GC */
     .fc { font-family: 'Hanken Grotesk', sans-serif; }
     .fc-theme-standard td, .fc-theme-standard th, .fc-theme-standard .fc-scrollgrid { border-color: #444748; }
     .fc .fc-daygrid-day { background: #1f201e; }

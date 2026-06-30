@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laureti &amp; Associates — Crear Cuenta</title>
+    <title>GC Tu Conexión Legal — Crear Cuenta</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0&display=swap" rel="stylesheet">
@@ -47,7 +47,7 @@
     {{-- ── PANEL IZQUIERDO ──────────────────────────────── --}}
     <div class="hidden md:flex w-5/12 bg-surface-container-lowest border-r border-outline-variant flex-col justify-between p-12">
         <div>
-            <p class="font-caslon text-2xl font-bold text-secondary tracking-wide">LAURETI</p>
+            <p class="font-caslon text-2xl font-bold text-secondary tracking-wide">GC</p>
             <p class="text-xs font-grotesk font-semibold tracking-[.18em] uppercase text-outline mt-0.5">&amp; Associates</p>
         </div>
 
@@ -67,7 +67,7 @@
         </div>
 
         <p class="text-xs text-outline tracking-wider">
-            © {{ date('Y') }} Laureti &amp; Associates.
+            © {{ date('Y') }} GC Tu Conexión Legal.
         </p>
     </div>
 

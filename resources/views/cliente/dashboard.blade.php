@@ -197,7 +197,7 @@
         <span class="material-symbols-outlined text-outline text-[24px]">support_agent</span>
         <div>
             <p class="text-on-surface font-grotesk font-semibold text-sm">Soporte</p>
-            <p class="text-outline text-xs mt-0.5">Laureti & Associates</p>
+            <p class="text-outline text-xs mt-0.5">GC Tu Conexión Legal</p>
         </div>
     </div>
 </div>
