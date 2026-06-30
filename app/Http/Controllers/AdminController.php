@@ -105,12 +105,11 @@ class AdminController extends Controller
     public function estadisticas()
     {
         // Ingresos por mes (últimos 6 meses)
-        // SQLite no tiene YEAR()/MONTH(); usamos strftime() que sí soporta
         $ingresosMes = Cita::confirmadas()
-            ->selectRaw("strftime('%Y', fecha) as anio, CAST(strftime('%m', fecha) AS INTEGER) as mes, SUM(monto) as total")
+            ->selectRaw("YEAR(fecha) as anio, MONTH(fecha) as mes, SUM(monto) as total")
             ->where('fecha', '>=', now()->subMonths(6))
-            ->groupByRaw("strftime('%Y', fecha), strftime('%m', fecha)")
-            ->orderByRaw("strftime('%Y', fecha), strftime('%m', fecha)")
+            ->groupByRaw("YEAR(fecha), MONTH(fecha)")
+            ->orderByRaw("YEAR(fecha), MONTH(fecha)")
             ->get();
 
         return view('interno.estadisticas', compact('ingresosMes'));
