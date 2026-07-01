@@ -305,7 +305,6 @@ window.addEventListener('load', function () {
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
-        })
         .then(function(r) { return r.json(); })
         .then(function(slots) {
             cont.innerHTML = '';
