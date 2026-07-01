@@ -301,8 +301,10 @@ window.addEventListener('load', function () {
         fetch('/api/slots?abogado_id=' + abogadoId + '&fecha=' + fecha, {
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             }
+        })
         })
         .then(function(r) { return r.json(); })
         .then(function(slots) {
