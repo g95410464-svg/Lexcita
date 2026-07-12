@@ -4,8 +4,9 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 
-class Usuario extends Authenticatable
+class Usuario extends Authenticatable implements MustVerifyEmail
 {
     use Notifiable;
 
@@ -24,8 +25,9 @@ class Usuario extends Authenticatable
     protected $hidden = ['password', 'remember_token'];
 
     protected $casts = [
-        'activo'   => 'boolean',
-        'password' => 'hashed',
+        'activo'            => 'boolean',
+        'password'          => 'hashed',
+        'email_verified_at' => 'datetime',
     ];
 
     // ─── Helpers de rol ───────────────────────────────────────

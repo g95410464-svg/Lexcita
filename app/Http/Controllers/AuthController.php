@@ -21,12 +21,17 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        // Auth usa guard 'web' con modelo Usuario (config/auth.php)
         if (!Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['password'], 'activo' => true])) {
             return back()->withErrors(['email' => 'Credenciales incorrectas o cuenta inactiva.'])->withInput();
         }
 
         $request->session()->regenerate();
+
+        // Bloquear acceso si no verificó el correo
+        if (!Auth::user()->hasVerifiedEmail()) {
+            Auth::logout();
+            return back()->withErrors(['email' => 'Debes verificar tu correo electrónico antes de iniciar sesión.'])->withInput();
+        }
 
         return $this->redireccionPorRol(Auth::user());
     }
@@ -51,11 +56,13 @@ class AuthController extends Controller
             'password'          => Hash::make($data['password']),
             'rol'               => 'cliente',
             'telefono_whatsapp' => $data['telefono_whatsapp'],
+            'activo'            => true,
         ]);
 
-        Auth::login($usuario);
+        // Enviar correo de verificación
+        $usuario->sendEmailVerificationNotification();
 
-        return redirect()->route('cliente.dashboard');
+        return redirect()->route('verificacion.aviso');
     }
 
     public function logout(Request $request)
