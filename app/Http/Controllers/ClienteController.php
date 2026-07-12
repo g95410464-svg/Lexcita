@@ -84,6 +84,16 @@ class ClienteController extends Controller
         return view('cliente.mis-citas', compact('citas'));
     }
 
+    public function ticket(int $id)
+    {
+        $cita = Cita::where('id', $id)
+            ->where('cliente_id', Auth::id())
+            ->with(['cliente', 'abogado'])
+            ->firstOrFail();
+
+        return view('cliente.ticket', compact('cita'));
+    }
+
     public function cancelarCita(int $id)
     {
         $cita = Cita::where('id', $id)
