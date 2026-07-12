@@ -59,7 +59,8 @@ class AuthController extends Controller
             'activo'            => true,
         ]);
 
-        // Enviar correo de verificación
+        // Loguear y enviar correo de verificación
+        Auth::login($usuario);
         $usuario->sendEmailVerificationNotification();
 
         return redirect()->route('verificacion.aviso');

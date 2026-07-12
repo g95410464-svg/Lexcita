@@ -7,6 +7,7 @@ use App\Http\Controllers\AbogadoController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PagoController;
 use App\Http\Controllers\ApiController;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 Route::get('/', fn() => redirect()->route('login'));
 Route::get('/login',    [AuthController::class, 'showLogin'])->name('login');
@@ -19,10 +20,11 @@ Route::post('/logout',  [AuthController::class, 'logout'])->name('logout');
 Route::get('/verificacion/aviso', fn() => view('auth.verificacion-aviso'))
     ->name('verificacion.aviso');
 
-Route::get('/verificacion/email/{id}/{hash}',
-    [\Illuminate\Foundation\Auth\EmailVerificationRequest::class, 'fulfill'])
-    ->middleware(['auth', 'signed'])
-    ->name('verification.verify');
+Route::get('/verificacion/email/{id}/{hash}', function (EmailVerificationRequest $request) {
+    $request->fulfill();
+    Auth::login($request->user());
+    return redirect()->route('cliente.dashboard')->with('verified', true);
+})->middleware(['auth', 'signed'])->name('verification.verify');
 
 Route::post('/verificacion/reenviar', function () {
     request()->user()->sendEmailVerificationNotification();
