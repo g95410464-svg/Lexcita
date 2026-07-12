@@ -19,6 +19,14 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Request::HEADER_X_FORWARDED_AWS_ELB
         );
 
+        // Excluir rutas de auth de verificación CSRF (FrankenPHP proxy issue)
+        $middleware->validateCsrfTokens(except: [
+            'login',
+            'registro',
+            'logout',
+            'verificacion/*',
+        ]);
+
         // Registrar alias del middleware de rol
         $middleware->alias([
             'rol' => \App\Http\Middleware\RolMiddleware::class,
