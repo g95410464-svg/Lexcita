@@ -83,7 +83,7 @@
                 </div>
 
                 {{-- Acción --}}
-                <div class="flex-shrink-0 flex items-center md:justify-end">
+                <div class="flex-shrink-0 flex items-center gap-2 md:justify-end">
                     @if($cita->estaPendiente())
                         <a href="{{ route('pago.crear-sesion', $cita->id) }}"
                            class="inline-flex items-center gap-2 bg-secondary text-on-secondary text-[11px] font-grotesk font-bold tracking-widest uppercase px-4 py-2 hover:opacity-90 transition-opacity">
@@ -102,6 +102,16 @@
                         </form>
                     @else
                         <span class="text-outline text-xs">—</span>
+                    @endif
+
+                    {{-- Botón ticket (solo citas confirmadas) --}}
+                    @if($cita->estaConfirmada())
+                        <a href="{{ route('cliente.ticket', $cita->id) }}"
+                           target="_blank"
+                           class="inline-flex items-center gap-2 border border-outline-variant text-outline text-[11px] font-grotesk font-bold tracking-widest uppercase px-4 py-2 hover:border-secondary hover:text-secondary transition-colors">
+                            <span class="material-symbols-outlined text-[15px]">print</span>
+                            Ticket
+                        </a>
                     @endif
                 </div>
 
