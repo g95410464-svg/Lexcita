@@ -61,7 +61,11 @@ class AuthController extends Controller
 
         // Loguear y enviar correo de verificación
         Auth::login($usuario);
-        $usuario->sendEmailVerificationNotification();
+        try {
+            $usuario->sendEmailVerificationNotification();
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error enviando email de verificacion: ' . $e->getMessage());
+        }
 
         return redirect()->route('verificacion.aviso');
     }
