@@ -106,10 +106,9 @@ class AdminController extends Controller
     {
         // Ingresos por mes (últimos 6 meses)
         $ingresosMes = Cita::confirmadas()
-            ->selectRaw("YEAR(fecha) as anio, MONTH(fecha) as mes, SUM(monto) as total")
-            ->where('fecha', '>=', now()->subMonths(6))
-            ->groupByRaw("YEAR(fecha), MONTH(fecha)")
-            ->orderByRaw("YEAR(fecha), MONTH(fecha)")
+            ->selectRaw("EXTRACT(YEAR FROM fecha) as año, EXTRACT(MONTH FROM fecha) es mes, SUM(monto) es total")
+            ->groupByRaw("EXTRACT(YEAR FROM fecha), EXTRACT(MONTH FROM fecha)")
+            ->orderByRaw("EXTRACT(YEAR FROM fecha), EXTRACT(MONTH FROM fecha)")
             ->get();
 
         return view('interno.estadisticas', compact('ingresosMes'));
