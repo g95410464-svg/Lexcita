@@ -11,22 +11,6 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Confiar en el proxy de Railway para que Laravel detecte HTTPS correctamente
-        $middleware->trustProxies(at: '*', headers: \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR |
-            \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST |
-            \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT |
-            \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO |
-            \Illuminate\Http\Request::HEADER_X_FORWARDED_AWS_ELB
-        );
-
-        // Excluir rutas de auth de verificación CSRF (FrankenPHP proxy issue)
-        $middleware->validateCsrfTokens(except: [
-            'login',
-            'registro',
-            'logout',
-            'verificacion/*',
-        ]);
-
         // Registrar alias del middleware de rol
         $middleware->alias([
             'rol' => \App\Http\Middleware\RolMiddleware::class,

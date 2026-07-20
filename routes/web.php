@@ -7,7 +7,6 @@ use App\Http\Controllers\AbogadoController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\PagoController;
 use App\Http\Controllers\ApiController;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 Route::get('/', fn() => redirect()->route('login'));
 Route::get('/login',    [AuthController::class, 'showLogin'])->name('login');
@@ -16,38 +15,19 @@ Route::get('/registro', [AuthController::class, 'showRegistro'])->name('registro
 Route::post('/registro',[AuthController::class, 'registro'])->name('registro.post');
 Route::post('/logout',  [AuthController::class, 'logout'])->name('logout');
 
-// ─── Verificación de email ────────────────────────────────────
-Route::get('/verificacion/aviso', fn() => view('auth.verificacion-aviso'))
-    ->name('verificacion.aviso');
-
-Route::get('/verificacion/email/{id}/{hash}', function (EmailVerificationRequest $request) {
-    $request->fulfill();
-    Auth::login($request->user());
-    return redirect()->route('cliente.dashboard')->with('verified', true);
-})->middleware(['auth', 'signed'])->name('verification.verify');
-
-Route::post('/verificacion/reenviar', function () {
-    request()->user()->sendEmailVerificationNotification();
-    return back()->with('reenviado', true);
-})->middleware(['auth', 'throttle:6,1'])->name('verificacion.reenviar');
-
-// ─── Cliente ──────────────────────────────────────────────────
-Route::middleware(['auth', 'verified', 'rol:cliente'])->prefix('cliente')->name('cliente.')->group(function () {
+Route::middleware(['auth', 'rol:cliente'])->prefix('cliente')->name('cliente.')->group(function () {
     Route::get('/dashboard',       [ClienteController::class, 'dashboard'])->name('dashboard');
     Route::get('/nueva-cita',      [ClienteController::class, 'nuevaCita'])->name('nueva-cita');
     Route::post('/nueva-cita',     [ClienteController::class, 'crearCita'])->name('nueva-cita.post');
     Route::get('/mis-citas',       [ClienteController::class, 'misCitas'])->name('mis-citas');
-    Route::get('/ticket/{id}',     [ClienteController::class, 'ticket'])->name('ticket');
     Route::post('/cancelar/{id}',  [ClienteController::class, 'cancelarCita'])->name('cancelar');
 });
 
-// ─── Abogado ──────────────────────────────────────────────────
 Route::middleware(['auth', 'rol:abogado'])->prefix('abogado')->name('abogado.')->group(function () {
     Route::get('/dashboard', [AbogadoController::class, 'dashboard'])->name('dashboard');
     Route::get('/agenda',    [AbogadoController::class, 'agenda'])->name('agenda');
 });
 
-// ─── Admin ────────────────────────────────────────────────────
 Route::middleware(['auth', 'rol:admin'])->prefix('interno')->name('interno.')->group(function () {
     Route::get('/dashboard',              [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/abogados',               [AdminController::class, 'abogados'])->name('abogados');
@@ -60,7 +40,6 @@ Route::middleware(['auth', 'rol:admin'])->prefix('interno')->name('interno.')->g
     Route::post('/citas/{id}/cancelar',   [PagoController::class, 'cancelarManual'])->name('citas.cancelar');
 });
 
-// ─── Pago ─────────────────────────────────────────────────────
 Route::middleware(['auth'])->prefix('pago')->name('pago.')->group(function () {
     Route::get('/instrucciones/{citaId}', [PagoController::class, 'mostrarInstrucciones'])->name('instrucciones');
     Route::get('/exito',                  [PagoController::class, 'exito'])->name('exito');
@@ -69,7 +48,6 @@ Route::middleware(['auth'])->prefix('pago')->name('pago.')->group(function () {
     Route::post('/citas/{id}/confirmar',  [PagoController::class, 'confirmarManual'])->name('confirmar');
 });
 
-// ─── API ──────────────────────────────────────────────────────
 Route::middleware(['auth'])->prefix('api')->name('api.')->group(function () {
     Route::get('/slots', [ApiController::class, 'slots'])->name('slots');
 });
