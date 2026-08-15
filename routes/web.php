@@ -15,7 +15,7 @@ Route::get('/registro', [AuthController::class, 'showRegistro'])->name('registro
 Route::post('/registro',[AuthController::class, 'registro'])->name('registro.post');
 Route::post('/logout',  [AuthController::class, 'logout'])->name('logout');
 
-Route::middleware(['auth', 'rol:cliente'])->prefix('cliente')->name('cliente.')->group(function () {
+Route::middleware(['auth', 'verified', 'rol:cliente'])->prefix('cliente')->name('cliente.')->group(function () {
     Route::get('/dashboard',       [ClienteController::class, 'dashboard'])->name('dashboard');
     Route::get('/nueva-cita',      [ClienteController::class, 'nuevaCita'])->name('nueva-cita');
     Route::post('/nueva-cita',     [ClienteController::class, 'crearCita'])->name('nueva-cita.post');
@@ -23,12 +23,12 @@ Route::middleware(['auth', 'rol:cliente'])->prefix('cliente')->name('cliente.')-
     Route::post('/cancelar/{id}',  [ClienteController::class, 'cancelarCita'])->name('cancelar');
 });
 
-Route::middleware(['auth', 'rol:abogado'])->prefix('abogado')->name('abogado.')->group(function () {
+Route::middleware(['auth', 'verified', 'rol:abogado'])->prefix('abogado')->name('abogado.')->group(function () {
     Route::get('/dashboard', [AbogadoController::class, 'dashboard'])->name('dashboard');
     Route::get('/agenda',    [AbogadoController::class, 'agenda'])->name('agenda');
 });
 
-Route::middleware(['auth', 'rol:admin'])->prefix('interno')->name('interno.')->group(function () {
+Route::middleware(['auth', 'verified', 'rol:admin'])->prefix('interno')->name('interno.')->group(function () {
     Route::get('/dashboard',              [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/abogados',               [AdminController::class, 'abogados'])->name('abogados');
     Route::post('/abogados',              [AdminController::class, 'crearAbogado'])->name('abogados.crear');
@@ -40,7 +40,7 @@ Route::middleware(['auth', 'rol:admin'])->prefix('interno')->name('interno.')->g
     Route::post('/citas/{id}/cancelar',   [PagoController::class, 'cancelarManual'])->name('citas.cancelar');
 });
 
-Route::middleware(['auth'])->prefix('pago')->name('pago.')->group(function () {
+Route::middleware(['auth', 'verified'])->prefix('pago')->name('pago.')->group(function () {
     Route::get('/instrucciones/{citaId}', [PagoController::class, 'mostrarInstrucciones'])->name('instrucciones');
     Route::get('/exito',                  [PagoController::class, 'exito'])->name('exito');
     Route::get('/cancelado',              [PagoController::class, 'cancelado'])->name('cancelado');

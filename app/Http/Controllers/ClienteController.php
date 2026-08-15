@@ -35,7 +35,7 @@ class ClienteController extends Controller
     {
         $data = $request->validate([
             'abogado_id'  => 'required|exists:usuarios,id',
-            'fecha'       => 'required|date|after:today',
+            'fecha'       => 'required|date|after_or_equal:today',
             'hora_inicio' => 'required|date_format:H:i',
             'tipo'        => 'required|in:consulta_general,derecho_familiar,derecho_penal,derecho_laboral,derecho_civil,otro',
             'modalidad'   => 'required|in:presencial,virtual',
