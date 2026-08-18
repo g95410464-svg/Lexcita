@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/../../config.php';
+$googleAuthUrl = $client->createAuthUrl();
+?>
 <!DOCTYPE html>
 <html lang="es" class="dark">
 <head>
@@ -144,9 +148,20 @@
             {{-- Botón principal --}}
             <button
                 type="submit"
-                class="w-full bg-secondary text-on-secondary font-grotesk text-[13px] font-bold tracking-[.12em] uppercase py-4 hover:opacity-90 transition-opacity duration-200">
+                class="w-full bg-secondary text-on-secondary font-grotesk text-[13px] font-bold tracking-[.12em] uppercase py-4 hover:opacity-90 transition-opacity duration-200 mb-4">
                 INGRESAR
             </button>
+
+            <a href="<?php echo $googleAuthUrl; ?>"
+               class="w-full flex items-center justify-center gap-2 bg-white text-[#1f201e] font-grotesk text-[13px] font-bold tracking-[.12em] uppercase py-4 hover:opacity-90 transition-opacity duration-200">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12.24 10.28C13.84 10.28 14.89 10.96 15.65 11.62L18.42 8.89C16.89 7.37 14.73 6.64 12.24 6.64C8.24 6.64 4.88 9 3.52 13.06L6.5 15.42C7.38 12.87 9.53 10.28 12.24 10.28Z" fill="#EA4335"/>
+                    <path d="M21.92 12.24C21.92 11.58 21.84 10.92 21.73 10.28H12.24V14.19H17.79C17.58 15.11 17.07 15.93 16.32 16.53L19.34 18.91C20.89 17.5 21.92 15.42 21.92 12.24Z" fill="#4285F4"/>
+                    <path d="M3.52 13.06L6.5 15.42C6.97 16.84 8.01 17.81 9.38 18.57L6.34 21.05C4.82 19.55 3.52 17.53 3.52 13.06Z" fill="#FBBC04"/>
+                    <path d="M12.24 21.92C15.49 21.92 18.17 20.91 20.07 18.91L16.32 16.53C15.38 17.15 14.07 17.59 12.24 17.59C9.53 17.59 7.38 14.99 6.5 12.44L3.52 10.08C4.88 14.14 8.24 16.53 12.24 16.53C12.24 16.53 12.24 21.92 12.24 21.92Z" fill="#34A853"/>
+                </svg>
+                CONTINUAR CON GOOGLE
+            </a>
         </form>
 
         {{-- Separador --}}
