@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Usuario;
+use Google\Client;
 
 class AuthController extends Controller
 {
@@ -60,7 +61,7 @@ class AuthController extends Controller
 
     public function googleRedirect()
     {
-        $client = new \Google\Client();
+        $client = new Client();
         $client->setClientId(config('google.client_id') ?: getenv('GOOGLE_CLIENT_ID'));
         $client->setClientSecret(config('google.client_secret') ?: getenv('GOOGLE_CLIENT_SECRET'));
         $client->setRedirectUri(config('google.redirect_uri') ?: getenv('GOOGLE_REDIRECT_URI'));
