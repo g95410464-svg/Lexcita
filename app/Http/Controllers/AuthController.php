@@ -71,6 +71,42 @@ class AuthController extends Controller
         return redirect()->away($client->createAuthUrl());
     }
 
+    public function googleCallback(Request $request)
+    {
+        $client = new Client();
+        $client->setClientId(config('google.client_id') ?: getenv('GOOGLE_CLIENT_ID'));
+        $client->setClientSecret(config('google.client_secret') ?: getenv('GOOGLE_CLIENT_SECRET'));
+        $client->setRedirectUri(config('google.redirect_uri') ?: getenv('GOOGLE_REDIRECT_URI'));
+
+        if ($request->has('code')) {
+            $token = $client->fetchAccessTokenWithAuthCode($request->get('code'));
+            if (!isset($token['error'])) {
+                $client->setAccessToken($token['access_token']);
+                $googleOauth = new \Google\Service\Oauth2($client);
+                $googleAccount = $googleOauth->userinfo->get();
+
+                $usuario = Usuario::where('email', $googleAccount->email)->first();
+
+                if (!$usuario) {
+                    $usuario = Usuario::create([
+                        'nombre'            => $googleAccount->name ?? $googleAccount->email,
+                        'email'             => $googleAccount->email,
+                        'password'          => Hash::make(\Illuminate\Support\Str::random(24)),
+                        'rol'               => 'cliente',
+                        'telefono_whatsapp' => '',
+                    ]);
+                }
+
+                Auth::login($usuario);
+                $request->session()->regenerate();
+
+                return $this->redireccionPorRol($usuario);
+            }
+        }
+
+        return redirect()->route('login')->withErrors(['email' => 'Error al autenticar con Google.']);
+    }
+
     public function logout(Request $request)
     {
         Auth::logout();

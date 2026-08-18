@@ -16,6 +16,7 @@ Route::post('/registro',[AuthController::class, 'registro'])->name('registro.pos
 Route::post('/logout',  [AuthController::class, 'logout'])->name('logout');
 
 Route::get('/auth/google/redirect', [AuthController::class, 'googleRedirect'])->name('google.redirect');
+Route::get('/auth/google/callback', [AuthController::class, 'googleCallback'])->name('google.callback');
 
 Route::middleware(['auth', 'verified', 'rol:cliente'])->prefix('cliente')->name('cliente.')->group(function () {
     Route::get('/dashboard',       [ClienteController::class, 'dashboard'])->name('dashboard');
