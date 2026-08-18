@@ -13,7 +13,10 @@ WORKDIR /var/www/html
 
 COPY . .
 
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Aumentamos el timeout y agregamos --prefer-dist
+ENV COMPOSER_PROCESS_TIMEOUT=600
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
 RUN npm install && npm run build
 RUN php artisan config:cache && php artisan route:cache && php artisan view:cache
 
