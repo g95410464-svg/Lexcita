@@ -15,6 +15,8 @@ Route::get('/registro', [AuthController::class, 'showRegistro'])->name('registro
 Route::post('/registro',[AuthController::class, 'registro'])->name('registro.post');
 Route::post('/logout',  [AuthController::class, 'logout'])->name('logout');
 
+Route::get('/auth/google/redirect', [AuthController::class, 'googleRedirect'])->name('google.redirect');
+
 Route::middleware(['auth', 'verified', 'rol:cliente'])->prefix('cliente')->name('cliente.')->group(function () {
     Route::get('/dashboard',       [ClienteController::class, 'dashboard'])->name('dashboard');
     Route::get('/nueva-cita',      [ClienteController::class, 'nuevaCita'])->name('nueva-cita');

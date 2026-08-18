@@ -58,6 +58,18 @@ class AuthController extends Controller
         return redirect()->route('cliente.dashboard');
     }
 
+    public function googleRedirect()
+    {
+        $client = new \Google\Client();
+        $client->setClientId(config('google.client_id') ?: getenv('GOOGLE_CLIENT_ID'));
+        $client->setClientSecret(config('google.client_secret') ?: getenv('GOOGLE_CLIENT_SECRET'));
+        $client->setRedirectUri(config('google.redirect_uri') ?: getenv('GOOGLE_REDIRECT_URI'));
+        $client->addScope('email');
+        $client->addScope('profile');
+
+        return redirect()->away($client->createAuthUrl());
+    }
+
     public function logout(Request $request)
     {
         Auth::logout();
