@@ -1,7 +1,3 @@
-<?php
-require_once __DIR__ . '/../../config.php';
-$googleAuthUrl = $client->createAuthUrl();
-?>
 <!DOCTYPE html>
 <html lang="es" class="dark">
 <head>
@@ -152,7 +148,7 @@ $googleAuthUrl = $client->createAuthUrl();
                 INGRESAR
             </button>
 
-            <a href="<?php echo $googleAuthUrl; ?>"
+            <a href="<?php echo getGoogleAuthUrl(); ?>"
                class="w-full flex items-center justify-center gap-2 bg-white text-[#1f201e] font-grotesk text-[13px] font-bold tracking-[.12em] uppercase py-4 hover:opacity-90 transition-opacity duration-200">
                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12.24 10.28C13.84 10.28 14.89 10.96 15.65 11.62L18.42 8.89C16.89 7.37 14.73 6.64 12.24 6.64C8.24 6.64 4.88 9 3.52 13.06L6.5 15.42C7.38 12.87 9.53 10.28 12.24 10.28Z" fill="#EA4335"/>

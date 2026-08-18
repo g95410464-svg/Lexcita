@@ -16,3 +16,8 @@ $client->setRedirectUri(
 
 $client->addScope('email');
 $client->addScope('profile');
+
+function getGoogleAuthUrl() {
+    global $client;
+    return $client->createAuthUrl();
+}
