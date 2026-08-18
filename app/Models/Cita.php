@@ -14,7 +14,6 @@ class Cita extends Model
         'fecha', 'hora_inicio', 'hora_fin',
         'tipo', 'modalidad', 'descripcion',
         'estado', 'monto',
-        'stripe_session_id', 'stripe_payment_intent_id',
     ];
 
     protected $casts = [

@@ -1,0 +1,147 @@
+Date : 2026-08-17 22:59:27
+Directory : c:\laragon\www\lexcita-app
+Total : 80 files,  13238 codes, 619 comments, 798 blanks, all 14655 lines
+
+Languages
++------------+------------+------------+------------+------------+------------+
+| language   | files      | code       | comment    | blank      | total      |
++------------+------------+------------+------------+------------+------------+
+| JSON       |          4 |      8,582 |          0 |          4 |      8,586 |
+| PHP        |         66 |      4,017 |        598 |        693 |      5,308 |
+| PostCSS    |          2 |        362 |         21 |         29 |        412 |
+| Markdown   |          2 |        151 |          0 |         57 |        208 |
+| YAML       |          1 |         56 |          0 |          1 |         57 |
+| XML        |          1 |         35 |          0 |          1 |         36 |
+| JavaScript |          3 |         21 |          0 |          5 |         26 |
+| Docker     |          1 |         14 |          0 |          8 |         22 |
++------------+------------+------------+------------+------------+------------+
+
+Directories
++-------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                              | files      | code       | comment    | blank      | total      |
++-------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                                 |         80 |     13,238 |        619 |        798 |     14,655 |
+| . (Files)                                                                                                         |          9 |      8,705 |          0 |         28 |      8,733 |
+| .claude                                                                                                           |          1 |         35 |          0 |          1 |         36 |
+| app                                                                                                               |         16 |        713 |         50 |        183 |        946 |
+| app\Http                                                                                                          |          8 |        441 |         15 |        108 |        564 |
+| app\Http\Controllers                                                                                              |          7 |        413 |          8 |        101 |        522 |
+| app\Http\Middleware                                                                                               |          1 |         28 |          7 |          7 |         42 |
+| app\Models                                                                                                        |          4 |        127 |         24 |         39 |        190 |
+| app\Providers                                                                                                     |          1 |         18 |          1 |          5 |         24 |
+| app\Services                                                                                                      |          3 |        127 |         10 |         31 |        168 |
+| bootstrap                                                                                                         |          2 |         24 |          2 |          5 |         31 |
+| config                                                                                                            |         11 |        511 |        475 |        189 |      1,175 |
+| database                                                                                                          |         10 |        305 |         41 |         51 |        397 |
+| database\factories                                                                                                |          1 |         26 |         14 |          6 |         46 |
+| database\migrations                                                                                               |          8 |        229 |         24 |         36 |        289 |
+| database\seeders                                                                                                  |          1 |         50 |          3 |          9 |         62 |
+| memory                                                                                                            |          1 |        129 |          0 |         48 |        177 |
+| public                                                                                                            |          2 |        363 |         25 |         33 |        421 |
+| public (Files)                                                                                                    |          1 |         10 |          4 |          7 |         21 |
+| public\css                                                                                                        |          1 |        353 |         21 |         26 |        400 |
+| resources                                                                                                         |         23 |      2,372 |         18 |        236 |      2,626 |
+| resources\css                                                                                                     |          1 |          9 |          0 |          3 |         12 |
+| resources\js                                                                                                      |          2 |          4 |          0 |          3 |          7 |
+| resources\views                                                                                                   |         20 |      2,359 |         18 |        230 |      2,607 |
+| resources\views (Files)                                                                                           |          1 |        270 |          0 |          8 |        278 |
+| resources\views\abogado                                                                                           |          2 |        137 |          1 |         14 |        152 |
+| resources\views\auth                                                                                              |          3 |        365 |          0 |         44 |        409 |
+| resources\views\cliente                                                                                           |          4 |        950 |         15 |        113 |      1,078 |
+| resources\views\components                                                                                        |          1 |          9 |          0 |          2 |         11 |
+| resources\views\interno                                                                                           |          5 |        377 |          0 |         22 |        399 |
+| resources\views\layouts                                                                                           |          1 |        149 |          2 |         12 |        163 |
+| resources\views\pago                                                                                              |          3 |        102 |          0 |         15 |        117 |
+| routes                                                                                                            |          2 |         54 |          0 |         11 |         65 |
+| tests                                                                                                             |          3 |         27 |          8 |         13 |         48 |
+| tests (Files)                                                                                                     |          1 |          6 |          1 |          4 |         11 |
+| tests\Feature                                                                                                     |          1 |         11 |          4 |          5 |         20 |
+| tests\Unit                                                                                                        |          1 |         10 |          3 |          4 |         17 |
++-------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++-------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| filename                                                                                                          | language   | code       | comment    | blank      | total      |
++-------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| c:\laragon\www\lexcita-app\.claude\settings.local.json                                                            | JSON       |         35 |          0 |          1 |         36 |
+| c:\laragon\www\lexcita-app\Dockerfile                                                                             | Docker     |         14 |          0 |          8 |         22 |
+| c:\laragon\www\lexcita-app\README.md                                                                              | Markdown   |         22 |          0 |          9 |         31 |
+| c:\laragon\www\lexcita-app\app\Http\Controllers\AbogadoController.php                                             | PHP        |         42 |          1 |         10 |         53 |
+| c:\laragon\www\lexcita-app\app\Http\Controllers\AdminController.php                                               | PHP        |         93 |          2 |         21 |        116 |
+| c:\laragon\www\lexcita-app\app\Http\Controllers\ApiController.php                                                 | PHP        |         19 |          0 |          6 |         25 |
+| c:\laragon\www\lexcita-app\app\Http\Controllers\AuthController.php                                                | PHP        |        102 |          1 |         24 |        127 |
+| c:\laragon\www\lexcita-app\app\Http\Controllers\ClienteController.php                                             | PHP        |         88 |          3 |         20 |        111 |
+| c:\laragon\www\lexcita-app\app\Http\Controllers\Controller.php                                                    | PHP        |          5 |          1 |          3 |          9 |
+| c:\laragon\www\lexcita-app\app\Http\Controllers\PagoController.php                                                | PHP        |         64 |          0 |         17 |         81 |
+| c:\laragon\www\lexcita-app\app\Http\Middleware\RolMiddleware.php                                                  | PHP        |         28 |          7 |          7 |         42 |
+| c:\laragon\www\lexcita-app\app\Models\Cita.php                                                                    | PHP        |         36 |          4 |         11 |         51 |
+| c:\laragon\www\lexcita-app\app\Models\HorarioDisponible.php                                                       | PHP        |         22 |          1 |          8 |         31 |
+| c:\laragon\www\lexcita-app\app\Models\User.php                                                                    | PHP        |         27 |         16 |          7 |         50 |
+| c:\laragon\www\lexcita-app\app\Models\Usuario.php                                                                 | PHP        |         42 |          3 |         13 |         58 |
+| c:\laragon\www\lexcita-app\app\Providers\AppServiceProvider.php                                                   | PHP        |         18 |          1 |          5 |         24 |
+| c:\laragon\www\lexcita-app\app\Services\CitaService.php                                                           | PHP        |         53 |          7 |         12 |         72 |
+| c:\laragon\www\lexcita-app\app\Services\HorarioService.php                                                        | PHP        |         16 |          3 |          5 |         24 |
+| c:\laragon\www\lexcita-app\app\Services\WhatsAppService.php                                                       | PHP        |         58 |          0 |         14 |         72 |
+| c:\laragon\www\lexcita-app\bootstrap\app.php                                                                      | PHP        |         20 |          2 |          3 |         25 |
+| c:\laragon\www\lexcita-app\bootstrap\providers.php                                                                | PHP        |          4 |          0 |          2 |          6 |
+| c:\laragon\www\lexcita-app\compose.yaml                                                                           | YAML       |         56 |          0 |          1 |         57 |
+| c:\laragon\www\lexcita-app\composer.json                                                                          | JSON       |         62 |          0 |          1 |         63 |
+| c:\laragon\www\lexcita-app\composer.lock                                                                          | JSON       |      8,468 |          0 |          1 |      8,469 |
+| c:\laragon\www\lexcita-app\config.php                                                                             | PHP        |         14 |          0 |          4 |         18 |
+| c:\laragon\www\lexcita-app\config\app.php                                                                         | PHP        |         22 |         82 |         23 |        127 |
+| c:\laragon\www\lexcita-app\config\auth.php                                                                        | PHP        |         28 |          0 |          8 |         36 |
+| c:\laragon\www\lexcita-app\config\cache.php                                                                       | PHP        |         64 |         35 |         19 |        118 |
+| c:\laragon\www\lexcita-app\config\database.php                                                                    | PHP        |        119 |         43 |         23 |        185 |
+| c:\laragon\www\lexcita-app\config\filesystems.php                                                                 | PHP        |         36 |         32 |         13 |         81 |
+| c:\laragon\www\lexcita-app\config\google.php                                                                      | PHP        |          6 |          0 |          3 |          9 |
+| c:\laragon\www\lexcita-app\config\logging.php                                                                     | PHP        |         79 |         33 |         21 |        133 |
+| c:\laragon\www\lexcita-app\config\mail.php                                                                        | PHP        |         57 |         43 |         19 |        119 |
+| c:\laragon\www\lexcita-app\config\queue.php                                                                       | PHP        |         65 |         45 |         20 |        130 |
+| c:\laragon\www\lexcita-app\config\services.php                                                                    | PHP        |         12 |          2 |          5 |         19 |
+| c:\laragon\www\lexcita-app\config\session.php                                                                     | PHP        |         23 |        160 |         35 |        218 |
+| c:\laragon\www\lexcita-app\database\factories\UserFactory.php                                                     | PHP        |         26 |         14 |          6 |         46 |
+| c:\laragon\www\lexcita-app\database\migrations\0001_01_01_000000_create_users_table.php                           | PHP        |         38 |          6 |          6 |         50 |
+| c:\laragon\www\lexcita-app\database\migrations\0001_01_01_000001_create_cache_table.php                           | PHP        |         25 |          6 |          5 |         36 |
+| c:\laragon\www\lexcita-app\database\migrations\0001_01_01_000002_create_jobs_table.php                            | PHP        |         46 |          6 |          6 |         58 |
+| c:\laragon\www\lexcita-app\database\migrations\2024_01_01_000001_create_usuarios_table.php                        | PHP        |         26 |          0 |          4 |         30 |
+| c:\laragon\www\lexcita-app\database\migrations\2024_01_01_000002_create_horarios_disponibles_table.php            | PHP        |         23 |          0 |          4 |         27 |
+| c:\laragon\www\lexcita-app\database\migrations\2024_01_01_000003_create_citas_table.php                           | PHP        |         31 |          0 |          4 |         35 |
+| c:\laragon\www\lexcita-app\database\migrations\2024_01_01_000004_add_email_verified_at_to_usuarios.php            | PHP        |         19 |          0 |          3 |         22 |
+| c:\laragon\www\lexcita-app\database\migrations\2026_08_04_000000_remove_email_verified_at_from_usuarios_table.php | PHP        |         21 |          6 |          4 |         31 |
+| c:\laragon\www\lexcita-app\database\seeders\DatabaseSeeder.php                                                    | PHP        |         50 |          3 |          9 |         62 |
+| c:\laragon\www\lexcita-app\memory\review-clientecontroller.md                                                     | Markdown   |        129 |          0 |         48 |        177 |
+| c:\laragon\www\lexcita-app\package.json                                                                           | JSON       |         17 |          0 |          1 |         18 |
+| c:\laragon\www\lexcita-app\phpunit.xml                                                                            | XML        |         35 |          0 |          1 |         36 |
+| c:\laragon\www\lexcita-app\public\css\lexcita.css                                                                 | PostCSS    |        353 |         21 |         26 |        400 |
+| c:\laragon\www\lexcita-app\public\index.php                                                                       | PHP        |         10 |          4 |          7 |         21 |
+| c:\laragon\www\lexcita-app\resources\css\app.css                                                                  | PostCSS    |          9 |          0 |          3 |         12 |
+| c:\laragon\www\lexcita-app\resources\js\app.js                                                                    | JavaScript |          1 |          0 |          1 |          2 |
+| c:\laragon\www\lexcita-app\resources\js\bootstrap.js                                                              | JavaScript |          3 |          0 |          2 |          5 |
+| c:\laragon\www\lexcita-app\resources\views\abogado\agenda.blade.php                                               | PHP        |         56 |          1 |          6 |         63 |
+| c:\laragon\www\lexcita-app\resources\views\abogado\dashboard.blade.php                                            | PHP        |         81 |          0 |          8 |         89 |
+| c:\laragon\www\lexcita-app\resources\views\auth\login.blade.php                                                   | PHP        |        165 |          0 |         17 |        182 |
+| c:\laragon\www\lexcita-app\resources\views\auth\registro.blade.php                                                | PHP        |        146 |          0 |         17 |        163 |
+| c:\laragon\www\lexcita-app\resources\views\auth\verificacion-aviso.blade.php                                      | PHP        |         54 |          0 |         10 |         64 |
+| c:\laragon\www\lexcita-app\resources\views\cliente\dashboard.blade.php                                            | PHP        |        189 |          0 |         16 |        205 |
+| c:\laragon\www\lexcita-app\resources\views\cliente\mis-citas.blade.php                                            | PHP        |        117 |          0 |         15 |        132 |
+| c:\laragon\www\lexcita-app\resources\views\cliente\nueva-cita.blade.php                                           | PHP        |        340 |          6 |         37 |        383 |
+| c:\laragon\www\lexcita-app\resources\views\cliente\ticket.blade.php                                               | PHP        |        304 |          9 |         45 |        358 |
+| c:\laragon\www\lexcita-app\resources\views\components\nav-link.blade.php                                          | PHP        |          9 |          0 |          2 |         11 |
+| c:\laragon\www\lexcita-app\resources\views\interno\abogados.blade.php                                             | PHP        |        122 |          0 |          5 |        127 |
+| c:\laragon\www\lexcita-app\resources\views\interno\citas.blade.php                                                | PHP        |         96 |          0 |          5 |        101 |
+| c:\laragon\www\lexcita-app\resources\views\interno\clientes.blade.php                                             | PHP        |         50 |          0 |          3 |         53 |
+| c:\laragon\www\lexcita-app\resources\views\interno\dashboard.blade.php                                            | PHP        |         78 |          0 |          5 |         83 |
+| c:\laragon\www\lexcita-app\resources\views\interno\estadisticas.blade.php                                         | PHP        |         31 |          0 |          4 |         35 |
+| c:\laragon\www\lexcita-app\resources\views\layouts\app.blade.php                                                  | PHP        |        149 |          2 |         12 |        163 |
+| c:\laragon\www\lexcita-app\resources\views\pago\cancelado.blade.php                                               | PHP        |         15 |          0 |          2 |         17 |
+| c:\laragon\www\lexcita-app\resources\views\pago\exito.blade.php                                                   | PHP        |         24 |          0 |          4 |         28 |
+| c:\laragon\www\lexcita-app\resources\views\pago\instrucciones.blade.php                                           | PHP        |         63 |          0 |          9 |         72 |
+| c:\laragon\www\lexcita-app\resources\views\welcome.blade.php                                                      | PHP        |        270 |          0 |          8 |        278 |
+| c:\laragon\www\lexcita-app\routes\console.php                                                                     | PHP        |          6 |          0 |          3 |          9 |
+| c:\laragon\www\lexcita-app\routes\web.php                                                                         | PHP        |         48 |          0 |          8 |         56 |
+| c:\laragon\www\lexcita-app\tests\Feature\ExampleTest.php                                                          | PHP        |         11 |          4 |          5 |         20 |
+| c:\laragon\www\lexcita-app\tests\TestCase.php                                                                     | PHP        |          6 |          1 |          4 |         11 |
+| c:\laragon\www\lexcita-app\tests\Unit\ExampleTest.php                                                             | PHP        |         10 |          3 |          4 |         17 |
+| c:\laragon\www\lexcita-app\vite.config.js                                                                         | JavaScript |         17 |          0 |          2 |         19 |
+| Total                                                                                                             |            |     13,238 |        619 |        798 |     14,655 |
++-------------------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+

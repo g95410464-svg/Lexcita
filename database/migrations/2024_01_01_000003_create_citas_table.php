@@ -21,8 +21,6 @@ return new class extends Migration
             $table->text('descripcion')->nullable();
             $table->enum('estado', ['pendiente_pago','confirmada','cancelada'])->default('pendiente_pago');
             $table->decimal('monto', 8, 2)->default(50.00);
-            $table->string('stripe_session_id')->nullable();
-            $table->string('stripe_payment_intent_id')->nullable();
             $table->timestamps();
         });
     }

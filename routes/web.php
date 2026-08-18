@@ -5,7 +5,6 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\AbogadoController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\PagoController;
 use App\Http\Controllers\ApiController;
 
 Route::get('/', fn() => redirect()->route('login'));
@@ -39,16 +38,8 @@ Route::middleware(['auth', 'verified', 'rol:admin'])->prefix('interno')->name('i
     Route::get('/clientes',               [AdminController::class, 'clientes'])->name('clientes');
     Route::get('/citas',                  [AdminController::class, 'citas'])->name('citas');
     Route::get('/estadisticas',           [AdminController::class, 'estadisticas'])->name('estadisticas');
-    Route::post('/citas/{id}/confirmar',  [PagoController::class, 'confirmarManual'])->name('citas.confirmar');
-    Route::post('/citas/{id}/cancelar',   [PagoController::class, 'cancelarManual'])->name('citas.cancelar');
-});
-
-Route::middleware(['auth', 'verified'])->prefix('pago')->name('pago.')->group(function () {
-    Route::get('/instrucciones/{citaId}', [PagoController::class, 'mostrarInstrucciones'])->name('instrucciones');
-    Route::get('/exito',                  [PagoController::class, 'exito'])->name('exito');
-    Route::get('/cancelado',              [PagoController::class, 'cancelado'])->name('cancelado');
-    Route::get('/crear-sesion/{citaId}',  [PagoController::class, 'crearSesion'])->name('crear-sesion');
-    Route::post('/citas/{id}/confirmar',  [PagoController::class, 'confirmarManual'])->name('confirmar');
+    Route::post('/citas/{id}/confirmar',  [AdminController::class, 'confirmarCita'])->name('citas.confirmar');
+    Route::post('/citas/{id}/cancelar',   [AdminController::class, 'cancelarCita'])->name('citas.cancelar');
 });
 
 Route::middleware(['auth'])->prefix('api')->name('api.')->group(function () {

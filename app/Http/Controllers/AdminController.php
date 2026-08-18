@@ -113,4 +113,27 @@ class AdminController extends Controller
 
         return view('interno.estadisticas', compact('ingresosMes'));
     }
+
+    public function confirmarCita(int $id)
+    {
+        $cita = Cita::where('id', $id)
+            ->where('estado', '!=', 'cancelada')
+            ->with(['cliente', 'abogado'])
+            ->firstOrFail();
+
+        $cita->update(['estado' => 'confirmada']);
+
+        return back()->with('success', "Cita {$cita->codigo} confirmada correctamente.");
+    }
+
+    public function cancelarCita(int $id)
+    {
+        $cita = Cita::where('id', $id)
+            ->whereIn('estado', ['confirmada'])
+            ->firstOrFail();
+
+        $cita->update(['estado' => 'cancelada']);
+
+        return back()->with('success', "Cita {$cita->codigo} cancelada.");
+    }
 }

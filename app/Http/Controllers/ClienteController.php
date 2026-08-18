@@ -66,12 +66,11 @@ class ClienteController extends Controller
             'tipo'        => $data['tipo'],
             'modalidad'   => $data['modalidad'],
             'descripcion' => $data['descripcion'] ?? null,
-            'estado'      => 'pendiente_pago',
+            'estado'      => 'confirmada',
             'monto'       => 35.00,
         ]);
 
-        // Redirigir a crear sesión de pago
-        return redirect()->route('pago.crear-sesion', $cita->id);
+        return redirect()->route('cliente.mis-citas')->with('success', 'Cita agendada correctamente: ' . $cita->codigo);
     }
 
     public function misCitas()

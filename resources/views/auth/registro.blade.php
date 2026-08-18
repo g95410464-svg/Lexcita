@@ -57,7 +57,7 @@
                 representación <span class="text-secondary">de élite.</span>
             </h1>
             <div class="mt-8 flex flex-col gap-4">
-                @foreach(['Consultas confidenciales', 'Abogados especializados', 'Pago seguro con Stripe', 'Notificaciones por WhatsApp'] as $item)
+                @foreach(['Consultas confidenciales', 'Abogados especializados', 'Notificaciones por WhatsApp'] as $item)
                 <div class="flex items-center gap-3">
                     <span class="w-4 h-px bg-secondary block flex-shrink-0"></span>
                     <p class="text-sm text-on-surface-variant">{{ $item }}</p>

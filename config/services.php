@@ -2,12 +2,6 @@
 
 return [
 
-    // ─── Stripe ───────────────────────────────────────────────
-    'stripe' => [
-        'key'    => env('STRIPE_KEY'),
-        'secret' => env('STRIPE_SECRET'),
-    ],
-
     // ─── Twilio WhatsApp ──────────────────────────────────────
     'twilio' => [
         'account_sid'   => env('TWILIO_ACCOUNT_SID'),
