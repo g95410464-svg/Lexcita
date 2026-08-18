@@ -66,11 +66,11 @@ class ClienteController extends Controller
             'tipo'        => $data['tipo'],
             'modalidad'   => $data['modalidad'],
             'descripcion' => $data['descripcion'] ?? null,
-            'estado'      => 'confirmada',
+            'estado'      => 'pendiente_pago',
             'monto'       => 35.00,
         ]);
 
-        return redirect()->route('cliente.mis-citas')->with('success', 'Cita agendada correctamente: ' . $cita->codigo);
+        return redirect()->route('cliente.pre-confirmacion', $cita->id)->with('success', 'Cita agendada: ' . $cita->codigo . '. Por favor confirma el pago.');
     }
 
     public function misCitas()
@@ -92,6 +92,59 @@ class ClienteController extends Controller
             ->firstOrFail();
 
         return view('cliente.ticket', compact('cita'));
+    }
+
+    public function hacerPago(int $id)
+    {
+        $cita = Cita::where('id', $id)
+            ->where('cliente_id', Auth::id())
+            ->where('estado', 'pendiente_pago')
+            ->firstOrFail();
+
+        $cita->update(['estado' => 'confirmada']);
+
+        return redirect()->route('cliente.mis-citas')->with('success', 'Pago procesado. Tu cita '.$cita->codigo.' ha sido confirmada.');
+    }
+
+    public function preConfirmacion(int $id)
+    {
+        $cita = Cita::where('id', $id)
+            ->where('cliente_id', Auth::id())
+            ->where('estado', 'pendiente_pago')
+            ->firstOrFail();
+
+        return view('cliente.pre-confirmacion', compact('cita'));
+    }
+
+    public function procesarPago(int $id)
+    {
+        $cita = Cita::where('id', $id)
+            ->where('cliente_id', Auth::id())
+            ->where('estado', 'pendiente_pago')
+            ->firstOrFail();
+
+        // Aquí integraríamos con PayPal
+        // Por ahora, simulamos el pago exitoso y confirmamos la cita
+        $cita->update(['estado' => 'confirmada']);
+
+        return redirect()->route('cliente.mis-citas')->with('success', 'Pago procesado. Tu cita '.$cita->codigo.' ha sido confirmada.');
+    }
+
+    public function paypalPago(int $id)
+    {
+        $cita = Cita::where('id', $id)
+            ->where('cliente_id', Auth::id())
+            ->where('estado', 'pendiente_pago')
+            ->firstOrFail();
+
+        // Al presionar "Pagar cita", redirigimos al usuario al flujo de PayPal
+        // El ID de la cita se pasa como parámetro para que el sistema pueda
+        // identificar qué cita está siendo procesada en el callback
+        return redirect()->away(
+            'https://www.paypal.com/donate?hosted_button_id=HHFA4DKJHYE5Q' .
+            (strpos('?', '?') !== false ? '&' : '?') .
+            'invoice=' . urlencode($cita->codigo)
+        );
     }
 
     public function cancelarCita(int $id)
