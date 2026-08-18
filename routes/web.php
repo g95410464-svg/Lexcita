@@ -22,11 +22,11 @@ Route::middleware(['auth', 'verified', 'rol:cliente'])->prefix('cliente')->name(
     Route::get('/nueva-cita',      [ClienteController::class, 'nuevaCita'])->name('nueva-cita');
     Route::post('/nueva-cita',     [ClienteController::class, 'crearCita'])->name('nueva-cita.post');
     Route::get('/mis-citas',       [ClienteController::class, 'misCitas'])->name('mis-citas');
-Route::get('/ticket/{id}',     [ClienteController::class, 'ticket'])->name('cliente.ticket');
-Route::get('/hacer-pago/{id}', [ClienteController::class, 'hacerPago'])->name('cliente.hacer-pago');
-Route::get('/pre-confirmacion/{id}', [ClienteController::class, 'preConfirmacion'])->name('cliente.pre-confirmacion');
-Route::get('/procesar-pago/{id}', [ClienteController::class, 'procesarPago'])->name('cliente.procesar-pago');
-Route::get('/paypal-pago/{id}', [ClienteController::class, 'paypalPago'])->name('cliente.paypal-pago');
+    Route::get('/ticket/{id}',     [ClienteController::class, 'ticket'])->name('cliente.ticket');
+    Route::get('/hacer-pago/{id}', [ClienteController::class, 'hacerPago'])->name('cliente.hacer-pago');
+    Route::get('/pre-confirmacion/{id}', [ClienteController::class, 'preConfirmacion'])->name('cliente.pre-confirmacion');
+    Route::get('/procesar-pago/{id}', [ClienteController::class, 'procesarPago'])->name('cliente.procesar-pago');
+    Route::get('/paypal-pago/{id}', [ClienteController::class, 'paypalPago'])->name('cliente.paypal-pago');
     Route::post('/cancelar/{id}',  [ClienteController::class, 'cancelarCita'])->name('cancelar');
 });
 
