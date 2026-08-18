@@ -1,357 +1,129 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ticket {{ $cita->codigo }}</title>
+    <title>GC Tu Conexión Legal — Ticket de Cita</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0&display=swap" rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface":                  "#121412",
+                        "surface-dim":              "#121412",
+                        "surface-container-lowest": "#0d0f0d",
+                        "surface-container-low":    "#1a1c1a",
+                        "surface-container":        "#1f201e",
+                        "surface-container-high":   "#292a29",
+                        "surface-variant":          "#343533",
+                        "on-surface":               "#e3e2e0",
+                        "on-surface-variant":       "#c4c7c7",
+                        "outline":                  "#8e9192",
+                        "outline-variant":          "#444748",
+                        "secondary":                "#e9c349",
+                        "on-secondary":             "#3c2f00",
+                        "secondary-container":      "#af8d11",
+                        "on-secondary-container":   "#342800",
+                        "error":                    "#ffb4ab",
+                        "error-container":          "#93000a",
+                        "on-error-container":       "#ffdad6",
+                    },
+                    fontFamily: {
+                        "caslon":  ["Libre Caslon Text", "serif"],
+                        "grotesk": ["Hanken Grotesk", "sans-serif"],
+                    },
+                    borderRadius: { DEFAULT: "0", lg: "0", xl: "0", full: "9999px" },
+                }
+            }
+        }
+    </script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Georgia', serif;
-            background: #f5f5f0;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            padding: 40px 20px;
-        }
-
-        .ticket {
-            background: white;
-            width: 100%;
-            max-width: 600px;
-            border-radius: 4px;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
-        }
-
-        /* Cabecera */
-        .ticket-header {
-            background: #0d0d0d;
-            color: white;
-            padding: 30px 35px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .ticket-header .logo {
-            font-size: 28px;
-            font-weight: bold;
-            color: #c9a84c;
-            letter-spacing: 2px;
-        }
-
-        .ticket-header .subtitle {
-            font-size: 11px;
-            color: #888;
-            margin-top: 3px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .ticket-header .codigo {
-            text-align: right;
-        }
-
-        .ticket-header .codigo-label {
-            font-size: 10px;
-            color: #888;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .ticket-header .codigo-value {
-            font-size: 20px;
-            color: #c9a84c;
-            font-weight: bold;
-            margin-top: 4px;
-            letter-spacing: 1px;
-        }
-
-        /* Estado */
-        .ticket-estado {
-            padding: 12px 35px;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .estado-confirmada { background: #dcfce7; color: #166534; }
-        .estado-pendiente_pago { background: #fef9c3; color: #854d0e; }
-        .estado-cancelada { background: #fee2e2; color: #991b1b; }
-
-        /* Separador de puntos */
-        .divider {
-            border: none;
-            border-top: 2px dashed #e5e5e5;
-            margin: 0 35px;
-        }
-
-        /* Cuerpo */
-        .ticket-body {
-            padding: 30px 35px;
-        }
-
-        .section-title {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: #999;
-            margin-bottom: 16px;
-        }
-
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 28px;
-        }
-
-        .info-item label {
-            display: block;
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #999;
-            margin-bottom: 4px;
-        }
-
-        .info-item span {
-            display: block;
-            font-size: 15px;
-            color: #1a1a1a;
-            font-weight: 500;
-        }
-
-        .info-item.full {
-            grid-column: 1 / -1;
-        }
-
-        .info-item .highlight {
-            color: #c9a84c;
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        /* Descripción */
-        .descripcion-box {
-            background: #f9f9f7;
-            border-left: 3px solid #c9a84c;
-            padding: 14px 16px;
-            margin-bottom: 28px;
-            border-radius: 0 4px 4px 0;
-        }
-
-        .descripcion-box label {
-            display: block;
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #999;
-            margin-bottom: 6px;
-        }
-
-        .descripcion-box p {
-            font-size: 13px;
-            color: #444;
-            line-height: 1.6;
-        }
-
-        /* Monto */
-        .monto-section {
-            background: #0d0d0d;
-            margin: 0 -35px -30px;
-            padding: 20px 35px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 10px;
-        }
-
-        .monto-section .monto-label {
-            font-size: 12px;
-            color: #888;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .monto-section .monto-valor {
-            font-size: 26px;
-            color: #c9a84c;
-            font-weight: bold;
-        }
-
-        /* Footer */
-        .ticket-footer {
-            background: #0d0d0d;
-            padding: 16px 35px 24px;
-            text-align: center;
-        }
-
-        .ticket-footer p {
-            font-size: 11px;
-            color: #555;
-            line-height: 1.7;
-        }
-
-        .ticket-footer .aviso {
-            color: #c9a84c;
-            font-size: 10px;
-            margin-top: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* Botones (solo pantalla, no imprimen) */
-        .acciones {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            margin-top: 24px;
-        }
-
-        .btn-imprimir {
-            background: #c9a84c;
-            color: #0d0d0d;
-            border: none;
-            padding: 12px 28px;
-            font-size: 13px;
-            font-weight: bold;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            cursor: pointer;
-            border-radius: 2px;
-        }
-
-        .btn-volver {
-            background: transparent;
-            color: #666;
-            border: 1px solid #ddd;
-            padding: 12px 28px;
-            font-size: 13px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            cursor: pointer;
-            border-radius: 2px;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        /* Estilos de impresión */
-        @media print {
-            body { background: white; padding: 0; }
-            .ticket { box-shadow: none; max-width: 100%; }
-            .acciones { display: none; }
-            .ticket-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .ticket-estado { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .monto-section { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .ticket-footer { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; vertical-align: middle; }
+        body { background-color: #121412; color: #e3e2e0; font-family: 'Hanken Grotesk', sans-serif; }
+        input:-webkit-autofill { -webkit-box-shadow: 0 0 0 100px #1a1c1a inset !important; -webkit-text-fill-color: #e3e2e0 !important; }
     </style>
 </head>
-<body>
+<body class="min-h-screen flex items-center justify-center p-6">
 
-<div>
-    <div class="ticket">
+<div class="w-full max-w-4xl border border-outline-variant flex" style="min-height:520px">
 
-        {{-- Cabecera --}}
-        <div class="ticket-header">
-            <div>
-                <div class="logo">GC</div>
-                <div class="subtitle">Tu Conexión Legal</div>
-            </div>
-            <div class="codigo">
-                <div class="codigo-label">Código de Cita</div>
-                <div class="codigo-value">{{ $cita->codigo }}</div>
-            </div>
+    {{-- ── PANEL IZQUIERDO ──────────────────────────────── --}}
+    <div class="hidden md:flex w-1/2 bg-surface-container-lowest border-r border-outline-variant flex-col justify-between p-12">
+        {{-- Logo --}}
+        <div>
+            <p class="font-caslon text-2xl font-bold text-secondary tracking-wide">GC</p>
+            <p class="text-xs font-grotesk font-semibold tracking-[.18em] uppercase text-outline mt-0.5">& Associates</p>
         </div>
 
-        {{-- Estado --}}
-        <div class="ticket-estado estado-{{ $cita->estado }}">
-            @switch($cita->estado)
-                @case('confirmada') ✓ Cita Confirmada @break
-                @case('pendiente_pago') ⏳ Pendiente de Pago @break
-                @case('cancelada') ✕ Cita Cancelada @break
-                @default {{ $cita->estado }}
-            @endswitch
-        </div>
-
-        <hr class="divider">
-
-        {{-- Cuerpo --}}
-        <div class="ticket-body">
-
-            <p class="section-title">Información de la Cita</p>
-
-            <div class="info-grid">
-                <div class="info-item">
-                    <label>Fecha</label>
-                    <span class="highlight">{{ $cita->fecha->locale('es')->isoFormat('dddd D [de] MMMM, YYYY') }}</span>
-                </div>
-                <div class="info-item">
-                    <label>Horario</label>
-                    <span class="highlight">{{ \Carbon\Carbon::parse($cita->hora_inicio)->format('h:i A') }} – {{ \Carbon\Carbon::parse($cita->hora_fin)->format('h:i A') }}</span>
-                </div>
-                <div class="info-item">
-                    <label>Tipo de Consulta</label>
-                    <span>{{ ucwords(str_replace('_', ' ', $cita->tipo)) }}</span>
-                </div>
-                <div class="info-item">
-                    <label>Modalidad</label>
-                    <span>{{ ucfirst($cita->modalidad) }}</span>
-                </div>
-                <div class="info-item">
-                    <label>Cliente</label>
-                    <span>{{ $cita->cliente->nombre }}</span>
-                </div>
-                <div class="info-item">
-                    <label>Abogado Asignado</label>
-                    <span>{{ $cita->abogado->nombre }}</span>
-                </div>
-                @if($cita->abogado->especialidad)
-                <div class="info-item full">
-                    <label>Especialidad</label>
-                    <span>{{ $cita->abogado->especialidad }}</span>
-                </div>
-                @endif
-            </div>
-
-            @if($cita->descripcion)
-            <div class="descripcion-box">
-                <label>Motivo de Consulta</label>
-                <p>{{ $cita->descripcion }}</p>
-            </div>
-            @endif
-
-            <div class="monto-section">
-                <div>
-                    <div class="monto-label">Total Pagado</div>
-                </div>
-                <div class="monto-valor">${{ number_format($cita->monto, 2) }}</div>
-            </div>
-
+        {{-- Headline --}}
+        <div>
+            <h1 class="font-caslon text-3xl font-normal leading-snug text-on-surface">
+                Acceso discreto.<br>
+                Asesoría <span class="text-secondary">de élite.</span>
+            </h1>
+            <p class="text-sm text-outline mt-4 leading-relaxed">
+                Su información está protegida bajo cifrado de grado militar y secreto profesional.
+            </p>
         </div>
 
         {{-- Footer --}}
-        <div class="ticket-footer">
-            <p>
-                GC Tu Conexión Legal — Servicios Legales Integrales<br>
-                servicioslegalesint.com &nbsp;|&nbsp; {{ date('Y') }}
-            </p>
-            <p class="aviso">Presentar este ticket al momento de la consulta</p>
+        <p class="text-xs text-outline tracking-wider">
+            © {{ date('Y') }} GC Tu Conexión Legal. Asesoría Legal de Élite.
+        </p>
+    </div>
+
+    {{-- ── PANEL DERECHO (ticket) ──────────────────────────────── --}}
+    <div class="flex-1 bg-surface-container-low flex flex-col justify-center p-10 md:p-12">
+
+        {{-- Etiqueta de sección --}}
+        <p class="text-xs font-grotesk font-semibold tracking-[.18em] uppercase text-secondary mb-5">
+            Detalles de la Cita
+        </p>
+
+        <h2 class="font-caslon text-3xl font-normal text-on-surface mb-2">Ticket de Cita</h2>
+
+        <div class="bg-surface-container border border-outline-variant p-6 mb-6">
+            <p class="text-[11px] font-grotesk font-semibold tracking-[.18em] uppercase text-outline mb-4">Información de la Cita</p>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <p class="text-[10px] text-outline uppercase tracking-wider">Código</p>
+                    <p class="font-caslon text-2xl font-bold text-on-surface">{{ $cita->codigo }}</p>
+                </div>
+                <div>
+                    <p class="text-[10px] text-outline uppercase tracking-wider">Fecha</p>
+                    <p class="font-caslon text-2xl font-bold text-on-surface">{{ $cita->fecha->format('d/m/Y') }}</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <p class="text-[10px] text-outline uppercase tracking-wider">Hora</p>
+                    <p class="font-caslon text-2xl font-bold text-on-surface">{{ $cita->hora_inicio }}</p>
+                </div>
+                <div>
+                    <p class="text-[10px] text-outline uppercase tracking-wider">Modalidad</p>
+                    <p class="font-caslon text-2xl font-bold text-on-surface">{{ ucfirst($cita->modalidad) }}</p>
+                </div>
+            </div>
+            <div>
+                <p class="text-[10px] text-outline uppercase tracking-wider">Tipo</p>
+                <p class="font-caslon text-2xl font-bold text-on-surface">{{ str_replace('_', ' ', $cita->tipo) }}</p>
+            </div>
+            <div class="mt-4">
+                <p class="text-[10px] text-outline uppercase tracking-wider">Abogado</p>
+                <p class="font-caslon text-xl font-medium text-on-surface">{{ $cita->abogado->nombre }}</p>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center">
+            <a href="{{ route('cliente.mis-citas') }}" class="text-secondary hover:underline">Volver a mis citas</a>
         </div>
 
     </div>
 
-    {{-- Botones --}}
-    <div class="acciones">
-        <button class="btn-imprimir" onclick="window.print()">🖨 Imprimir Ticket</button>
-        <a href="{{ route('cliente.mis-citas') }}" class="btn-volver">← Volver a mis citas</a>
-    </div>
 </div>
 
 </body>

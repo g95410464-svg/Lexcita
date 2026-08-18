@@ -87,6 +87,7 @@ class ClienteController extends Controller
     {
         $cita = Cita::where('id', $id)
             ->where('cliente_id', Auth::id())
+            ->where('estado', 'confirmada')
             ->with(['cliente', 'abogado'])
             ->firstOrFail();
 

@@ -22,6 +22,7 @@ Route::middleware(['auth', 'verified', 'rol:cliente'])->prefix('cliente')->name(
     Route::get('/nueva-cita',      [ClienteController::class, 'nuevaCita'])->name('nueva-cita');
     Route::post('/nueva-cita',     [ClienteController::class, 'crearCita'])->name('nueva-cita.post');
     Route::get('/mis-citas',       [ClienteController::class, 'misCitas'])->name('mis-citas');
+Route::get('/ticket/{id}',     [ClienteController::class, 'ticket'])->name('cliente.ticket');
     Route::post('/cancelar/{id}',  [ClienteController::class, 'cancelarCita'])->name('cancelar');
 });
 
