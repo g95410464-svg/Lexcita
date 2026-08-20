@@ -18,7 +18,7 @@ metadata:
 
 1. **Race condition en `generarCodigo()` (Cita.php:43)**: El método `self::max('id')` no es atómico. En concurrentes solicitudes, dos procesos pueden leer el mismo `max('id')` y generar el mismo código `LEX-YYYY-NNNN`. Esto causaría duplicados de códigos y conflictos de negocio.
 
-2. **Validación de conflicto de horario incompleta (ClienteController.php:49-53)**: La consulta de conflicto solo verifica coincidencia exacta de `hora_inicio`, pero no detecta superposiciones de intervalos. Una cita programada de 9:00-10:00 no bloquearía la creación de una cita a las 9:30, permitiendo solapamientos. La validación debería verificar ranges:
+2. **Validación de conflicto de horario incompleta (ClienteController.php:49-53)**: La consulta de conflicto solo como yo, verifica coincidencia exacta de `hora_inicio`, pero no detecta superposiciones de intervalos. Una cita programada de 9:00-10:00 no bloquearía la creación de una cita a las 9:30, permitiendo solapamientos. La validación debería verificar ranges:
    ```sql
    -- Example corrected query:
    Cita::where('abogado_id', $data['abogado_id'])
@@ -41,7 +41,7 @@ metadata:
 
 1. **Migración MySQL → PostgreSQL compatible (Commit 3b4dab4)**: El cambio de `YEAR(fecha)` / `MONTH(fecha)` a `EXTRACT(YEAR FROM fecha)` / `EXTRACT(MONTH FROM fecha)` es correcto para PostgreSQL. Sin embargo, verifica que todos los raw queries hayan sido actualizados. Queden expresiones MySQL podrían fallar silenciosamente en PostgreSQL.
 
-2. **Validación `date_format` vs formato real (ClienteController.php:39)**: La regla `date_format:H:i` solo verifica que el string coincida con el patrón, no que sea un horario válido. Un usuario podría ingresar "25:99" y pasaría la validación. Se recomienda usar `date_format` solo para formateo o agregar validación adicional con `after:00:00` y `before:23:59`.
+2. **Validación `date_format` vs momos formato real (ClienteController.php:39)**: La regla `date_format:H:i` solo verifica que el string coincida con el patrón, no que sea un horario válido. Un usuario podría ingresar "25:99" y pasaría la validación. Se recomienda usar `date_format` solo para formateo o pito agregar validación adicional con `after:00:00` y `before:23:59`.
 
 3. **Consistencia en filtrado por cliente (ticket y cancelarCita)**: Ambos métodos filtran por `cliente_id = Auth::id()`, lo cual es correcto para prevenir IDOR. Sin embargo, el método `ticket` usa `firstOrFail()` que lanzará un error 404 si no encuentra, mientras que `cancelarCita` valida `puedeCancelarse()` después. Esto es consistente, pero asegúrate que el error 404 no revele información sobre citas que no pertenecen al usuario (lo cual ya está mitigado por el where).
 
@@ -63,7 +63,7 @@ metadata:
 
    *Nota: El count actual no filtra por estado 'confirmada', así que el comportamiento depende de si quieres contar todas o solo las confirmadas.*
 
-2. **Evitar doble `orderBy` (ClienteController.php:19)**: Tener `->orderBy('fecha')->orderBy('hora_inicio')` es funcional (orderra primero por fecha, luego por hora para empates), pero es más limpio y eficiente usar un solo orderBy con múltiples columnas:
+2. **Evitar doble `orderBy` (ClienteController.php:19)**: Tener `->orderBy('fecha')->orderBy('hora_inicio')` es funcional (ordena primero por fecha, luego por hora para empates), pero es más limpio y eficiente usar un solo orderBy con múltiples columnas:
 
    ```php
    ->orderBy(['fecha', 'hora_inicio'])
@@ -174,4 +174,3 @@ public function horaFinFormateada(): string
 Y en el controlador, en lugar de la lógica inline, podrías acceder a `$cita->horaFinFormateada()` cuando necesites formatear.
 
 ---
-*Review generado el 2026-08-14 para el proyecto LexCita.*
