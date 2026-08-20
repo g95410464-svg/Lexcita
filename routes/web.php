@@ -30,6 +30,9 @@ Route::middleware(['auth', 'verified', 'rol:cliente'])->prefix('cliente')->name(
     Route::post('/cancelar/{id}',  [ClienteController::class, 'cancelarCita'])->name('cancelar');
 });
 
+// Ruta para crear sesión de pago (para citas pendientes de pago)
+Route::get('/pago/crear-sesion/{id}', [ClienteController::class, 'procesarPago'])->name('pago.crear-sesion');
+
 Route::middleware(['auth', 'verified', 'rol:abogado'])->prefix('abogado')->name('abogado.')->group(function () {
     Route::get('/dashboard', [AbogadoController::class, 'dashboard'])->name('dashboard');
     Route::get('/agenda',    [AbogadoController::class, 'agenda'])->name('agenda');
