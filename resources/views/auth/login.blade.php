@@ -197,7 +197,7 @@
 </div>
 <div class="mt-8 text-center">
 <p class="font-label-sm text-label-sm text-on-surface-variant">
-                    ¿Sin cuenta? <a class="text-primary hover:text-primary-fixed transition-colors font-semibold" href="#">Crear cuenta gratuita</a>
+                    ¿Sin cuenta? <a class="text-primary hover:text-primary-fixed transition-colors font-semibold" href="{{ route('registro') }}">Crear cuenta gratuita</a>
 </p>
 </div>
 </div>
