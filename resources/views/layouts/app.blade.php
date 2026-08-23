@@ -54,108 +54,121 @@
         /* Scrollbar */
         ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #1a1c1a; } ::-webkit-scrollbar-thumb { background: #444748; }
     </style>
-    @stack('styles')
 </head>
 <body class="min-h-screen flex">
 
-{{-- ── SIDEBAR ──────────────────────────────────────────── --}}
-<aside id="sidebar" class="fixed left-0 top-0 h-full w-64 bg-surface-container border-r border-outline-variant flex flex-col py-8 z-50 transition-transform duration-200 -translate-x-full md:translate-x-0">
+{{-- ── TOP NAVBAR ────────────────────────────────────────── --}}
+<nav class="fixed w-full bg-[#131317] border-b border-neutral-800 px-6 py-3 z-50">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <!-- Left: Brand -->
+        <div class="flex items-baseline gap-2">
+            <p class="text-2xl font-caslon text-gradient-gold">GC</p>
+            <p class="text-[10px] font-grotesk uppercase text-neutral-400">PORTAL DEL CLIENTE</p>
+        </div>
 
-    {{-- Logo --}}
-    <div class="px-6 mb-10">
-        <p class="font-caslon text-xl font-bold text-secondary tracking-wide">GC</p>
-        <p class="text-[10px] font-grotesk font-semibold tracking-[.18em] uppercase text-outline mt-0.5">
+        <!-- Middle: Navigation Links -->
+        <div class="hidden md:flex items-center gap-6">
             @auth
-                @if(auth()->user()->esAdmin()) Admin Panel
-                @elseif(auth()->user()->esAbogado()) Portal Abogado
-                @else Portal del Cliente
+                @if(auth()->user()->esCliente())
+                    <a href="{{ route('cliente.dashboard') }}"
+                       class="relative text-on-surface hover:text-primary transition-colors group cursor-pointer">
+                        Dashboard
+                        <span class="absolute bottom-0 left-0 hidden group-hover:block w-full border-b-2 border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                    </a>
+                    <a href="{{ route('cliente.nueva-cita') }}"
+                       class="relative text-on-surface hover:text-primary transition-colors group cursor-pointer">
+                        Nueva Cita
+                        <span class="absolute bottom-0 left-0 hidden group-hover:block w-full border-b-2 border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                    </a>
+                    <a href="{{ route('cliente.mis-citas') }}"
+                       class="relative text-on-surface hover:text-primary transition-colors group cursor-pointer">
+                        Mis Citas
+                        <span class="absolute bottom-0 left-0 hidden group-hover:block w-full border-b-2 border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                    </a>
+                @elseif(auth()->user()->esAbogado())
+                    <a href="{{ route('abogado.dashboard') }}"
+                       class="relative text-on-surface hover:text-primary transition-colors group cursor-pointer">
+                        Dashboard
+                        <span class="absolute bottom-0 left-0 hidden group-hover:block w-full border-b-2 border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                    </a>
+                    <a href="{{ route('abogado.agenda') }}"
+                       class="relative text-on-surface hover:text-primary transition-colors group cursor-pointer">
+                        Mi Agenda
+                        <span class="absolute bottom-0 left-0 hidden group-hover:block w-full border-b-2 border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                    </a>
+                @elseif(auth()->user()->esAdmin())
+                    <a href="{{ route('interno.dashboard') }}"
+                       class="relative text-on-surface hover:text-primary transition-colors group cursor-pointer">
+                        Dashboard
+                        <span class="absolute bottom-0 left-0 hidden group-hover:block w-full border-b-2 border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                    </a>
+                    <a href="{{ route('interno.abogados') }}"
+                       class="relative text-on-surface hover:text-primary transition-colors group cursor-pointer">
+                        Abogados
+                        <span class="absolute bottom-0 left-0 hidden group-hover:block w-full border-b-2 border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                    </a>
+                    <a href="{{ route('interno.clientes') }}"
+                       class="relative text-on-surface hover:text-primary transition-colors group cursor-pointer">
+                        Clientes
+                        <span class="absolute bottom-0 left-0 hidden group-hover:block w-full border-b-2 border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                    </a>
+                    <a href="{{ route('interno.citas') }}"
+                       class="relative text-on-surface hover:text-primary transition-colors group cursor-pointer">
+                        Todas las Citas
+                        <span class="absolute bottom-0 left-0 hidden group-hover:block w-full border-b-2 border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                    </a>
+                    <a href="{{ route('interno.estadisticas') }}"
+                       class="relative text-on-surface hover:text-primary transition-colors group cursor-pointer">
+                       Estadísticas
+                        <span class="absolute bottom-0 left-0 hidden group-hover:block w-full border-b-2 border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                    </a>
                 @endif
             @endauth
-        </p>
-    </div>
+        </div>
 
-    {{-- Navegación --}}
-    <nav class="flex flex-col flex-1 gap-0.5">
-        @auth
-            @if(auth()->user()->esCliente())
-                <x-nav-link href="{{ route('cliente.dashboard') }}" :active="request()->routeIs('cliente.dashboard')" icon="dashboard">Dashboard</x-nav-link>
-                <x-nav-link href="{{ route('cliente.nueva-cita') }}" :active="request()->routeIs('cliente.nueva-cita')" icon="add_circle">Nueva Cita</x-nav-link>
-                <x-nav-link href="{{ route('cliente.mis-citas') }}" :active="request()->routeIs('cliente.mis-citas')" icon="calendar_month">Mis Citas</x-nav-link>
-
-            @elseif(auth()->user()->esAbogado())
-                <x-nav-link href="{{ route('abogado.dashboard') }}" :active="request()->routeIs('abogado.dashboard')" icon="dashboard">Dashboard</x-nav-link>
-                <x-nav-link href="{{ route('abogado.agenda') }}" :active="request()->routeIs('abogado.agenda')" icon="calendar_month">Mi Agenda</x-nav-link>
-
-            @elseif(auth()->user()->esAdmin())
-                <x-nav-link href="{{ route('interno.dashboard') }}" :active="request()->routeIs('interno.dashboard')" icon="dashboard">Dashboard</x-nav-link>
-                <x-nav-link href="{{ route('interno.abogados') }}" :active="request()->routeIs('interno.abogados')" icon="gavel">Abogados</x-nav-link>
-                <x-nav-link href="{{ route('interno.clientes') }}" :active="request()->routeIs('interno.clientes')" icon="group">Clientes</x-nav-link>
-                <x-nav-link href="{{ route('interno.citas') }}" :active="request()->routeIs('interno.citas')" icon="event_note">Todas las Citas</x-nav-link>
-                <x-nav-link href="{{ route('interno.estadisticas') }}" :active="request()->routeIs('interno.estadisticas')" icon="bar_chart">Estadísticas</x-nav-link>
-            @endif
-        @endauth
-    </nav>
-
-    {{-- Footer sidebar --}}
-    <div class="px-6 mt-auto">
-        @auth
-        {{-- Usuario --}}
-        <div class="flex items-center gap-3 mb-6">
-            <div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-on-secondary text-xs font-bold flex-shrink-0">
-                {{ strtoupper(substr(auth()->user()->nombre, 0, 1)) }}
+        <!-- Right: User Profile -->
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-on-secondary text-xs font-bold">
+                G
             </div>
             <div class="min-w-0">
-                <p class="text-sm font-semibold text-on-surface truncate">{{ auth()->user()->nombre }}</p>
-                <p class="text-[11px] text-outline uppercase tracking-wider">{{ ucfirst(auth()->user()->rol) }}</p>
+                <p class="font-grotesk text-on-surface truncate">{{ auth()->user()->nombre }}</p>
+                <p class="text-[10px] uppercase text-neutral-500">{{ ucfirst(auth()->user()->rol) }}</p>
             </div>
-        </div>
-        {{-- Cerrar sesión --}}
-        <div class="border-t border-outline-variant pt-4 flex flex-col gap-3">
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" class="w-full flex items-center gap-3 text-on-surface-variant hover:text-secondary text-sm transition-colors duration-150 py-1">
-                    <span class="material-symbols-outlined text-[18px]">logout</span>
-                    <span class="font-grotesk text-[13px]">Cerrar sesión</span>
+                <button type="submit" class="flex items-center gap-2 text-on-surface-variant hover:text-secondary text-sm py-1">
+                    <span class="material-symbols-outlined text-[16px]">logout</span>
+                    Cerrar sesión
                 </button>
             </form>
         </div>
-        @endauth
     </div>
-</aside>
+</nav>
 
-{{-- Burger mobile --}}
-<button id="burger" onclick="document.getElementById('sidebar').classList.toggle('-translate-x-full')"
-    class="md:hidden fixed top-4 left-4 z-[60] w-10 h-10 bg-surface-container border border-outline-variant flex flex-col items-center justify-center gap-1.5">
-    <span class="w-5 h-px bg-on-surface block"></span>
-    <span class="w-5 h-px bg-on-surface block"></span>
-    <span class="w-5 h-px bg-on-surface block"></span>
-</button>
+{{-- ── MAIN CONTENT ────────────────────────────────────────── --}}
+<main class="w-full container mx-auto py-8">
 
-{{-- ── CONTENIDO ────────────────────────────────────────── --}}
-<main class="flex-1 md:ml-64 min-h-screen">
-    <div class="max-w-5xl mx-auto px-6 md:px-10 py-10">
-
-        {{-- Alertas globales --}}
-        @if(session('success'))
-            <div class="flex items-center gap-3 bg-[#0a1a0f] border border-[#1a4d2a] px-4 py-3 mb-6">
-                <span class="material-symbols-outlined text-[#4caf82] text-[18px]">check_circle</span>
-                <p class="text-sm text-[#4caf82]">{{ session('success') }}</p>
-            </div>
-        @endif
-
-        @if($errors->any())
-            <div class="flex items-start gap-3 bg-[#1a0a0a] border border-error-container px-4 py-3 mb-6">
-                <span class="material-symbols-outlined text-error text-[18px] mt-0.5">error</span>
-                <div>
-                    @foreach($errors->all() as $error)
-                        <p class="text-sm text-error">{{ $error }}</p>
-                    @endforeach
-                </div>
-            </div>
-        @endif
-
-        @yield('content')
+    {{-- Alertas globales --}}
+    @if(session('success'))
+    <div class="flex items-center gap-3 bg-[#0a1a0f] border border-[#1a4d2a] px-4 py-3 mb-6">
+        <span class="material-symbols-outlined text-[#4caf82] text-[18px]">check_circle</span>
+        <p class="text-sm text-[#4caf82]">{{ session('success') }}</p>
     </div>
+    @endif
+
+    @if($errors->any())
+    <div class="flex items-start gap-3 bg-[#1a0a0a] border border-error-container px-4 py-3 mb-6">
+        <span class="material-symbols-outlined text-error text-[18px] mt-0.5">error</span>
+        <div>
+            @foreach($errors->all() as $error)
+                <p class="text-sm text-error">{{ $error }}</p>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
+    @yield('content')
 </main>
 
 @stack('scripts')
