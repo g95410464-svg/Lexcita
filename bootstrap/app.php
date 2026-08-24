@@ -22,8 +22,5 @@ return Application::configure(basePath: dirname(__DIR__))
             return redirect()->route('login');
         });
     })
-    ->withBroadcasting(function () {
-        // Cargar canales de autorización para Reverb
-        require base_path('routes/channels.php');
-    })
+    ->withBroadcasting(__DIR__.'/../routes/channels.php')
     ->create();
