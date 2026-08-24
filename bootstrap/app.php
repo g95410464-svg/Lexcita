@@ -21,4 +21,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
             return redirect()->route('login');
         });
-    })->create();
+    })
+    ->withBroadcasting(function () {
+        // Cargar canales de autorización para Reverb
+        require base_path('routes/channels.php');
+    })
+    ->create();

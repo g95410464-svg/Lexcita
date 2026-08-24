@@ -2,8 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\{Cita, HorarioDisponible};
+use App\Models\{Cita, HorarioDisponible, VideoRoom, VideoParticipant};
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class CitaService
 {
@@ -55,6 +56,59 @@ class CitaService
         }
 
         return $slots;
+    }
+
+    /**
+     * Confirma una cita y crea la sala de video si es virtual.
+     * Punto único de confirmación (admin o cliente tras pago).
+     */
+    public function confirmar(Cita $cita): Cita
+    {
+        // Solo se puede confirmar si está pendiente de pago
+        if (!$cita->estaPendiente()) {
+            throw new \InvalidArgumentException('Solo se pueden confirmar citas en estado "pendiente_pago".');
+        }
+
+        $cita->update(['estado' => 'confirmada']);
+
+        // Si es virtual, crear VideoRoom automáticamente
+        if ($cita->esVirtual()) {
+            $this->crearVideoRoom($cita);
+        }
+
+        return $cita->fresh();
+    }
+
+    /**
+     * Crea la sala de video para una cita virtual confirmada.
+     */
+    private function crearVideoRoom(Cita $cita): VideoRoom
+    {
+        // Verificar si ya existe (idempotencia)
+        if ($cita->videoRoom) {
+            return $cita->videoRoom;
+        }
+
+        $roomToken = Str::random(40); // token no adivinable
+
+        $videoRoom = VideoRoom::create([
+            'cita_id'    => $cita->id,
+            'room_token' => $roomToken,
+            'status'     => 'programada',
+        ]);
+
+        // Pre-registrar a ambos participantes (entrarán cuando den consentimiento)
+        VideoParticipant::create([
+            'room_id' => $videoRoom->id,
+            'user_id' => $cita->cliente_id,
+        ]);
+
+        VideoParticipant::create([
+            'room_id' => $videoRoom->id,
+            'user_id' => $cita->abogado_id,
+        ]);
+
+        return $videoRoom;
     }
 
     private function carbonDayToSpanish(int $iso): ?string

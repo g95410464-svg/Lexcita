@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\{Cita, Usuario};
+use App\Services\CitaService;
 use Carbon\Carbon;
 
 class ClienteController extends Controller
@@ -101,9 +102,18 @@ class ClienteController extends Controller
             ->where('estado', 'pendiente_pago')
             ->firstOrFail();
 
-        $cita->update(['estado' => 'confirmada']);
+        try {
+            app(CitaService::class)->confirmar($cita);
+            $cita = $cita->fresh();
+            $mensaje = 'Pago procesado. Tu cita '.$cita->codigo.' ha sido confirmada.';
+            if ($cita->esVirtual() && $cita->videoRoom) {
+                $mensaje .= ' Sala de videollamada creada.';
+            }
+        } catch (\InvalidArgumentException $e) {
+            return back()->withErrors(['pago' => $e->getMessage()]);
+        }
 
-        return redirect()->route('cliente.mis-citas')->with('success', 'Pago procesado. Tu cita '.$cita->codigo.' ha sido confirmada.');
+        return redirect()->route('cliente.mis-citas')->with('success', $mensaje);
     }
 
     public function preConfirmacion(int $id)
@@ -123,11 +133,18 @@ class ClienteController extends Controller
             ->where('estado', 'pendiente_pago')
             ->firstOrFail();
 
-        // Aquí integraríamos con PayPal
-        // Por ahora, simulamos el pago exitoso y confirmamos la cita
-        $cita->update(['estado' => 'confirmada']);
+        try {
+            app(CitaService::class)->confirmar($cita);
+            $cita = $cita->fresh();
+            $mensaje = 'Pago procesado. Tu cita '.$cita->codigo.' ha sido confirmada.';
+            if ($cita->esVirtual() && $cita->videoRoom) {
+                $mensaje .= ' Sala de videollamada creada.';
+            }
+        } catch (\InvalidArgumentException $e) {
+            return back()->withErrors(['pago' => $e->getMessage()]);
+        }
 
-        return redirect()->route('cliente.mis-citas')->with('success', 'Pago procesado. Tu cita '.$cita->codigo.' ha sido confirmada.');
+        return redirect()->route('cliente.mis-citas')->with('success', $mensaje);
     }
 
     public function paypalPago(int $id)

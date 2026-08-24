@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\{Usuario, Cita, HorarioDisponible};
-use App\Services\HorarioService;
+use App\Services\{HorarioService, CitaService};
 
 class AdminController extends Controller
 {
@@ -121,9 +121,18 @@ class AdminController extends Controller
             ->with(['cliente', 'abogado'])
             ->firstOrFail();
 
-        $cita->update(['estado' => 'confirmada']);
+        try {
+            app(CitaService::class)->confirmar($cita);
+            $cita = $cita->fresh();
+            $mensaje = "Cita {$cita->codigo} confirmada correctamente.";
+            if ($cita->esVirtual() && $cita->videoRoom) {
+                $mensaje .= ' Sala de videollamada creada.';
+            }
+        } catch (\InvalidArgumentException $e) {
+            return back()->withErrors(['confirmar' => $e->getMessage()]);
+        }
 
-        return back()->with('success', "Cita {$cita->codigo} confirmada correctamente.");
+        return back()->with('success', $mensaje);
     }
 
     public function cancelarCita(int $id)

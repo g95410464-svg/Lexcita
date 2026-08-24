@@ -46,4 +46,72 @@ class Cita extends Model
     // ─── Scope por estado ─────────────────────────────────────
     public function scopeConfirmadas($q) { return $q->where('estado', 'confirmada'); }
     public function scopePendientes($q)  { return $q->where('estado', 'pendiente_pago'); }
+
+    // ─── Relación con VideoRoom ───────────────────────────────
+    public function videoRoom()
+    {
+        return $this->hasOne(VideoRoom::class, 'cita_id');
+    }
+
+    public function notes()
+    {
+        return $this->hasMany(ConsultationNote::class, 'cita_id');
+    }
+
+    // ─── Helpers de videollamada ──────────────────────────────
+    public function esVirtual(): bool
+    {
+        return $this->modalidad === 'virtual';
+    }
+
+    public function ventanaVideollamadaAbierta(): bool
+    {
+        if (!$this->esVirtual() || !$this->estaConfirmada()) {
+            return false;
+        }
+
+        $inicio = \Carbon\Carbon::parse($this->fecha->format('Y-m-d') . ' ' . $this->hora_inicio);
+        $fin    = \Carbon\Carbon::parse($this->fecha->format('Y-m-d') . ' ' . $this->hora_fin);
+        $ahora  = now();
+
+        // Ventana: 15 minutos antes de hora_inicio hasta hora_fin
+        $ventanaInicio = $inicio->copy()->subMinutes(15);
+
+        return $ahora->between($ventanaInicio, $fin);
+    }
+
+    public function puedeEntrarAVideollamada(Usuario $usuario): bool
+    {
+        if (!$this->ventanaVideollamadaAbierta()) {
+            return false;
+        }
+
+        // Solo cliente o abogado de esta cita
+        return $this->cliente_id === $usuario->id || $this->abogado_id === $usuario->id;
+    }
+
+    public function clienteHaConsentido(): bool
+    {
+        return $this->cliente_consintio ?? false;
+    }
+
+    public function abogadoHaConsentido(): bool
+    {
+        return $this->abogado_consintio ?? false;
+    }
+
+    public function ambosConsintieron(): bool
+    {
+        return $this->clienteHaConsentido() && $this->abogadoHaConsentido();
+    }
+
+    public function registrarConsentimientoCliente(): void
+    {
+        $this->update(['cliente_consintio' => true]);
+    }
+
+    public function registrarConsentimientoAbogado(): void
+    {
+        $this->update(['abogado_consintio' => true]);
+    }
 }

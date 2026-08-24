@@ -49,6 +49,37 @@ class Usuario extends Authenticatable
         return $this->hasMany(HorarioDisponible::class, 'abogado_id');
     }
 
+    // ─── Relaciones de videollamada ────────────────────────────
+    public function videoRoomsComoCliente()
+    {
+        return $this->hasManyThrough(VideoRoom::class, Cita::class, 'cliente_id', 'cita_id');
+    }
+
+    public function videoRoomsComoAbogado()
+    {
+        return $this->hasManyThrough(VideoRoom::class, Cita::class, 'abogado_id', 'cita_id');
+    }
+
+    public function videoParticipants()
+    {
+        return $this->hasMany(VideoParticipant::class, 'user_id');
+    }
+
+    public function videoMessages()
+    {
+        return $this->hasMany(VideoMessage::class, 'user_id');
+    }
+
+    public function videoFiles()
+    {
+        return $this->hasMany(VideoFile::class, 'user_id');
+    }
+
+    public function consultationNotes()
+    {
+        return $this->hasMany(ConsultationNote::class, 'abogado_id');
+    }
+
     // ─── Scope: solo abogados activos ─────────────────────────
     public function scopeAbogadosActivos($query)
     {
