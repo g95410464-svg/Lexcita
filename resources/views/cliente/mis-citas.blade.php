@@ -42,7 +42,7 @@
             };
         @endphp
 
-        <div class="bg-surface-container border border-outline-variant hover:border-outline transition-colors duration-150">
+        <div class="bg-surface-container border border-outline-variant hover:border-outline transition-colors duration-150 selectable-card">
             <div class="flex flex-col md:flex-row md:items-center gap-4 px-6 py-5">
 
                 {{-- Fecha destacada --}}

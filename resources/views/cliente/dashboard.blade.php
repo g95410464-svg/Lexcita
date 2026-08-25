@@ -175,7 +175,7 @@
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
     <a href="{{ route('cliente.nueva-cita') }}"
        class="bg-surface-container border border-outline-variant hover:border-secondary group p-5
-              flex items-center gap-4 transition-colors duration-150">
+              flex items-center gap-4 transition-colors duration-150 selectable-card">
         <span class="material-symbols-outlined text-outline group-hover:text-secondary transition-colors text-[24px]">add_circle</span>
         <div>
             <p class="text-on-surface font-grotesk font-semibold text-sm">Nueva Cita</p>
@@ -185,7 +185,7 @@
 
     <a href="{{ route('cliente.mis-citas') }}"
        class="bg-surface-container border border-outline-variant hover:border-secondary group p-5
-              flex items-center gap-4 transition-colors duration-150">
+              flex items-center gap-4 transition-colors duration-150 selectable-card">
         <span class="material-symbols-outlined text-outline group-hover:text-secondary transition-colors text-[24px]">calendar_month</span>
         <div>
             <p class="text-on-surface font-grotesk font-semibold text-sm">Mis Citas</p>
@@ -193,7 +193,7 @@
         </div>
     </a>
 
-    <div class="bg-surface-container border border-outline-variant p-5 flex items-center gap-4">
+    <div class="bg-surface-container border border-outline-variant p-5 flex items-center gap-4 selectable-card">
         <span class="material-symbols-outlined text-outline text-[24px]">support_agent</span>
         <div>
             <p class="text-on-surface font-grotesk font-semibold text-sm">Soporte</p>

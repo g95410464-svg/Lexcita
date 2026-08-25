@@ -31,23 +31,20 @@
     .step-active .step-label   { color:#e9c349; }
     .step-inactive .step-circle{ background:transparent; border-color:#444748; color:#8e9192; }
     .step-inactive .step-label { color:#8e9192; }
-    /* Tarjetas abogado */
-    .abogado-card { cursor:pointer; transition:border-color .15s, background .15s; }
-    .abogado-card:hover { border-color:#8e9192; }
-    .abogado-card.selected { border-color:#e9c349 !important; background:#1a1400 !important; }
+
+    /* Tarjetas abogado - usando micro-interacciones CSS */
+    .abogado-card { cursor:pointer; }
     .abogado-card.selected .av-circle { background:#e9c349; color:#3c2f00; }
-    /* Días del calendario */
+
+    /* Días del calendario - usando micro-interacciones CSS */
     .cal-day { padding:7px 4px; text-align:center; font-size:.82rem; font-family:'Hanken Grotesk',sans-serif;
-               border:1px solid transparent; cursor:pointer; transition:.12s; }
-    .cal-day:not(.disabled):hover { border-color:#e9c349; color:#e9c349; }
-    .cal-day.selected { background:#e9c349 !important; color:#3c2f00 !important; font-weight:700; border-color:#e9c349 !important; }
+               border:1px solid transparent; cursor:pointer; }
     .cal-day.disabled { color:#444748; cursor:default; }
-    /* Slots */
+
+    /* Slots - usando micro-interacciones CSS */
     .slot-btn { padding:8px 12px; border:1px solid #444748; font-size:.78rem; font-family:'Hanken Grotesk',sans-serif;
                 font-weight:600; letter-spacing:.08em; text-transform:uppercase; cursor:pointer;
-                background:transparent; color:#c4c7c7; transition:.12s; }
-    .slot-btn:hover   { border-color:#e9c349; color:#e9c349; }
-    .slot-btn.selected{ background:#e9c349; color:#3c2f00; border-color:#e9c349; }
+                background:transparent; color:#c4c7c7; }
 </style>
 @endpush
 
@@ -68,7 +65,7 @@
     </p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         @foreach($abogados as $ab)
-        <div class="abogado-card bg-surface-container border border-outline-variant p-5 flex items-center gap-4"
+        <div class="abogado-card selectable-card bg-surface-container border border-outline-variant p-5 flex items-center gap-4"
              data-id="{{ $ab->id }}"
              onclick="window.seleccionarAbogado({{ $ab->id }}, this)">
             <div class="av-circle w-11 h-11 rounded-full bg-surface-container-highest flex items-center justify-center
@@ -229,6 +226,11 @@ window.addEventListener('load', function () {
         abogadoNom = el.querySelector('p').textContent;
         document.getElementById('abogado_id').value = id;
 
+        // Disparar animación de selección
+        el.classList.remove('animate-select');
+        void el.offsetWidth; // reflow para reiniciar animación
+        el.classList.add('animate-select');
+
         var paso2 = document.getElementById('paso2');
         paso2.style.display = 'block';
         activarStep('step-ind-2');
@@ -262,7 +264,7 @@ window.addEventListener('load', function () {
             var fechaStr   = anio + '-' + String(mes+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
 
             var div = document.createElement('div');
-            div.className = 'cal-day' + (esFinSem || esPasado ? ' disabled' : '') + (fechaStr === fechaSel ? ' selected' : '');
+            div.className = 'cal-day selectable-card selectable-day' + (esFinSem || esPasado ? ' disabled' : '') + (fechaStr === fechaSel ? ' selected' : '');
             div.textContent = d;
 
             if (!esFinSem && !esPasado) {
@@ -282,11 +284,19 @@ window.addEventListener('load', function () {
         renderCalendario();
     };
 
-    window.seleccionarFecha = function(fecha) {
+    window.seleccionarFecha = function(fecha, el) {
         fechaSel = fecha;
         horaSel  = null;
         document.getElementById('fecha_input').value = fecha;
         document.getElementById('hora_inicio').value = '';
+
+        // Disparar animación de selección en el elemento clickeado
+        if (el) {
+            el.classList.remove('animate-select');
+            void el.offsetWidth; // reflow para reiniciar animación
+            el.classList.add('animate-select');
+        }
+
         renderCalendario();
         cargarSlots(fecha);
     };
@@ -319,7 +329,7 @@ window.addEventListener('load', function () {
             slots.forEach(function(slot) {
                 var b = document.createElement('button');
                 b.type = 'button';
-                b.className = 'slot-btn';
+                b.className = 'slot-btn selectable-card selectable-slot';
                 b.textContent = slot.hora_label;
                 b.dataset.hora = slot.hora;
                 b.addEventListener('click', function() {
@@ -339,6 +349,11 @@ window.addEventListener('load', function () {
         document.getElementById('hora_inicio').value = hora;
         document.querySelectorAll('.slot-btn').forEach(function(b) { b.classList.remove('selected'); });
         btn.classList.add('selected');
+
+        // Disparar animación de selección
+        btn.classList.remove('animate-select');
+        void btn.offsetWidth;
+        btn.classList.add('animate-select');
 
         var fechaObj = new Date(fechaSel + 'T00:00:00');
         var opts = {weekday:'long', year:'numeric', month:'long', day:'numeric'};

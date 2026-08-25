@@ -397,3 +397,101 @@ tbody tr:hover { background: rgba(0,0,0,.018); }
 @media (max-width: 480px) {
     .stats-grid { grid-template-columns: 1fr; }
 }
+
+/* ─── MICRO-INTERACCIONES DE SELECCIÓN ─────────────────────── */
+/* Keyframes: escala elástica tipo spring (0.96 → 1.03 → 1.0) en 250ms */
+@keyframes select-scale {
+    0%   { transform: scale(1); }
+    30%  { transform: scale(0.96); }
+    55%  { transform: scale(1.03); }
+    75%  { transform: scale(0.99); }
+    100% { transform: scale(1); }
+}
+
+/* Keyframes: anillo/glow que se expande y desaparece en 400ms */
+@keyframes select-glow {
+    0%   { box-shadow: 0 0 0 0 rgba(201, 168, 76, 0.45); }
+    50%  { box-shadow: 0 0 0 10px rgba(201, 168, 76, 0.15); }
+    100% { box-shadow: 0 0 0 0 rgba(201, 168, 76, 0); }
+}
+
+/* Clase combinada: dispara ambas animaciones al seleccionar */
+.animate-select {
+    animation: select-scale 250ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+               select-glow 400ms ease-out forwards;
+    will-change: transform, box-shadow;
+}
+
+/* Tarjeta seleccionable base: transiciones suaves solo en GPU (transform, box-shadow) */
+.selectable-card {
+    transition: transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                box-shadow 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                border-color 150ms ease;
+    will-change: transform, box-shadow;
+}
+
+/* Hover: ligera elevación */
+.selectable-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Active (click/press): ligera compresión */
+.selectable-card:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Estado seleccionado (persistente) */
+.selectable-card.selected {
+    border-color: var(--clr-gold);
+    background: rgba(201, 168, 76, 0.06);
+}
+
+/* Variante para botones de slots (más compactos) */
+.selectable-slot {
+    transition: transform 150ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                box-shadow 150ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                border-color 120ms ease,
+                background 120ms ease,
+                color 120ms ease;
+    will-change: transform, box-shadow;
+}
+.selectable-slot:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+.selectable-slot:active {
+    transform: scale(0.97);
+}
+.selectable-slot.selected {
+    border-color: var(--clr-gold);
+    background: rgba(201, 168, 76, 0.12);
+    color: var(--clr-gold);
+    font-weight: 700;
+}
+
+/* Variante para días de calendario */
+.selectable-day {
+    transition: transform 120ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                box-shadow 120ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                border-color 120ms ease,
+                background 120ms ease,
+                color 120ms ease;
+    will-change: transform, box-shadow;
+}
+.selectable-day:not(.disabled):hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(201, 168, 76, 0.2);
+    border-color: var(--clr-gold);
+    color: var(--clr-gold);
+}
+.selectable-day:not(.disabled):active {
+    transform: scale(0.95);
+}
+.selectable-day.selected {
+    background: var(--clr-gold) !important;
+    color: #000 !important;
+    font-weight: 700;
+    border-color: var(--clr-gold) !important;
+}
