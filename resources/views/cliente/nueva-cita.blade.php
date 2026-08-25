@@ -34,17 +34,39 @@
 
     /* Tarjetas abogado - usando micro-interacciones CSS */
     .abogado-card { cursor:pointer; }
+    .abogado-card.selected {
+        border-color: #e9c349;
+        background: rgba(233, 195, 73, 0.08);
+        box-shadow: 0 0 0 2px rgba(233, 195, 73, 0.2);
+    }
     .abogado-card.selected .av-circle { background:#e9c349; color:#3c2f00; }
 
     /* Días del calendario - usando micro-interacciones CSS */
     .cal-day { padding:7px 4px; text-align:center; font-size:.82rem; font-family:'Hanken Grotesk',sans-serif;
                border:1px solid transparent; cursor:pointer; }
+    .cal-day:not(.disabled):hover {
+        background: rgba(233, 195, 73, 0.12);
+        border-color: #e9c349;
+        color: #e9c349;
+    }
+    .cal-day.selected {
+        background: #e9c349;
+        border-color: #e9c349;
+        color: #3c2f00;
+        font-weight: 700;
+    }
     .cal-day.disabled { color:#444748; cursor:default; }
 
     /* Slots - usando micro-interacciones CSS */
     .slot-btn { padding:8px 12px; border:1px solid #444748; font-size:.78rem; font-family:'Hanken Grotesk',sans-serif;
                 font-weight:600; letter-spacing:.08em; text-transform:uppercase; cursor:pointer;
                 background:transparent; color:#c4c7c7; }
+    .slot-btn:hover { border-color: #e9c349; color: #e9c349; background: rgba(233, 195, 73, 0.08); }
+    .slot-btn.selected {
+        border-color: #e9c349;
+        background: #e9c349;
+        color: #3c2f00;
+    }
 </style>
 @endpush
 
@@ -59,13 +81,13 @@
 @csrf
 
 {{-- ── PASO 1: Abogado ────────────────────────────────── --}}
-<div id="paso1">
+<div id="paso1" x-show="$store.step === 1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" style="display:block">
     <p class="text-[11px] font-grotesk font-semibold tracking-[.18em] uppercase text-outline mb-4">
         Paso 1 — Selecciona un abogado
     </p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         @foreach($abogados as $ab)
-        <div class="abogado-card selectable-card bg-surface-container border border-outline-variant p-5 flex items-center gap-4"
+        <div class="abogado-card selectable-card bg-surface-container border border-outline-variant p-5 flex items-center gap-4 transition-all duration-300 hover:border-secondary hover:shadow-lg hover:shadow-secondary/10 hover:-translate-y-1"
              data-id="{{ $ab->id }}"
              onclick="window.seleccionarAbogado({{ $ab->id }}, this)">
             <div class="av-circle w-11 h-11 rounded-full bg-surface-container-highest flex items-center justify-center
@@ -83,14 +105,14 @@
 </div>
 
 {{-- ── PASO 2: Fecha y hora ───────────────────────────── --}}
-<div id="paso2" style="display:none" class="mt-8">
+<div id="paso2" x-show="$store.step === 2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" style="display:none" class="mt-8">
     <p class="text-[11px] font-grotesk font-semibold tracking-[.18em] uppercase text-outline mb-4">
         Paso 2 — Selecciona fecha y horario
     </p>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         {{-- Calendario --}}
-        <div class="bg-surface-container border border-outline-variant p-5">
+        <div class="bg-surface-container border border-outline-variant p-5 transition-all duration-300">
             <div class="flex items-center justify-between mb-4">
                 <button type="button"
                     onclick="window.cambiarMes(-1)"
@@ -114,7 +136,7 @@
         </div>
 
         {{-- Slots horarios --}}
-        <div class="bg-surface-container border border-outline-variant p-5">
+        <div class="bg-surface-container border border-outline-variant p-5 transition-all duration-300" x-data="{ slotsLoaded: false }" x-show="slotsLoaded || $store.fechaSeleccionada" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
             <p class="text-[11px] font-grotesk font-semibold tracking-[.18em] uppercase text-outline mb-4">
                 Horarios disponibles
             </p>
@@ -131,11 +153,11 @@
 </div>
 
 {{-- ── PASO 3: Detalles ───────────────────────────────── --}}
-<div id="paso3" style="display:none" class="mt-8">
+<div id="paso3" x-show="$store.step === 3" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" style="display:none" class="mt-8">
     <p class="text-[11px] font-grotesk font-semibold tracking-[.18em] uppercase text-outline mb-4">
         Paso 3 — Detalles de la consulta
     </p>
-    <div class="bg-surface-container border border-outline-variant p-6">
+    <div class="bg-surface-container border border-outline-variant p-6 transition-all duration-300">
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             {{-- Tipo --}}
@@ -182,7 +204,7 @@
         </div>
 
         {{-- Resumen --}}
-        <div id="resumen" class="bg-surface-container-high border border-outline-variant p-4 mb-5 hidden">
+        <div id="resumen" x-show="$store.horaSeleccionada" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="bg-surface-container-high border border-outline-variant p-4 mb-5 hidden">
         </div>
 
         {{-- Botones --}}
@@ -209,21 +231,52 @@
 
 @push('scripts')
 <script>
-window.addEventListener('load', function () {
+// Alpine.js store para manejo de estado global
+document.addEventListener('alpine:init', () => {
+    Alpine.store('booking', {
+        step: 1,
+        abogadoId: null,
+        abogadoNom: '',
+        fechaSeleccionada: null,
+        horaSeleccionada: null,
+        anio: new Date().getFullYear(),
+        mes: new Date().getMonth(),
 
-    var abogadoId  = null;
-    var abogadoNom = '';
-    var fechaSel   = null;
-    var horaSel    = null;
-    var anio = new Date().getFullYear();
-    var mes  = new Date().getMonth();
+        setAbogado(id, nombre) {
+            this.abogadoId = id;
+            this.abogadoNom = nombre;
+            this.step = 2;
+        },
+
+        setFecha(fecha) {
+            this.fechaSeleccionada = fecha;
+            this.horaSeleccionada = null;
+        },
+
+        setHora(hora) {
+            this.horaSeleccionada = hora;
+            this.step = 3;
+        },
+
+        volverPaso2() {
+            this.step = 2;
+            this.horaSeleccionada = null;
+        },
+
+        cambiarMes(dir) {
+            this.mes += dir;
+            if (this.mes < 0)  { this.mes = 11; this.anio--; }
+            if (this.mes > 11) { this.mes = 0;  this.anio++; }
+        }
+    });
+});
+
+window.addEventListener('load', function () {
 
     // ─── Paso 1: Seleccionar abogado ───────────────────────
     window.seleccionarAbogado = function(id, el) {
         document.querySelectorAll('.abogado-card').forEach(function(c) { c.classList.remove('selected'); });
         el.classList.add('selected');
-        abogadoId  = id;
-        abogadoNom = el.querySelector('p').textContent;
         document.getElementById('abogado_id').value = id;
 
         // Disparar animación de selección
@@ -231,40 +284,46 @@ window.addEventListener('load', function () {
         void el.offsetWidth; // reflow para reiniciar animación
         el.classList.add('animate-select');
 
-        var paso2 = document.getElementById('paso2');
-        paso2.style.display = 'block';
-        activarStep('step-ind-2');
-        renderCalendario();
-        paso2.scrollIntoView({behavior:'smooth', block:'start'});
+        const abogadoNom = el.querySelector('p').textContent;
+        Alpine.store('booking').setAbogado(id, abogadoNom);
+
+        // Scroll suave al paso 2
+        setTimeout(() => {
+            const paso2 = document.getElementById('paso2');
+            if (paso2) paso2.scrollIntoView({behavior:'smooth', block:'start'});
+        }, 100);
     };
 
     // ─── Calendario ────────────────────────────────────────
-    function renderCalendario() {
-        var meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
-                     'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-        document.getElementById('cal-titulo').textContent = meses[mes] + ' ' + anio;
+    window.renderCalendario = function() {
+        const store = Alpine.store('booking');
+        const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                       'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+        document.getElementById('cal-titulo').textContent = meses[store.mes] + ' ' + store.anio;
 
-        var celdas = document.getElementById('cal-celdas');
+        const celdas = document.getElementById('cal-celdas');
         celdas.innerHTML = '';
 
-        var primerDia = new Date(anio, mes, 1).getDay();
-        var ajuste    = (primerDia === 0) ? 6 : primerDia - 1;
-        var diasMes   = new Date(anio, mes + 1, 0).getDate();
-        var hoy       = new Date(); hoy.setHours(0,0,0,0);
+        const primerDia = new Date(store.anio, store.mes, 1).getDay();
+        const ajuste    = (primerDia === 0) ? 6 : primerDia - 1;
+        const diasMes   = new Date(store.anio, store.mes + 1, 0).getDate();
+        const hoy       = new Date(); hoy.setHours(0,0,0,0);
 
-        for (var i = 0; i < ajuste; i++) {
+        for (let i = 0; i < ajuste; i++) {
             celdas.appendChild(document.createElement('div'));
         }
 
-        for (var d = 1; d <= diasMes; d++) {
-            var fecha      = new Date(anio, mes, d);
-            var diaSemana  = fecha.getDay();
-            var esFinSem   = (diaSemana === 0 || diaSemana === 6);
-            var esPasado   = fecha < hoy;
-            var fechaStr   = anio + '-' + String(mes+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+        for (let d = 1; d <= diasMes; d++) {
+            const fecha      = new Date(store.anio, store.mes, d);
+            const diaSemana  = fecha.getDay();
+            const esFinSem   = (diaSemana === 0 || diaSemana === 6);
+            const esPasado   = fecha < hoy;
+            const fechaStr   = store.anio + '-' + String(store.mes+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
 
-            var div = document.createElement('div');
-            div.className = 'cal-day selectable-card selectable-day' + (esFinSem || esPasado ? ' disabled' : '') + (fechaStr === fechaSel ? ' selected' : '');
+            const div = document.createElement('div');
+            div.className = 'cal-day selectable-card selectable-day transition-all duration-200' +
+                (esFinSem || esPasado ? ' disabled' : '') +
+                (fechaStr === store.fechaSeleccionada ? ' selected' : '');
             div.textContent = d;
 
             if (!esFinSem && !esPasado) {
@@ -275,40 +334,38 @@ window.addEventListener('load', function () {
             }
             celdas.appendChild(div);
         }
-    }
+    };
 
     window.cambiarMes = function(dir) {
-        mes += dir;
-        if (mes < 0)  { mes = 11; anio--; }
-        if (mes > 11) { mes = 0;  anio++; }
-        renderCalendario();
+        Alpine.store('booking').cambiarMes(dir);
+        window.renderCalendario();
     };
 
     window.seleccionarFecha = function(fecha, el) {
-        fechaSel = fecha;
-        horaSel  = null;
+        Alpine.store('booking').setFecha(fecha);
         document.getElementById('fecha_input').value = fecha;
         document.getElementById('hora_inicio').value = '';
 
         // Disparar animación de selección en el elemento clickeado
         if (el) {
             el.classList.remove('animate-select');
-            void el.offsetWidth; // reflow para reiniciar animación
+            void el.offsetWidth;
             el.classList.add('animate-select');
         }
 
-        renderCalendario();
+        window.renderCalendario();
         cargarSlots(fecha);
     };
 
     // ─── Slots ─────────────────────────────────────────────
     function cargarSlots(fecha) {
-        var cont = document.getElementById('slots-container');
+        const store = Alpine.store('booking');
+        const cont = document.getElementById('slots-container');
         cont.innerHTML = '<div class="flex items-center gap-2 py-6 justify-center">' +
             '<span class="material-symbols-outlined text-outline animate-spin" style="font-size:22px;">refresh</span>' +
             '<p class="text-outline text-xs">Cargando horarios...</p></div>';
 
-        fetch('/api/slots?abogado_id=' + abogadoId + '&fecha=' + fecha, {
+        fetch('/api/slots?abogado_id=' + store.abogadoId + '&fecha=' + fecha, {
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                 'Accept': 'application/json',
@@ -324,12 +381,12 @@ window.addEventListener('load', function () {
                     '<p class="text-outline text-xs">Sin horarios disponibles este día.</p></div>';
                 return;
             }
-            var grid = document.createElement('div');
+            const grid = document.createElement('div');
             grid.className = 'flex flex-wrap gap-2';
             slots.forEach(function(slot) {
-                var b = document.createElement('button');
+                const b = document.createElement('button');
                 b.type = 'button';
-                b.className = 'slot-btn selectable-card selectable-slot';
+                b.className = 'slot-btn selectable-card selectable-slot transition-all duration-200';
                 b.textContent = slot.hora_label;
                 b.dataset.hora = slot.hora;
                 b.addEventListener('click', function() {
@@ -345,7 +402,7 @@ window.addEventListener('load', function () {
     }
 
     window.seleccionarSlot = function(hora, horaLabel, btn) {
-        horaSel = hora;
+        Alpine.store('booking').setHora(hora);
         document.getElementById('hora_inicio').value = hora;
         document.querySelectorAll('.slot-btn').forEach(function(b) { b.classList.remove('selected'); });
         btn.classList.add('selected');
@@ -355,23 +412,24 @@ window.addEventListener('load', function () {
         void btn.offsetWidth;
         btn.classList.add('animate-select');
 
-        var fechaObj = new Date(fechaSel + 'T00:00:00');
-        var opts = {weekday:'long', year:'numeric', month:'long', day:'numeric'};
-        var resumen = document.getElementById('resumen');
-        resumen.classList.remove('hidden');
+        const store = Alpine.store('booking');
+        const fechaObj = new Date(store.fechaSeleccionada + 'T00:00:00');
+        const opts = {weekday:'long', year:'numeric', month:'long', day:'numeric'};
+        const resumen = document.getElementById('resumen');
         resumen.innerHTML =
             '<p class="text-[10px] font-grotesk font-semibold uppercase tracking-widest text-outline mb-3">Resumen de tu cita</p>' +
             '<div class="flex flex-col gap-1.5">' +
-            row('person', 'Abogado', abogadoNom) +
+            row('person', 'Abogado', store.abogadoNom) +
             row('calendar_today', 'Fecha', fechaObj.toLocaleDateString('es-SV', opts)) +
             row('schedule', 'Hora', horaLabel) +
             row('payments', 'Costo', '$35.00') +
             '</div>';
 
-        var paso3 = document.getElementById('paso3');
-        paso3.style.display = 'block';
         activarStep('step-ind-3');
-        paso3.scrollIntoView({behavior:'smooth', block:'start'});
+        setTimeout(() => {
+            const paso3 = document.getElementById('paso3');
+            if (paso3) paso3.scrollIntoView({behavior:'smooth', block:'start'});
+        }, 100);
     };
 
     function row(icon, label, value) {
@@ -383,16 +441,19 @@ window.addEventListener('load', function () {
     }
 
     window.volverPaso2 = function() {
-        document.getElementById('paso3').style.display = 'none';
+        Alpine.store('booking').volverPaso2();
         document.getElementById('step-ind-3').classList.remove('step-active');
         document.getElementById('step-ind-3').classList.add('step-inactive');
     };
 
     function activarStep(id) {
-        var el = document.getElementById(id);
+        const el = document.getElementById(id);
         el.classList.remove('step-inactive');
         el.classList.add('step-active');
     }
+
+    // Inicializar calendario
+    window.renderCalendario();
 });
 </script>
 @endpush
