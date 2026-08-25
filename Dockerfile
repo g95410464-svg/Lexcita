@@ -13,6 +13,21 @@ WORKDIR /var/www/html
 
 COPY . .
 
+# Set dummy env vars for build-time to prevent package:discover failures
+# when broadcasting config is loaded without real credentials
+ENV BROADCAST_DRIVER=null \
+    REVERB_APP_KEY=dummy \
+    REVERB_APP_SECRET=dummy \
+    REVERB_APP_ID=dummy \
+    REVERB_HOST=127.0.0.1 \
+    REVERB_PORT=8080 \
+    REVERB_SCHEME=http \
+    PUSHER_APP_KEY=dummy \
+    PUSHER_APP_SECRET=dummy \
+    PUSHER_APP_ID=dummy \
+    PUSHER_APP_CLUSTER=dummy \
+    ABLY_KEY=dummy
+
 # Aumentamos el timeout y agregamos --prefer-dist
 ENV COMPOSER_PROCESS_TIMEOUT=600
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
