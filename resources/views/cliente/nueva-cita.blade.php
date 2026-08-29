@@ -101,7 +101,7 @@
         </div>
         @endforeach
     </div>
-    <input type="hidden" name="abogado_id" id="abogado_id" x-init="$watch('$store.booking.abogadoId', v => $el.value = v || '')">
+    <input type="hidden" name="abogado_id" id="abogado_id" x-effect="$el.value = $store.booking.abogadoId || ''">
 </div>
 
 {{-- ── PASO 2: Fecha y hora ───────────────────────────── --}}
@@ -280,14 +280,17 @@ window.addEventListener('load', function () {
         el.classList.add('animate-select');
     };
 
-    // Scroll suave al paso 2 cuando se selecciona abogado
-    const unwatchAbogado = Alpine.store('booking').$watch('abogadoId', function(newVal) {
-        if (newVal) {
+    // Scroll suave al paso 2 cuando se selecciona abogado.
+    // Se usa Alpine.effect() porque Alpine.store() no expone el método $watch.
+    let abogadoSeleccionado = false;
+    Alpine.effect(() => {
+        const abogadoId = Alpine.store('booking').abogadoId;
+        if (abogadoId && !abogadoSeleccionado) {
+            abogadoSeleccionado = true;
             setTimeout(() => {
                 const paso2 = document.getElementById('paso2');
                 if (paso2) paso2.scrollIntoView({behavior:'smooth', block:'start'});
             }, 100);
-            unwatchAbogado();
         }
     });
 
