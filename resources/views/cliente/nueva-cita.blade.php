@@ -88,7 +88,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         @foreach($abogados as $ab)
         <div class="abogado-card selectable-card bg-surface-container border border-outline-variant p-5 flex items-center gap-4 transition-all duration-300 hover:border-secondary hover:shadow-lg hover:shadow-secondary/10 hover:-translate-y-1"
-             @click="$store.booking.setAbogado({{ $ab->id }}, '{{ $ab->nombre }}'); triggerSelectAnim($el)"
+             @click="$store.booking.setAbogado({{ $ab->id }}, '{{ $ab->nombre }}'); window.triggerSelectAnim($el)"
              :class="{ 'selected': $store.booking.abogadoId === {{ $ab->id }} }">
             <div class="av-circle w-11 h-11 rounded-full bg-surface-container-highest flex items-center justify-center
                         text-sm font-grotesk font-bold text-on-surface flex-shrink-0 transition-colors duration-150">
@@ -105,7 +105,7 @@
 </div>
 
 {{-- ── PASO 2: Fecha y hora ───────────────────────────── --}}
-<div id="paso2" x-show="$store.booking.step >= 2 || $store.booking.abogadoId !== null" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-4" style="display:none" class="mt-8">
+<div id="paso2" x-show="$store.booking.step >= 2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-4" style="display:none" class="mt-8">
     <p class="text-[11px] font-grotesk font-semibold tracking-[.18em] uppercase text-outline mb-4">
         Paso 2 — Selecciona fecha y horario
     </p>
