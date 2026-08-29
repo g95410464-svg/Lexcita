@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\{Cita, HorarioDisponible, VideoRoom, VideoParticipant};
+use App\Models\{Cita, HorarioDisponible};
 use Carbon\Carbon;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class CitaService
 {
@@ -61,6 +61,10 @@ class CitaService
     /**
      * Confirma una cita y crea la sala de video si es virtual.
      * Punto único de confirmación (admin o cliente tras pago).
+     *
+     * Operación transaccional: la cita y su VideoRoom (si aplica)
+     * se persisten de forma atómica. La creación de la sala se delega
+     * en VideoRoomService para mantener la lógica desacoplada.
      */
     public function confirmar(Cita $cita): Cita
     {
@@ -69,46 +73,16 @@ class CitaService
             throw new \InvalidArgumentException('Solo se pueden confirmar citas en estado "pendiente_pago".');
         }
 
-        $cita->update(['estado' => 'confirmada']);
+        return DB::transaction(function () use ($cita) {
+            $cita->update(['estado' => 'confirmada']);
 
-        // Si es virtual, crear VideoRoom automáticamente
-        if ($cita->esVirtual()) {
-            $this->crearVideoRoom($cita);
-        }
+            // Si es virtual, delegar la creación de la sala al VideoRoomService
+            if ($cita->esVirtual()) {
+                app(VideoRoomService::class)->obtenerOCrearSala($cita);
+            }
 
-        return $cita->fresh();
-    }
-
-    /**
-     * Crea la sala de video para una cita virtual confirmada.
-     */
-    private function crearVideoRoom(Cita $cita): VideoRoom
-    {
-        // Verificar si ya existe (idempotencia)
-        if ($cita->videoRoom) {
-            return $cita->videoRoom;
-        }
-
-        $roomToken = Str::random(40); // token no adivinable
-
-        $videoRoom = VideoRoom::create([
-            'cita_id'    => $cita->id,
-            'room_token' => $roomToken,
-            'status'     => 'programada',
-        ]);
-
-        // Pre-registrar a ambos participantes (entrarán cuando den consentimiento)
-        VideoParticipant::create([
-            'room_id' => $videoRoom->id,
-            'user_id' => $cita->cliente_id,
-        ]);
-
-        VideoParticipant::create([
-            'room_id' => $videoRoom->id,
-            'user_id' => $cita->abogado_id,
-        ]);
-
-        return $videoRoom;
+            return $cita->fresh();
+        });
     }
 
     private function carbonDayToSpanish(int $iso): ?string

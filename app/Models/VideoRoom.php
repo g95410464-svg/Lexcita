@@ -27,17 +27,17 @@ class VideoRoom extends Model
         return $this->belongsTo(Cita::class, 'cita_id');
     }
 
-    public function participants()
+    public function participantes()
     {
         return $this->hasMany(VideoParticipant::class, 'room_id');
     }
 
-    public function messages()
+    public function mensajes()
     {
         return $this->hasMany(VideoMessage::class, 'room_id')->orderBy('created_at');
     }
 
-    public function files()
+    public function archivos()
     {
         return $this->hasMany(VideoFile::class, 'room_id')->orderBy('created_at');
     }

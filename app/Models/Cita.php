@@ -17,8 +17,10 @@ class Cita extends Model
     ];
 
     protected $casts = [
-        'fecha'  => 'date',
-        'monto'  => 'decimal:2',
+        'fecha'               => 'date',
+        'monto'               => 'decimal:2',
+        'cliente_consintio'   => 'boolean',
+        'abogado_consintio'   => 'boolean',
     ];
 
     // ─── Relaciones ───────────────────────────────────────────
@@ -58,6 +60,11 @@ class Cita extends Model
         return $this->hasMany(ConsultationNote::class, 'cita_id');
     }
 
+    public function consultationNote()
+    {
+        return $this->hasOne(ConsultationNote::class, 'cita_id');
+    }
+
     // ─── Helpers de videollamada ──────────────────────────────
     public function esVirtual(): bool
     {
@@ -70,8 +77,8 @@ class Cita extends Model
             return false;
         }
 
-        $inicio = \Carbon\Carbon::parse($this->fecha->format('Y-m-d') . ' ' . $this->hora_inicio);
-        $fin    = \Carbon\Carbon::parse($this->fecha->format('Y-m-d') . ' ' . $this->hora_fin);
+        $inicio = Carbon::parse($this->fecha->format('Y-m-d') . ' ' . $this->hora_inicio);
+        $fin    = Carbon::parse($this->fecha->format('Y-m-d') . ' ' . $this->hora_fin);
         $ahora  = now();
 
         // Ventana: 15 minutos antes de hora_inicio hasta hora_fin

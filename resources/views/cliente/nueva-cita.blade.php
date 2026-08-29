@@ -81,15 +81,15 @@
 @csrf
 
 {{-- ── PASO 1: Abogado ────────────────────────────────── --}}
-<div id="paso1" x-show="$store.step === 1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" style="display:block">
+<div id="paso1" x-show="$store.booking.step === 1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" style="display:block">
     <p class="text-[11px] font-grotesk font-semibold tracking-[.18em] uppercase text-outline mb-4">
         Paso 1 — Selecciona un abogado
     </p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         @foreach($abogados as $ab)
         <div class="abogado-card selectable-card bg-surface-container border border-outline-variant p-5 flex items-center gap-4 transition-all duration-300 hover:border-secondary hover:shadow-lg hover:shadow-secondary/10 hover:-translate-y-1"
-             data-id="{{ $ab->id }}"
-             onclick="window.seleccionarAbogado({{ $ab->id }}, this)">
+             @click="$store.booking.setAbogado({{ $ab->id }}, '{{ $ab->nombre }}'); triggerSelectAnim($el)"
+             :class="{ 'selected': $store.booking.abogadoId === {{ $ab->id }} }">
             <div class="av-circle w-11 h-11 rounded-full bg-surface-container-highest flex items-center justify-center
                         text-sm font-grotesk font-bold text-on-surface flex-shrink-0 transition-colors duration-150">
                 {{ strtoupper(substr($ab->nombre, 0, 1)) }}
@@ -101,11 +101,11 @@
         </div>
         @endforeach
     </div>
-    <input type="hidden" name="abogado_id" id="abogado_id">
+    <input type="hidden" name="abogado_id" id="abogado_id" x-init="$watch('$store.booking.abogadoId', v => $el.value = v || '')">
 </div>
 
 {{-- ── PASO 2: Fecha y hora ───────────────────────────── --}}
-<div id="paso2" x-show="$store.step === 2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" style="display:none" class="mt-8">
+<div id="paso2" x-show="$store.booking.step >= 2 || $store.booking.abogadoId !== null" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-4" style="display:none" class="mt-8">
     <p class="text-[11px] font-grotesk font-semibold tracking-[.18em] uppercase text-outline mb-4">
         Paso 2 — Selecciona fecha y horario
     </p>
@@ -136,7 +136,7 @@
         </div>
 
         {{-- Slots horarios --}}
-        <div class="bg-surface-container border border-outline-variant p-5 transition-all duration-300" x-data="{ slotsLoaded: false }" x-show="slotsLoaded || $store.fechaSeleccionada" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+        <div class="bg-surface-container border border-outline-variant p-5 transition-all duration-300" x-data="{ slotsLoaded: false }" x-show="slotsLoaded || $store.booking.fechaSeleccionada" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
             <p class="text-[11px] font-grotesk font-semibold tracking-[.18em] uppercase text-outline mb-4">
                 Horarios disponibles
             </p>
@@ -153,7 +153,7 @@
 </div>
 
 {{-- ── PASO 3: Detalles ───────────────────────────────── --}}
-<div id="paso3" x-show="$store.step === 3" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" style="display:none" class="mt-8">
+<div id="paso3" x-show="$store.booking.step === 3" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" style="display:none" class="mt-8">
     <p class="text-[11px] font-grotesk font-semibold tracking-[.18em] uppercase text-outline mb-4">
         Paso 3 — Detalles de la consulta
     </p>
@@ -204,7 +204,7 @@
         </div>
 
         {{-- Resumen --}}
-        <div id="resumen" x-show="$store.horaSeleccionada" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="bg-surface-container-high border border-outline-variant p-4 mb-5 hidden">
+        <div id="resumen" x-show="$store.booking.horaSeleccionada" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="bg-surface-container-high border border-outline-variant p-4 mb-5 hidden">
         </div>
 
         {{-- Botones --}}
@@ -273,26 +273,23 @@ document.addEventListener('alpine:init', () => {
 
 window.addEventListener('load', function () {
 
-    // ─── Paso 1: Seleccionar abogado ───────────────────────
-    window.seleccionarAbogado = function(id, el) {
-        document.querySelectorAll('.abogado-card').forEach(function(c) { c.classList.remove('selected'); });
-        el.classList.add('selected');
-        document.getElementById('abogado_id').value = id;
-
-        // Disparar animación de selección
+    // Helper: disparar animación de selección en elemento
+    window.triggerSelectAnim = function(el) {
         el.classList.remove('animate-select');
-        void el.offsetWidth; // reflow para reiniciar animación
+        void el.offsetWidth;
         el.classList.add('animate-select');
-
-        const abogadoNom = el.querySelector('p').textContent;
-        Alpine.store('booking').setAbogado(id, abogadoNom);
-
-        // Scroll suave al paso 2
-        setTimeout(() => {
-            const paso2 = document.getElementById('paso2');
-            if (paso2) paso2.scrollIntoView({behavior:'smooth', block:'start'});
-        }, 100);
     };
+
+    // Scroll suave al paso 2 cuando se selecciona abogado
+    const unwatchAbogado = Alpine.store('booking').$watch('abogadoId', function(newVal) {
+        if (newVal) {
+            setTimeout(() => {
+                const paso2 = document.getElementById('paso2');
+                if (paso2) paso2.scrollIntoView({behavior:'smooth', block:'start'});
+            }, 100);
+            unwatchAbogado();
+        }
+    });
 
     // ─── Calendario ────────────────────────────────────────
     window.renderCalendario = function() {
