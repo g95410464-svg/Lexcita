@@ -88,7 +88,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         @foreach($abogados as $ab)
         <div class="abogado-card selectable-card bg-surface-container border border-outline-variant p-5 flex items-center gap-4 transition-all duration-300 hover:border-secondary hover:shadow-lg hover:shadow-secondary/10 hover:-translate-y-1"
-             @click="$store.booking.setAbogado({{ $ab->id }}, {{ json_encode($ab->nombre) }}); window.triggerSelectAnim($el)"
+             @click="$store.booking.setAbogado({{ $ab->id }}, '{{ $ab->nombre }}'); window.triggerSelectAnim($el)"
              :class="{ 'selected': $store.booking.abogadoId === {{ $ab->id }} }">
             <div class="av-circle w-11 h-11 rounded-full bg-surface-container-highest flex items-center justify-center
                         text-sm font-grotesk font-bold text-on-surface flex-shrink-0 transition-colors duration-150">
@@ -166,7 +166,7 @@
                     Tipo de consulta
                 </label>
                 <select name="tipo" required
-                    class="w-100 bg-surface-container-high border border-outline-variant text-on-surface
+                    class="w-full bg-surface-container-high border border-outline-variant text-on-surface
                            text-sm font-grotesk px-3 py-2.5 focus:outline-none focus:border-secondary transition-colors">
                     <option value="">Selecciona...</option>
                     <option value="consulta_general">Consulta general</option>
@@ -183,7 +183,7 @@
                     Modalidad
                 </label>
                 <select name="modalidad" required
-                    class="w-100 bg-surface-container-high border border-outline-variant text-on-surface
+                    class="w-full bg-surface-container-high border border-outline-variant text-on-surface
                            text-sm font-grotesk px-3 py-2.5 focus:outline-none focus:border-secondary transition-colors">
                     <option value="presencial">Presencial</option>
                     <option value="virtual">Virtual</option>
@@ -198,7 +198,7 @@
             </label>
             <textarea name="descripcion" rows="3"
                 placeholder="Describe brevemente el motivo de tu consulta..."
-                class="w-100 bg-surface-container-high border border-outline-variant text-on-surface text-sm
+                class="w-full bg-surface-container-high border border-outline-variant text-on-surface text-sm
                        font-grotesk px-3 py-2.5 resize-none focus:outline-none focus:border-secondary transition-colors
                        placeholder:text-outline"></textarea>
         </div>
@@ -230,230 +230,3 @@
 @endsection
 
 @push('scripts')
-<script>
-// Alpine.js store para manejo de estado global – inicializado vía alpine:init
-document.addEventListener('alpine:init', () => {
-    Alpine.store('booking', {
-        step: 1,
-        abogadoId: null,
-        abogadoNom: '',
-        fechaSeleccionada: null,
-        horaSeleccionada: null,
-        anio: new Date().getFullYear(),
-        mes: new Date().getMonth(),
-
-        setAbogado(id, nombre) {
-            this.abogadoId = id;
-            this.abogadoNom = nombre;
-            this.step = 2;
-        },
-
-        setFecha(fecha) {
-            this.fechaSeleccionada = fecha;
-            this.horaSeleccionada = null;
-        },
-
-        setHora(hora) {
-            this.horaSeleccionada = hora;
-            this.step = 3;
-        },
-
-        volverPaso2() {
-            this.step = 2;
-            this.horaSeleccionada = null;
-        },
-
-        cambiarMes(dir) {
-            this.mes += dir;
-            if (this.mes < 0) { this.mes = 11; this.anio--; }
-            if (this.mes > 11) { this.mes = 0; this.anio++; }
-        }
-    });
-});
-
-window.addEventListener('load', function () {
-
-    // Helper: disparar animación de selección en elemento
-    window.triggerSelectAnim = function(el) {
-        el.classList.remove('animate-select');
-        void el.offsetWidth;
-        el.classList.add('animate-select');
-    };
-
-    // Scroll suave al paso 2 cuando se selecciona abogado.
-    // Se usa Alpine.effect() porque Alpine.store() no expone el método $watch.
-    let abogadoSeleccionado = false;
-    Alpine.effect(() => {
-        const abogadoId = Alpine.store('booking').abogadoId;
-        if (abogadoId && !abogadoSeleccionado) {
-            abogadoSeleccionado = true;
-            setTimeout(() => {
-                const paso2 = document.getElementById('paso2');
-                if (paso2) paso2.scrollIntoView({behavior:'smooth', block:'start'});
-            }, 100);
-        }
-    });
-
-    // ─── Calendario ────────────────────────────────────────
-    window.renderCalendario = function() {
-        const store = Alpine.store('booking');
-        const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
-                       'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-        document.getElementById('cal-titulo').textContent = meses[store.mes] + ' ' + store.anio;
-
-        const celdas = document.getElementById('cal-celdas');
-        celdas.innerHTML = '';
-
-        const primerDia = new Date(store.anio, store.mes, 1).getDay();
-        const ajuste    = (primerDia === 0) ? 6 : primerDia - 1;
-        const diasMes   = new Date(store.anio, store.mes + 1, 0).getDate();
-        const hoy       = new Date(); hoy.setHours(0,0,0,0);
-
-        for (let i = 0; i < ajuste; i++) {
-            celdas.appendChild(document.createElement('div'));
-        }
-
-        for (let d = 1; d <= diasMes; d++) {
-            const fecha      = new Date(store.anio, store.mes, d);
-            const diaSemana  = fecha.getDay();
-            const esFinSem   = (diaSemana === 0 || diaSemana === 6);
-            const esPasado   = fecha < hoy;
-            const fechaStr   = store.anio + '-' + String(store.mes+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-
-            const div = document.createElement('div');
-            div.className = 'cal-day selectable-card selectable-day transition-all duration-200' +
-                (esFinSem || esPasado ? ' disabled' : '') +
-                (fechaStr === store.fechaSeleccionada ? ' selected' : '');
-            div.textContent = d;
-
-            if (!esFinSem && !esPasado) {
-                div.dataset.fecha = fechaStr;
-                div.addEventListener('click', function() {
-                    window.seleccionarFecha(this.dataset.fecha, this);
-                });
-            }
-            celdas.appendChild(div);
-        }
-    };
-
-    window.cambiarMes = function(dir) {
-        Alpine.store('booking').cambiarMes(dir);
-        window.renderCalendario();
-    };
-
-    window.seleccionarFecha = function(fecha, el) {
-        Alpine.store('booking').setFecha(fecha);
-        document.getElementById('fecha_input').value = fecha;
-        document.getElementById('hora_inicio').value = '';
-
-        // Disparar animación de selección en el elemento clickeado
-        if (el) {
-            el.classList.remove('animate-select');
-            void el.offsetWidth;
-            el.classList.add('animate-select');
-        }
-
-        window.renderCalendario();
-        cargarSlots(fecha);
-    };
-
-    // ─── Slots ─────────────────────────────────────────────
-    function cargarSlots(fecha) {
-        const store = Alpine.store('booking');
-        const cont = document.getElementById('slots-container');
-        cont.innerHTML = '<div class="flex items-center gap-2 py-6 justify-center">' +
-            '<span class="material-symbols-outlined text-outline animate-spin" style="font-size:22px;">refresh</span>' +
-            '<p class="text-outline text-xs">Cargando horarios...</p></div>';
-
-        fetch('/api/slots?abogado_id=' + store.abogadoId + '&fecha=' + fecha, {
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(r => r.json())
-        .then(slots => {
-            cont.innerHTML = '';
-            if (!slots.length) {
-                cont.innerHTML = '<div class="flex flex-col items-center py-8 gap-2">' +
-                    '<span class="material-symbols-outlined text-outline" style="font-size:28px;">event_busy</span>' +
-                    '<p class="text-outline text-xs">Sin horarios disponibles este día.</p></div>';
-                return;
-            }
-            const grid = document.createElement('div');
-            grid.className = 'flex flex-wrap gap-2';
-            slots.forEach(slot => {
-                const b = document.createElement('button');
-                b.type = 'button';
-                b.className = 'slot-btn selectable-card selectable-slot transition-all duration-200';
-                b.textContent = slot.hora_label;
-                b.dataset.hora = slot.hora;
-                b.addEventListener('click', () => {
-                    window.seleccionarSlot(slot.hora, slot.hora_label, b);
-                });
-                grid.appendChild(b);
-            });
-            cont.appendChild(grid);
-        })
-        .catch(() => {
-            cont.innerHTML = '<p class="text-error text-xs py-4">Error al cargar horarios. Intenta de nuevo.</p>';
-        });
-    }
-
-    window.seleccionarSlot = function(hora, horaLabel, btn) {
-        Alpine.store('booking').setHora(hora);
-        document.getElementById('hora_inicio').value = hora;
-        document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-
-        // Disparar animación de selección
-        btn.classList.remove('animate-select');
-        void btn.offsetWidth;
-        btn.classList.add('animate-select');
-
-        const store = Alpine.store('booking');
-        const fechaObj = new Date(store.fechaSeleccionada + 'T00:00:00');
-        const opts = {weekday:'long', year:'numeric', month:'long', day:'numeric'};
-        const resumen = document.getElementById('resumen');
-        resumen.innerHTML =
-            '<p class="text-[10px] font-grotesk font-semibold uppercase tracking-widest text-outline mb-3">Resumen de tu cita</p>' +
-            '<div class="flex flex-col gap-1.5">' +
-            row('person', 'Abogado', store.abogadoNom) +
-            row('calendar_today', 'Fecha', fechaObj.toLocaleDateString('es-SV', opts)) +
-            row('schedule', 'Hora', horaLabel) +
-            row('payments', 'Costo', '$35.00') +
-            '</div>';
-
-        activarStep('step-ind-3');
-        setTimeout(() => {
-            const paso3 = document.getElementById('paso3');
-            if (paso3) paso3.scrollIntoView({behavior:'smooth', block:'start'});
-        }, 100);
-    };
-
-    function row(icon, label, value) {
-        return '<div class="flex items-center gap-2">' +
-            '<span class="material-symbols-outlined text-outline" style="font-size:15px;">' + icon + '</span>' +
-            '<span class="text-outline text-xs w-16">' + label + '</span>' +
-            '<span class="text-on-surface text-sm font-grotesk font-semibold">' + value + '</span>' +
-            '</div>';
-    }
-
-    window.volverPaso2 = function() {
-        Alpine.store('booking').volverPaso2();
-        document.getElementById('step-ind-3').classList.remove('step-active');
-        document.getElementById('step-ind-3').classList.add('step-inactive');
-    };
-
-    function activarStep(id) {
-        const el = document.getElementById(id);
-        el.classList.remove('step-inactive');
-        el.classList.add('step-active');
-    }
-
-    // Inicializar calendario
-    window.renderCalendario();
-});
-</script>
-@endpush
