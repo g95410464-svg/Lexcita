@@ -232,7 +232,8 @@
 @push('scripts')
 <script>
 // Alpine.js store para manejo de estado global
-document.addEventListener('alpine:init', () => {
+// Initialize Alpine store - works whether Alpine is already initialized or not
+if (window.Alpine) {
     Alpine.store('booking', {
         step: 1,
         abogadoId: null,
@@ -265,11 +266,50 @@ document.addEventListener('alpine:init', () => {
 
         cambiarMes(dir) {
             this.mes += dir;
-            if (this.mes < 0)  { this.mes = 11; this.anio--; }
+            if (this.mes < 0) { this.mes = 11; this.anio--; }
             if (this.mes > 11) { this.mes = 0;  this.anio++; }
         }
     });
-});
+} else {
+    document.addEventListener('alpine:init', () => {
+        Alpine.store('booking', {
+            step: 1,
+            abogadoId: null,
+            abogadoNom: '',
+            fechaSeleccionada: null,
+            horaSeleccionada: null,
+            anio: new Date().getFullYear(),
+            mes: new Date().getMonth(),
+
+            setAbogado(id, nombre) {
+                this.abogadoId = id;
+                this.abogadoNom = nombre;
+                this.step = 2;
+            },
+
+            setFecha(fecha) {
+                this.fechaSeleccionada = fecha;
+                this.horaSeleccionada = null;
+            },
+
+            setHora(hora) {
+                this.horaSeleccionada = hora;
+                this.step = 3;
+            },
+
+            volverPaso2() {
+                this.step = 2;
+                this.horaSeleccionada = null;
+            },
+
+            cambiarMes(dir) {
+                this.mes += dir;
+                if (this.mes < 0) { this.mes = 11; this.anio--; }
+                if (this.mes > 11) { this.mes = 0;  this.anio++; }
+            }
+        });
+    });
+}
 
 window.addEventListener('load', function () {
 
