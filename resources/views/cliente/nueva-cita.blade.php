@@ -81,7 +81,7 @@
 @csrf
 
 {{-- ── PASO 1: Abogado ────────────────────────────────── --}}
-<div id="paso1" x-show="$store.booking.step === 1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" style="display:block">
+<div id="paso1" x-show="$store.booking.step === 1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2">
     <p class="text-[11px] font-grotesk font-semibold tracking-[.18em] uppercase text-outline mb-4">
         Paso 1 — Selecciona un abogado
     </p>
@@ -105,7 +105,7 @@
 </div>
 
 {{-- ── PASO 2: Fecha y hora ───────────────────────────── --}}
-<div id="paso2" x-show="$store.booking.step >= 2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-4" style="display:none" class="mt-8">
+<div id="paso2" x-show="$store.booking.step >= 2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-4" class="mt-8">
     <p class="text-[11px] font-grotesk font-semibold tracking-[.18em] uppercase text-outline mb-4">
         Paso 2 — Selecciona fecha y horario
     </p>

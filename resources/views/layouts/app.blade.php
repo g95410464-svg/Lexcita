@@ -56,7 +56,7 @@
         ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #1a1c1a; } ::-webkit-scrollbar-thumb { background: #444748; }
     </style>
 </head>
-<body class="min-h-screen flex">
+<body class="min-h-screen flex" x-cloak>
 
 {{-- ── TOP NAVBAR ────────────────────────────────────────── --}}
 <nav class="fixed w-full bg-[#131317] border-b border-neutral-800 px-6 py-3 z-50">
