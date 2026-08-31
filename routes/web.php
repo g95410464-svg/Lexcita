@@ -30,6 +30,8 @@ Route::middleware(['auth', 'verified', 'rol:cliente'])->prefix('cliente')->name(
     Route::get('/paypal/checkout/{id}', [ClienteController::class, 'checkout'])->name('paypal.checkout');
     Route::get('/paypal/return',         [ClienteController::class, 'capture'])->name('paypal.return');
     Route::get('/paypal/cancel',         [ClienteController::class, 'cancel'])->name('paypal.cancel');
+    Route::post('/paypal/create/{id}',  [ClienteController::class, 'crearOrdenAjax'])->name('paypal.create');
+    Route::post('/paypal/capture/{id}', [ClienteController::class, 'capturarOrdenAjax'])->name('paypal.capture');
     Route::post('/cancelar/{id}',  [ClienteController::class, 'cancelarCita'])->name('cancelar');
 });
 

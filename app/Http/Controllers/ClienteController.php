@@ -195,45 +195,12 @@ class ClienteController extends Controller
                 ->withErrors(['pago' => 'Tu pago ya fue registrado pero tu cita no quedó confirmada. Por favor contacta a soporte.']);
         }
 
-        // Capture server-to-server FUERA de la transacción: no se sostiene un
-        // lock de BD abierto durante la llamada HTTP larga a PayPal.
-        try {
-            $order = app(PayPalService::class)->captureOrder($orderId);
-        } catch (\Throwable $e) {
-            Log::error('[PayPal] capture: error al capturar', ['cita' => $cita->id, 'order' => $orderId, 'error' => $e->getMessage()]);
+        $result = $this->capturarYPersistir($cita, $orderId);
+
+        if (!$result['ok']) {
             return redirect()->route('cliente.pre-confirmacion', $cita->id)
-                ->withErrors(['pago' => 'No se pudo completar el pago. Tu cita sigue pendiente; inténtalo de nuevo.']);
+                ->withErrors(['pago' => $result['message']]);
         }
-
-        if (!$this->pagoValido($order, $cita)) {
-            Log::warning('[PayPal] capture: validaciones fallidas', ['cita' => $cita->id, 'order' => $orderId]);
-            return redirect()->route('cliente.pre-confirmacion', $cita->id)
-                ->withErrors(['pago' => 'El pago no pudo validarse. Tu cita sigue pendiente de pago.']);
-        }
-
-        // Persistir bajo lock: se vuelve a leer la cita bloqueada; si otro
-        // request concurrente completó mientras capturábamos, NO repetimos
-        // efectos secundarios (no confirma dos veces ni duplica VideoRoom).
-        DB::transaction(function () use ($cita, $order, $orderId) {
-            $locked = Cita::where('paypal_order_id', $orderId)
-                ->where('cliente_id', $cita->cliente_id)
-                ->lockForUpdate()
-                ->first();
-
-            // Fila borrada o ya procesada por otro request → sin efectos.
-            if (!$locked || ($locked->pagoCompletado() && $locked->transaction_id)) {
-                return;
-            }
-
-            $locked->update([
-                'payment_status'   => 'completed',
-                'paypal_order_id'  => $orderId,
-                'transaction_id'   => $this->captureId($order),
-                'paid_at'          => now(),
-            ]);
-
-            app(CitaService::class)->confirmar($locked);
-        });
 
         return redirect()->route('cliente.mis-citas')
             ->with('success', 'Pago confirmado. Tu cita ' . $cita->codigo . ' ha sido confirmada.');
@@ -355,5 +322,168 @@ class ClienteController extends Controller
         $cita->update(['estado' => 'cancelada']);
 
         return back()->with('success', 'Cita cancelada correctamente.');
+    }
+
+    // ─── Helpers de dominio ────────────────────────────────────────────────
+
+    /** Ownership-only: aborta 404 si la cita no pertenece al cliente autenticado. */
+    protected function citaPropia(int $id): Cita
+    {
+        return Cita::where('id', $id)
+            ->where('cliente_id', Auth::id())
+            ->firstOrFail();
+    }
+
+    /** Ownership + estado pendiente + no pagada: usado antes de crear orden. */
+    protected function citaPropiaPendiente(int $id): Cita
+    {
+        return Cita::where('id', $id)
+            ->where('cliente_id', Auth::id())
+            ->where('estado', 'pendiente_pago')
+            ->where('payment_status', '!=', 'completed')
+            ->firstOrFail();
+    }
+
+    // ─── Captura compartida (redirect + AJAX) ──────────────────────────────
+
+    /**
+     * Capture server-to-server + validación + persistencia bajo lock.
+     * Punto único compartido por el callback GET (redirect) y el endpoint
+     * AJAX del JS SDK. NO invocado desde crearOrdenAjax (create ≠ capture).
+     *
+     * Devuelve ['ok' => bool, 'message' => string].
+     */
+    protected function capturarYPersistir(Cita $cita, string $orderId): array
+    {
+        try {
+            $order = app(PayPalService::class)->captureOrder($orderId);
+        } catch (\Throwable $e) {
+            Log::error('[PayPal] capture: error al capturar', ['cita' => $cita->id, 'order' => $orderId, 'error' => $e->getMessage()]);
+            return ['ok' => false, 'message' => 'No se pudo completar el pago. Tu cita sigue pendiente; inténtalo de nuevo.'];
+        }
+
+        if (!$this->pagoValido($order, $cita)) {
+            Log::warning('[PayPal] capture: validaciones fallidas', ['cita' => $cita->id, 'order' => $orderId]);
+            return ['ok' => false, 'message' => 'El pago no pudo validarse. Tu cita sigue pendiente de pago.'];
+        }
+
+        // Persistir bajo lock: se vuelve a leer la cita bloqueada; si otro
+        // request concurrente completó mientras capturábamos, NO repetimos
+        // efectos secundarios (no confirma dos veces ni duplica VideoRoom).
+        DB::transaction(function () use ($cita, $order, $orderId) {
+            $locked = Cita::where('paypal_order_id', $orderId)
+                ->where('cliente_id', $cita->cliente_id)
+                ->lockForUpdate()
+                ->first();
+
+            // Fila borrada o ya procesada por otro request → sin efectos.
+            if (!$locked || ($locked->pagoCompletado() && $locked->transaction_id)) {
+                return;
+            }
+
+            $locked->update([
+                'payment_status'   => 'completed',
+                'paypal_order_id'  => $orderId,
+                'transaction_id'   => $this->captureId($order),
+                'paid_at'          => now(),
+            ]);
+
+            app(CitaService::class)->confirmar($locked);
+        });
+
+        return ['ok' => true, 'message' => 'Pago confirmado.'];
+    }
+
+    // ─── Endpoints AJAX (JS SDK inline) ────────────────────────────────────
+
+    /**
+     * POST /cliente/paypal/create/{id}
+     * Crea una orden PayPal real (Orders API v2) y devuelve {orderID}
+     * para que el JS SDK abra el popup de PayPal. NO confirma la cita.
+     */
+    public function crearOrdenAjax(int $id)
+    {
+        $cita = $this->citaPropiaPendiente($id);
+
+        try {
+            $result = app(PayPalService::class)->createOrder($cita);
+        } catch (\Throwable $e) {
+            Log::error('[PayPal] ajax create: no se pudo crear orden', ['cita' => $cita->id, 'error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudo iniciar el pago con PayPal. Inténtalo de nuevo.',
+            ], 502);
+        }
+
+        $cita->update(['paypal_order_id' => $result['order_id']]);
+
+        return response()->json([
+            'success' => true,
+            'orderID' => $result['order_id'],
+        ]);
+    }
+
+    /**
+     * POST /cliente/paypal/capture/{id}
+     * Captura la orden, valida y confirma la cita. Punto AJAX equivalente
+     * al callback GET capture(), compartiendo la misma lógica de validación
+     * y persistencia a través de capturarYPersistir().
+     */
+    public function capturarOrdenAjax(Request $request, int $id)
+    {
+        $cita = $this->citaPropia($id);
+
+        // Idempotencia: pago ya registrado → respuesta exitosa sin re-procesar.
+        if ($cita->pagoCompletado() && $cita->transaction_id) {
+            if ($cita->estaConfirmada()) {
+                return response()->json([
+                    'success'  => true,
+                    'message'  => 'Pago ya procesado.',
+                    'redirect' => route('cliente.mis-citas'),
+                ]);
+            }
+
+            Log::error('[PayPal] ajax capture: estado inconsistente', [
+                'cita'   => $cita->id,
+                'estado' => $cita->estado,
+                'trans'  => $cita->transaction_id,
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Tu pago ya fue registrado pero tu cita no quedó confirmada. Contacta soporte.',
+            ], 409);
+        }
+
+        $orderId = (string) $request->input('orderID', '');
+
+        if (blank($orderId)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se recibió la orden de pago.',
+            ], 422);
+        }
+
+        if ($orderId !== $cita->paypal_order_id) {
+            Log::warning('[PayPal] ajax capture: orderID no coincide', ['cita' => $cita->id, 'orderId' => $orderId]);
+            return response()->json([
+                'success' => false,
+                'message' => 'La orden de pago no corresponde a esta cita.',
+            ], 422);
+        }
+
+        $result = $this->capturarYPersistir($cita, $orderId);
+
+        if (!$result['ok']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['message'],
+            ], 422);
+        }
+
+        return response()->json([
+            'success'  => true,
+            'message'  => $result['message'],
+            'redirect' => route('cliente.mis-citas'),
+        ]);
     }
 }
