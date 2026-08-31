@@ -27,6 +27,9 @@ Route::middleware(['auth', 'verified', 'rol:cliente'])->prefix('cliente')->name(
     Route::get('/pre-confirmacion/{id}', [ClienteController::class, 'preConfirmacion'])->name('pre-confirmacion');
     Route::get('/procesar-pago/{id}', [ClienteController::class, 'procesarPago'])->name('cliente.procesar-pago');
     Route::get('/paypal-pago/{id}', [ClienteController::class, 'paypalPago'])->name('paypal-pago');
+    Route::get('/paypal/checkout/{id}', [ClienteController::class, 'checkout'])->name('paypal.checkout');
+    Route::get('/paypal/return',         [ClienteController::class, 'capture'])->name('paypal.return');
+    Route::get('/paypal/cancel',         [ClienteController::class, 'cancel'])->name('paypal.cancel');
     Route::post('/cancelar/{id}',  [ClienteController::class, 'cancelarCita'])->name('cancelar');
 });
 

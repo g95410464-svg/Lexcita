@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Models\{Cita, Usuario};
 use App\Services\CitaService;
+use App\Services\PayPalService;
 use Carbon\Carbon;
 
 class ClienteController extends Controller
@@ -97,23 +100,8 @@ class ClienteController extends Controller
 
     public function hacerPago(int $id)
     {
-        $cita = Cita::where('id', $id)
-            ->where('cliente_id', Auth::id())
-            ->where('estado', 'pendiente_pago')
-            ->firstOrFail();
-
-        try {
-            app(CitaService::class)->confirmar($cita);
-            $cita = $cita->fresh();
-            $mensaje = 'Pago procesado. Tu cita '.$cita->codigo.' ha sido confirmada.';
-            if ($cita->esVirtual() && $cita->videoRoom) {
-                $mensaje .= ' Sala de videollamada creada.';
-            }
-        } catch (\InvalidArgumentException $e) {
-            return back()->withErrors(['pago' => $e->getMessage()]);
-        }
-
-        return redirect()->route('cliente.mis-citas')->with('success', $mensaje);
+        // Wrapper de compatibilidad (Mis Citas). Deriva al checkout unificado.
+        return $this->checkout($id);
     }
 
     public function preConfirmacion(int $id)
@@ -128,40 +116,230 @@ class ClienteController extends Controller
 
     public function procesarPago(int $id)
     {
-        $cita = Cita::where('id', $id)
-            ->where('cliente_id', Auth::id())
-            ->where('estado', 'pendiente_pago')
-            ->firstOrFail();
-
-        try {
-            app(CitaService::class)->confirmar($cita);
-            $cita = $cita->fresh();
-            $mensaje = 'Pago procesado. Tu cita '.$cita->codigo.' ha sido confirmada.';
-            if ($cita->esVirtual() && $cita->videoRoom) {
-                $mensaje .= ' Sala de videollamada creada.';
-            }
-        } catch (\InvalidArgumentException $e) {
-            return back()->withErrors(['pago' => $e->getMessage()]);
-        }
-
-        return redirect()->route('cliente.mis-citas')->with('success', $mensaje);
+        // Wrapper de compatibilidad (Dashboard). Deriva al checkout unificado.
+        return $this->checkout($id);
     }
 
     public function paypalPago(int $id)
+    {
+        // Wrapper de compatibilidad (Pre-Confirmación). Deriva al checkout unificado.
+        return $this->checkout($id);
+    }
+
+    /**
+     * Inicia el checkout PayPal para una cita pendiente de pago del cliente.
+     * Crea una orden real (Orders API v2, intent=CAPTURE), guarda el
+     * paypal_order_id en la cita y redirige al enlace de aprobación de PayPal.
+     * NUNCA confirma la cita aquí.
+     *
+     * Doble clic: PayPalService usa un PayPal-Request-Id ESTABLE (lexcita-create-{id}),
+     * por lo que PayPal devuelve el MISMO Order en lugar de crear órdenes nuevas.
+     */
+    public function checkout(int $id)
     {
         $cita = Cita::where('id', $id)
             ->where('cliente_id', Auth::id())
             ->where('estado', 'pendiente_pago')
             ->firstOrFail();
 
-        // Al presionar "Pagar cita", redirigimos al usuario al flujo de PayPal
-        // El ID de la cita se pasa como parámetro para que el sistema pueda
-        // identificar qué cita está siendo procesada en el callback
-        return redirect()->away(
-            'https://www.paypal.com/donate?hosted_button_id=HHFA4DKJHYE5Q' .
-            (strpos('?', '?') !== false ? '&' : '?') .
-            'invoice=' . urlencode($cita->codigo)
-        );
+        try {
+            $result = app(PayPalService::class)->createOrder($cita);
+        } catch (\Throwable $e) {
+            Log::error('[PayPal] checkout: no se pudo crear orden', ['cita' => $cita->id, 'error' => $e->getMessage()]);
+            return redirect()->route('cliente.pre-confirmacion', $cita->id)
+                ->withErrors(['pago' => 'No se pudo iniciar el pago con PayPal. Inténtalo de nuevo.']);
+        }
+
+        $cita->update(['paypal_order_id' => $result['order_id']]);
+
+        return redirect()->away($result['approve_url']);
+    }
+
+    /**
+     * Return URL de PayPal. Captura la orden server-to-server, valida de forma
+     * estricta y SOLO entonces registra el pago y confirma la cita.
+     */
+    public function capture(Request $request)
+    {
+        $orderId = $request->input('token');
+        if (blank($orderId)) {
+            return redirect()->route('cliente.mis-citas')
+                ->withErrors(['pago' => 'No se recibió la orden de pago.']);
+        }
+
+        $cita = Cita::where('paypal_order_id', $orderId)
+            ->where('cliente_id', Auth::id())
+            ->first();
+
+        if (!$cita) {
+            abort(404, 'Orden de pago no encontrada.');
+        }
+
+        // Ruta rápida idempotente: pago ya registrado → sin efectos secundarios.
+        if ($cita->pagoCompletado() && $cita->transaction_id) {
+            if ($cita->estaConfirmada()) {
+                return redirect()->route('cliente.mis-citas')
+                    ->with('success', 'Tu pago ya fue procesado y tu cita está confirmada.');
+            }
+
+            // Estado INCONSISTENTE: payment_status=completed pero cita NO
+            // confirmada. NO confirmar en silencio por entrar al callback:
+            // registra el error y deja la decisión a un manejo explícito.
+            Log::error('[PayPal] estado inconsistente: completed pero cita no confirmada', [
+                'cita'   => $cita->id,
+                'estado' => $cita->estado,
+                'order'  => $orderId,
+                'trans'  => $cita->transaction_id,
+            ]);
+            return redirect()->route('cliente.mis-citas')
+                ->withErrors(['pago' => 'Tu pago ya fue registrado pero tu cita no quedó confirmada. Por favor contacta a soporte.']);
+        }
+
+        // Capture server-to-server FUERA de la transacción: no se sostiene un
+        // lock de BD abierto durante la llamada HTTP larga a PayPal.
+        try {
+            $order = app(PayPalService::class)->captureOrder($orderId);
+        } catch (\Throwable $e) {
+            Log::error('[PayPal] capture: error al capturar', ['cita' => $cita->id, 'order' => $orderId, 'error' => $e->getMessage()]);
+            return redirect()->route('cliente.pre-confirmacion', $cita->id)
+                ->withErrors(['pago' => 'No se pudo completar el pago. Tu cita sigue pendiente; inténtalo de nuevo.']);
+        }
+
+        if (!$this->pagoValido($order, $cita)) {
+            Log::warning('[PayPal] capture: validaciones fallidas', ['cita' => $cita->id, 'order' => $orderId]);
+            return redirect()->route('cliente.pre-confirmacion', $cita->id)
+                ->withErrors(['pago' => 'El pago no pudo validarse. Tu cita sigue pendiente de pago.']);
+        }
+
+        // Persistir bajo lock: se vuelve a leer la cita bloqueada; si otro
+        // request concurrente completó mientras capturábamos, NO repetimos
+        // efectos secundarios (no confirma dos veces ni duplica VideoRoom).
+        DB::transaction(function () use ($cita, $order, $orderId) {
+            $locked = Cita::where('paypal_order_id', $orderId)
+                ->where('cliente_id', $cita->cliente_id)
+                ->lockForUpdate()
+                ->first();
+
+            // Fila borrada o ya procesada por otro request → sin efectos.
+            if (!$locked || ($locked->pagoCompletado() && $locked->transaction_id)) {
+                return;
+            }
+
+            $locked->update([
+                'payment_status'   => 'completed',
+                'paypal_order_id'  => $orderId,
+                'transaction_id'   => $this->captureId($order),
+                'paid_at'          => now(),
+            ]);
+
+            app(CitaService::class)->confirmar($locked);
+        });
+
+        return redirect()->route('cliente.mis-citas')
+            ->with('success', 'Pago confirmado. Tu cita ' . $cita->codigo . ' ha sido confirmada.');
+    }
+
+    /**
+     * Cancel URL de PayPal. NO confirma y mantiene la cita en pendiente_pago.
+     */
+    public function cancel(Request $request)
+    {
+        $orderId = $request->input('token');
+        if (!blank($orderId)) {
+            $cita = Cita::where('paypal_order_id', $orderId)
+                ->where('cliente_id', Auth::id())
+                ->first();
+            if ($cita && $cita->estaPendiente()) {
+                // Marca informativa del pago; el estado de la cita NO cambia.
+                $cita->update(['payment_status' => 'cancelled']);
+            }
+        }
+
+        return redirect()->route('cliente.mis-citas')
+            ->withErrors(['pago' => 'Pago cancelado. Tu cita sigue pendiente de pago; podrás intentarlo de nuevo.']);
+    }
+
+    /**
+     * Validaciones estrictas antes de confirmar. Cada una debe cumplirse.
+     * Cualquier fallo devuelve false (y la cita permanece pendiente_pago).
+     */
+    protected function pagoValido(array $order, Cita $cita): bool
+    {
+        // 1. Estado de orden COMPLETED.
+        if (($order['status'] ?? null) !== 'COMPLETED') {
+            return false;
+        }
+
+        // 2. El Order ID capturado coincide con el guardado en la cita.
+        if (($order['id'] ?? null) !== $cita->paypal_order_id) {
+            return false;
+        }
+
+        $pu = $order['purchase_units'][0] ?? null;
+        if (!$pu) {
+            return false;
+        }
+
+        // 3. La orden pertenece a esta cita (custom_id = cita.id o invoice_id = codigo).
+        $custom  = $pu['custom_id'] ?? null;
+        $invoice = $pu['invoice_id'] ?? null;
+        $refOk   = ($custom !== null && (string) $custom === (string) $cita->id)
+                || ($invoice !== null && $invoice === $cita->codigo);
+        if (!$refOk) {
+            return false;
+        }
+
+        $capture = $pu['payments']['captures'][0] ?? null;
+        if (!$capture) {
+            return false;
+        }
+
+        // 4. Estado de la captura EXACTAMENTE COMPLETED.
+        if (($capture['status'] ?? null) !== 'COMPLETED') {
+            return false;
+        }
+
+        // 5. Monto capturado igual al de la cita (comparación por string).
+        $esperado  = $this->normalizarMonto((string) $cita->monto);
+        $capturado = $this->normalizarMonto((string) ($capture['amount']['value'] ?? ''));
+        if ($capturado !== $esperado) {
+            return false;
+        }
+
+        // 6. Moneda exactamente USD.
+        if (($capture['amount']['currency_code'] ?? null) !== 'USD') {
+            return false;
+        }
+
+        // 7. Existe un Capture ID real.
+        if (blank($capture['id'] ?? null)) {
+            return false;
+        }
+
+        // 8/9/10. La cita pertenece al usuario (filtro en capture()), la orden
+        // coincide con la de BD (punto 2) y la idempotencia se evita en capture().
+        return true;
+    }
+
+    protected function captureId(array $order): string
+    {
+        return $order['purchase_units'][0]['payments']['captures'][0]['id'] ?? '';
+    }
+
+    /** Normaliza un valor monetario a "N.XX" con strings, sin floats. */
+    protected function normalizarMonto(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '0.00';
+        }
+        if (strpos($value, '.') === false) {
+            $value .= '.00';
+        }
+        $parts = explode('.', $value, 2);
+        $whole = $parts[0] === '' ? '0' : (string) (int) $parts[0];
+        $cents = str_pad(substr($parts[1], 0, 2), 2, '0');
+        return $whole . '.' . $cents;
     }
 
     public function cancelarCita(int $id)

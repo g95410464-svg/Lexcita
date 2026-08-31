@@ -14,6 +14,7 @@ class Cita extends Model
         'fecha', 'hora_inicio', 'hora_fin',
         'tipo', 'modalidad', 'descripcion',
         'estado', 'monto',
+        'payment_status', 'paypal_order_id', 'transaction_id', 'paid_at',
     ];
 
     protected $casts = [
@@ -21,7 +22,14 @@ class Cita extends Model
         'monto'               => 'decimal:2',
         'cliente_consintio'   => 'boolean',
         'abogado_consintio'   => 'boolean',
+        'paid_at'             => 'datetime',
     ];
+
+    // ─── Helpers de pago ─────────────────────────────────────
+    public function pagoCompletado(): bool
+    {
+        return $this->payment_status === 'completed';
+    }
 
     // ─── Relaciones ───────────────────────────────────────────
     public function cliente()  { return $this->belongsTo(Usuario::class, 'cliente_id'); }
