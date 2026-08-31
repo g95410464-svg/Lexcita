@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\{Cita, VideoRoom, VideoParticipant, VideoMessage, VideoFile, ConsultationNote, Usuario};
 use Carbon\Carbon;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Str;
 
 class VideoRoomService
@@ -22,11 +23,27 @@ class VideoRoomService
             throw new \InvalidArgumentException('La cita debe estar confirmada.');
         }
 
-        if ($cita->videoRoom) {
-            return $cita->videoRoom->fresh(['participantes.usuario']);
+        // Consultar directamente por cita_id. NO se depende de $cita->videoRoom,
+        // porque Eloquent cachea el resultado (incluido null) de la relación y,
+        // al reutilizar un objeto Cita que ya creó la sala, seguiría viendo null.
+        $sala = VideoRoom::where('cita_id', $cita->id)->first();
+        if ($sala) {
+            return $sala->fresh(['participantes.usuario']);
         }
 
-        return $this->crearSala($cita);
+        try {
+            return $this->crearSala($cita);
+        } catch (UniqueConstraintViolationException $e) {
+            // Carrera: dos solicitudes simultáneas intentaron crear la sala.
+            // UNIQUE(cita_id) garantiza que solo una gana; la otra recupera la
+            // sala ya existente. Cualquier otra QueryException se relanza tal cual.
+            $sala = VideoRoom::where('cita_id', $cita->id)->first();
+            if ($sala) {
+                return $sala->fresh(['participantes.usuario']);
+            }
+
+            throw $e;
+        }
     }
 
     /**
