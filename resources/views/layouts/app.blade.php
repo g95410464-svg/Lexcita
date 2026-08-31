@@ -55,6 +55,9 @@
         /* Scrollbar */
         ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: #1a1c1a; } ::-webkit-scrollbar-thumb { background: #444748; }
     </style>
+
+    {{-- Estilos adicionales empujados por cada vista (@push('styles')) --}}
+    @stack('styles')
 </head>
 <body class="min-h-screen flex" x-cloak>
 

@@ -57,6 +57,28 @@
     }
     .cal-day.disabled { color:#444748; cursor:default; }
 
+    /* Calendario: cabecera y celdas comparten EXACTAMENTE 7 columnas iguales y el mismo gap */
+    .cal-weekdays,
+    #cal-celdas {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 1px;
+    }
+
+    /* Celdas vacías de desplazamiento (antes del día 1): misma geometría, sin interacción */
+    .cal-empty {
+        min-height: 42px;
+        padding: 7px 4px;
+    }
+
+    /* Geometría consistente y centrado de los días */
+    #cal-celdas .cal-day {
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     /* Slots - usando micro-interacciones CSS */
     .slot-btn { padding:8px 12px; border:1px solid #444748; font-size:.78rem; font-family:'Hanken Grotesk',sans-serif;
                 font-weight:600; letter-spacing:.08em; text-transform:uppercase; cursor:pointer;
@@ -77,7 +99,7 @@
     </div>
 @endif
 
-<form method="POST" action="{{ route('cliente.nueva-cita.post') }}" id="formCita">
+<form method="POST" action="{{ route('cliente.nueva-cita.post') }}" id="formCita" x-data>
 @csrf
 
 {{-- ── PASO 1: Abogado ────────────────────────────────── --}}
@@ -127,7 +149,7 @@
                 </button>
             </div>
             {{-- Días de la semana --}}
-            <div class="grid grid-cols-7 text-center mb-1">
+            <div class="cal-weekdays grid grid-cols-7 text-center mb-1">
                 @foreach(['Lu','Ma','Mi','Ju','Vi','Sa','Do'] as $d)
                 <div class="text-[10px] font-grotesk font-semibold uppercase tracking-widest text-outline py-1">{{ $d }}</div>
                 @endforeach
@@ -136,7 +158,7 @@
         </div>
 
         {{-- Slots horarios --}}
-        <div class="bg-surface-container border border-outline-variant p-5 transition-all duration-300" x-data="{ slotsLoaded: false }" x-show="slotsLoaded || $store.booking.fechaSeleccionada" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+        <div class="bg-surface-container border border-outline-variant p-5 transition-all duration-300">
             <p class="text-[11px] font-grotesk font-semibold tracking-[.18em] uppercase text-outline mb-4">
                 Horarios disponibles
             </p>
@@ -232,7 +254,10 @@
 @push('scripts')
 <script>
 // Alpine.js store para manejo de estado global – inicializado vía alpine:init
+console.log('[LEXCITA] nueva-cita script cargado');
+
 document.addEventListener('alpine:init', () => {
+    console.log('[LEXCITA] alpine:init recibido');
     Alpine.store('booking', {
         step: 1,
         abogadoId: null,
@@ -269,6 +294,8 @@ document.addEventListener('alpine:init', () => {
             if (this.mes > 11) { this.mes = 0; this.anio++; }
         }
     });
+
+    console.log('[LEXCITA] booking store creado');
 });
 
 window.addEventListener('load', function () {
@@ -310,7 +337,9 @@ window.addEventListener('load', function () {
         const hoy       = new Date(); hoy.setHours(0,0,0,0);
 
         for (let i = 0; i < ajuste; i++) {
-            celdas.appendChild(document.createElement('div'));
+            const vacio = document.createElement('div');
+            vacio.className = 'cal-empty';
+            celdas.appendChild(vacio);
         }
 
         for (let d = 1; d <= diasMes; d++) {
