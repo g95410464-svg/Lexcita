@@ -62,6 +62,7 @@
                     <th class="text-left px-6 py-3 text-[11px] font-grotesk font-semibold tracking-[.1em] uppercase text-outline">Hora</th>
                     <th class="text-left px-6 py-3 text-[11px] font-grotesk font-semibold tracking-[.1em] uppercase text-outline">Monto</th>
                     <th class="text-left px-6 py-3 text-[11px] font-grotesk font-semibold tracking-[.1em] uppercase text-outline">Estado</th>
+                    <th class="text-left px-6 py-3 text-[11px] font-grotesk font-semibold tracking-[.1em] uppercase text-outline">Acciones</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-outline-variant">
@@ -82,10 +83,24 @@
                             <span class="text-[11px] font-grotesk font-semibold tracking-[.08em] uppercase px-2.5 py-1 bg-[#1a1500] text-secondary border border-[#3c2f00]">PENDIENTE</span>
                         @endif
                     </td>
+                    <td class="px-6 py-4">
+                        @if($cita->estaPendiente())
+                            <form method="POST" action="{{ route('interno.citas.confirmar', $cita->id) }}">
+                                @csrf
+                                <button type="submit"
+                                        title="Confirmación administrativa sin pago PayPal"
+                                        class="text-[11px] font-grotesk font-semibold tracking-[.08em] uppercase px-3 py-1.5 bg-secondary text-on-secondary hover:opacity-90 transition-opacity">
+                                    Confirmar manualmente
+                                </button>
+                            </form>
+                        @else
+                            <span class="text-[12px] font-grotesk text-outline">—</span>
+                        @endif
+                    </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="px-6 py-12 text-center text-outline text-sm">
+                    <td colspan="8" class="px-6 py-12 text-center text-outline text-sm">
                         No se encontraron citas con esos filtros.
                     </td>
                 </tr>
