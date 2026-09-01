@@ -50,9 +50,11 @@
     </div>
 </header>
 
-{{-- TEMPORAL Fase 7: diagnóstico visible en dispositivo movil (retirar al confirmar en prod). --}}
-<div id="diag-visor" class="hidden px-6 py-2 text-[11px] font-grotesk text-on-surface bg-surface-container-high border-b border-white/10">
-    <span class="uppercase tracking-widest text-outline">Diag:</span> <span id="diag-txt">iniciando…</span>
+{{-- TEMPORAL Fase 7: visor de diagnóstico SIEMPRE visible para el móvil (sin DevTools). --}}
+{{-- Retirar junto con toda la instrumentación diag() al confirmar en producción. --}}
+<div id="diag-visor" class="px-6 py-2 text-[11px] font-grotesk text-on-surface bg-surface-container-high border-b border-white/10 max-h-48 overflow-y-auto">
+    <span class="uppercase tracking-widest text-outline">Diag:</span>
+    <div id="diag-txt" class="mt-1 whitespace-pre-wrap break-words">esperando…</div>
 </div>
 
 {{-- Grid de video --}}
@@ -112,7 +114,40 @@
 (function () {
     'use strict';
 
-    var datos   = JSON.parse(document.getElementById('datos-sala').textContent);
+    // ── TEMPORAL Fase 7: visor de diagnóstico SIEMPRE visible (móvil sin DevTools). ──
+    // BOOT se imprime lo más pronto posible: este inline script corre de forma
+    // síncrona al parsear el body, ANTES de cualquier operación que pueda lanzar
+    // excepción (parseo de datos, Echo, RTCPeerConnection, red).
+    function diag(msg) {
+        console.log('[LexCita:diag] ' + msg);
+        var visor = document.getElementById('diag-visor');
+        var texto = document.getElementById('diag-txt');
+        if (visor) { visor.classList.remove('hidden'); }
+        if (texto) {
+            texto.textContent = (texto.textContent && texto.textContent.indexOf('esperando') === 0 ? '' : texto.textContent ? texto.textContent + '\n' : '') + '▶ ' + msg;
+            if (visor) { visor.scrollTop = visor.scrollHeight; }
+        }
+    }
+    function diagError(nombre, e) {
+        diag('ERROR: ' + nombre + ': ' + (e && e.message ? e.message : e));
+    }
+    diag('BOOT');
+
+    // Que ninguna excepción no capturada quede muda en el visor.
+    window.addEventListener('error', function (ev) {
+        diag('ERROR: global: ' + ev.message);
+    });
+    window.addEventListener('unhandledrejection', function (ev) {
+        diagError('promesa', (ev && ev.reason) || 'sin razón');
+    });
+
+    var datos;
+    try {
+        datos = JSON.parse(document.getElementById('datos-sala').textContent);
+    } catch (e) {
+        diagError('datosSala', e);
+        return;
+    }
     var csrf    = datos.csrf;
     var pc      = null;
     var local   = null;
@@ -136,16 +171,7 @@
         estadoDot.style.background = color || '#8e9192';
     }
 
-    // TEMPORAL Fase 7: diagnóstico visible (NO imprime SDP/ICE/tokens).
-    var diagVisor = document.getElementById('diag-visor');
-    var diagTxt   = document.getElementById('diag-txt');
-    function diag(msg) {
-        console.log('[LexCita:diag] ' + msg);
-        if (diagVisor && diagTxt) {
-            diagVisor.classList.remove('hidden');
-            diagTxt.textContent = msg;
-        }
-    }
+    // diag()/diagError() se definen al inicio del script (ver BOOT arriba).
 
     function headers(fn) {
         var h = { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf };
@@ -167,7 +193,7 @@
                 post(datos.urlIce, {
                     candidate: { candidate: e.candidate.candidate, sdpMid: e.candidate.sdpMid, sdpMLineIndex: e.candidate.sdpMLineIndex },
                     target_user_id: datos.peerUserId,
-                }).catch(function () { /* best-effort ICE */ });
+                }).catch(function (e) { diagError('icecandidate_POST', e); });
             }
         });
 
@@ -204,62 +230,99 @@
     async function despacharPendientes() {
         if (!pc.remoteDescription) return;
         while (pendientes.length) {
-            await pc.addIceCandidate(pendientes.shift()).catch(function () { /* candidato obsoleto */ });
+            try { await pc.addIceCandidate(pendientes.shift()); }
+            catch (e) { diagError('addIceCandidate_pendiente', e); }
         }
     }
 
     async function enviarOferta() {
-        diag('Enviando offer…');
-        console.log('[LexCita RTC] creando offer');
+        diag('OFRECER: creando offer…');
         var offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
+        diag('OFRECER: local desc fijada (offer)');
         setEstado('Esperando a ' + datos.peerNombre + '…', '#e9c349');
-        console.log('[LexCita RTC] offer enviada al backend');
         await post(datos.urlOffer, { sdp: pc.localDescription, target_user_id: datos.peerUserId });
-        diag('Offer enviado. Esperando answer…');
+        diag('OFRECER: POST /offer enviado');
     }
 
     async function alRecibirOferta(data) {
+        diag('OFFER RX de user_id=' + data.user_id + ' target=' + data.target_user_id);
         // La oferta debe ir dirigida a mí (como en alRecibirIce).
-        if (String(data.target_user_id) !== datos.myUserId) return;
+        if (String(data.target_user_id) !== datos.myUserId) {
+            diag('OFFER ignorada (target=' + data.target_user_id + ' ≠ my=' + datos.myUserId + ')');
+            return;
+        }
+        diag('TARGET OK');
         // Y no puede provenir de mí mismo (Laravel broadcast incluye al emisor):
         // responder a una oferta propia haría setRemoteDescription(offer) con una
         // oferta local ya fijada → InvalidStateError en Chrome.
-        if (String(data.user_id) === datos.myUserId) return;
+        if (String(data.user_id) === datos.myUserId) {
+            diag('OFFER propia ignorada');
+            return;
+        }
         // Si la oferta llega ANTES de que iniciar() cree `pc` (carrera de arranque),
         // no podemos procesarla todavía: el abogado reenviará la oferta (reintento).
         if (!pc) {
-            console.log('[LexCita RTC] offer llegó antes de iniciar pc; será reenviada');
+            diag('ERROR: pcNull: offer llegó con pc null (se espera el reintento del abogado)');
             return;
         }
-        diag('Offer recibida de ' + data.user_id);
-        console.log('[LexCita RTC] offer recibida');
         setEstado('Conectando…', '#e9c349');
-        await pc.setRemoteDescription({ type: data.sdp.type, sdp: data.sdp.sdp });
-        console.log('[LexCita RTC] creando answer');
-        var answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        await post(datos.urlAnswer, { sdp: pc.localDescription, target_user_id: datos.peerUserId });
-        console.log('[LexCita RTC] answer enviada');
-        diag('Respuesta enviada');
+        try {
+            await pc.setRemoteDescription({ type: data.sdp.type, sdp: data.sdp.sdp });
+            diag('REMOTE DESC OK');
+        } catch (e) {
+            diagError('setRemoteDescription', e);
+            return;
+        }
+        try {
+            var answer = await pc.createAnswer();
+            diag('ANSWER CREADA');
+        } catch (e) {
+            diagError('createAnswer', e);
+            return;
+        }
+        try {
+            await pc.setLocalDescription(answer);
+            diag('LOCAL DESC OK');
+        } catch (e) {
+            diagError('setLocalDescription', e);
+            return;
+        }
+        try {
+            await post(datos.urlAnswer, { sdp: pc.localDescription, target_user_id: datos.peerUserId });
+            diag('POST ANSWER 200');
+        } catch (e) {
+            diagError('postAnswer', e);
+        }
     }
 
     async function alRecibirAnswer(data) {
-        if (String(data.user_id) === datos.myUserId) return;
+        if (String(data.user_id) === datos.myUserId) { diag('ANSWER propia ignorada'); return; }
         respuestaRecibida = true;
-        diag('Answer recibida de ' + data.user_id);
-        console.log('[LexCita RTC] answer recibida');
-        await pc.setRemoteDescription({ type: data.sdp.type, sdp: data.sdp.sdp });
-        await despacharPendientes();
+        diag('ANSWER RX de user_id=' + data.user_id);
+        try {
+            await pc.setRemoteDescription({ type: data.sdp.type, sdp: data.sdp.sdp });
+            diag('REMOTE ANSWER OK');
+        } catch (e) {
+            diagError('setRemoteDescription_answer', e);
+        }
+        try {
+            await despacharPendientes();
+        } catch (e) {
+            diagError('despacharPendientes', e);
+        }
     }
 
     async function alRecibirIce(data) {
-        diag('ICE recibido (candidato)');
-        if (String(data.target_user_id) !== datos.myUserId) return;
+        diag('ICE RX');
+        if (String(data.target_user_id) !== datos.myUserId) { diag('ICE ignorado (target≠my)'); return; }
         var cand = data.candidate || {};
         var ice = { candidate: cand.candidate, sdpMid: cand.sdpMid, sdpMLineIndex: cand.sdpMLineIndex };
-        if (pc && pc.remoteDescription) { await pc.addIceCandidate(ice).catch(function () {}); }
-        else { pendientes.push(ice); }
+        if (pc && pc.remoteDescription) {
+            try { await pc.addIceCandidate(ice); } catch (e) { diagError('addIceCandidate', e); }
+        } else {
+            pendientes.push(ice);
+        }
     }
 
     function alRecibirLeft(data) {
@@ -291,7 +354,7 @@
         try {
             await enviarOferta();
         } catch (e) {
-            console.log('[LexCita RTC] error al enviar offer, se reintentará: ' + e.message);
+            diagError('enviarOferta', e);
         }
         programarReintentoOferta();
     }
@@ -336,20 +399,28 @@
     };
 
     async function iniciar() {
-        if (!window.Echo) { setEstado('Servicio de tiempo real no disponible', '#ffb4ab'); return; }
-        pc = crearPeer();
-
-        window.Echo.private(datos.channel)
-            .listen('.webrtc.offer',           alRecibirOferta)
-            .listen('.webrtc.answer',          alRecibirAnswer)
-            .listen('.webrtc.ice-candidate',   alRecibirIce)
-            .listen('.participant.joined',     alRecibirJoined)
-            .listen('.participant.left',       alRecibirLeft);
-        diag('Suscrito a private-' + datos.channel);
+        if (!window.Echo) {
+            diag('ERROR: echoNoDefinido: window.Echo es undefined');
+            setEstado('Servicio de tiempo real no disponible', '#ffb4ab');
+            return;
+        }
 
         try {
+            pc = crearPeer();
+            diag('PC CREADO');
+
+            window.Echo.private(datos.channel)
+                .listen('.webrtc.offer',           alRecibirOferta)
+                .listen('.webrtc.answer',          alRecibirAnswer)
+                .listen('.webrtc.ice-candidate',   alRecibirIce)
+                .listen('.participant.joined',     alRecibirJoined)
+                .listen('.participant.left',       alRecibirLeft);
+            diag('ECHO SUSCRITO a private-' + datos.channel);
+
             await empezarStreamLocal();
+            diag('STREAM LOCAL OK');
             setEstado('Listo. Conectando…', '#e9c349');
+
             if (datos.esAbogado) {
                 // ABOGADO = iniciador, pero solo ofrece cuando el cliente está presente.
                 if (!datos.esPrimero) {
@@ -364,6 +435,7 @@
                 setEstado('Esperando a ' + datos.peerNombre + '…', '#e9c349');
             }
         } catch (e) {
+            diagError('iniciar', e);
             setEstado('No se pudo acceder a cámara/micrófono', '#ffb4ab');
             elPlaceholder.classList.remove('hidden');
         }
