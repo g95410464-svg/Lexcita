@@ -18,8 +18,13 @@ use Illuminate\Support\Facades\Broadcast;
  * Canal privado para sala de videollamada.
  * Solo el cliente y el abogado de la cita pueden acceder.
  * Validación por room_token (no adivinable) + user_id pertenencia a la cita.
+ *
+ * IMPORTANTE: el patrón se registra SIN prefijos 'private-'/'presence-'.
+ * Laravel recibe 'private-video-room.{token}', le quita el prefijo y lo
+ * compara contra este patrón. Registrarlo con el prefijo rompía el match
+ * y devolvía 403 para TODOS los usuarios (Application/channel no autorizada).
  */
-Broadcast::channel('private-video-room.{room_token}', function (Usuario $user, string $room_token) {
+Broadcast::channel('video-room.{room_token}', function (Usuario $user, string $room_token) {
     // Buscar la sala por token
     $room = VideoRoom::where('room_token', $room_token)
         ->with('cita')

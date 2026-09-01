@@ -8,6 +8,7 @@ use App\Models\VideoRoom;
 use App\Services\CitaService;
 use App\Services\VideoRoomService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Broadcast;
 use Tests\TestCase;
 
 /**
@@ -414,5 +415,117 @@ class VideoRoomAccesoTest extends TestCase
 
         $despues = VideoRoom::where('cita_id', $cita->id)->count();
         $this->assertSame($antes, $despues);
+    }
+
+    // ─── Autorización del canal privado (POST /broadcasting/auth) ───
+    // Reproduce el bug real de producción: Echo.private('video-room.{token}')
+    // se suscribe a 'private-video-room.{token}'; el patrón del canal debe
+    // registrarse SIN el prefijo 'private-' para que Laravel haga el match
+    // (normaliza el nombre antes de comparar). Sin esto: 403 para TODOS.
+    //
+    // phpunit.xml fuerza BROADCAST_CONNECTION=null y su broadcaster autoriza
+    // TODO sin ejecutar los callbacks; por eso estas pruebas restauran el
+    // driver reverb real (mismo camino que producción) para ejercitar la
+    // lógica de autorización de routes/channels.php.
+
+    /** POST /broadcasting/auth contra el driver reverb (producción). */
+    private function postBroadcastAuth(?Usuario $user, string $channelName, string $socketId = '159299118.793669243')
+    {
+        // phpunit.xml fuerza BROADCAST_CONNECTION=null: su broadcaster NO ejecuta
+        // los callbacks de channels.php y la app registró los canales sobre ESE
+        // driver. Para ejercitar la lógica real se restaura el driver reverb y se
+        // vuelven a registrar los canales sobre ese mismo driver (tal y como
+        // ocurre en producción).
+        Broadcast::setDefaultDriver('reverb');
+        Broadcast::forgetDrivers();
+        require base_path('routes/channels.php');
+
+        $request = $user ? $this->actingAs($user) : $this;
+
+        return $request->post('/broadcasting/auth', [
+            'channel_name' => $channelName,
+            'socket_id'    => $socketId,
+        ]);
+    }
+
+    /** 1. Cliente propietario de la cita → autoriza el canal privado (200). */
+    public function test_cliente_propietario_puede_autorizar_canal_privado(): void
+    {
+        [$cliente, , $cita] = $this->citaVirtualConfirmadaEnVentana();
+        $room = $cita->videoRoom;
+
+        $this->postBroadcastAuth($cliente, 'private-video-room.'.$room->room_token)
+            ->assertOk()
+            ->assertJsonPath('auth', fn (string $auth) => $auth !== '');
+    }
+
+    /** 2. Abogado asignado → autoriza el canal privado (200). */
+    public function test_abogado_asignado_puede_autorizar_canal_privado(): void
+    {
+        [, $abogado, $cita] = $this->citaVirtualConfirmadaEnVentana();
+        $room = $cita->videoRoom;
+
+        $this->postBroadcastAuth($abogado, 'private-video-room.'.$room->room_token)
+            ->assertOk()
+            ->assertJsonPath('auth', fn (string $auth) => $auth !== '');
+    }
+
+    /** 3. Usuario ajeno (ni cliente ni abogado) → 403. */
+    public function test_usuario_ajeno_no_puede_autorizar_canal_privado(): void
+    {
+        [, , $cita] = $this->citaVirtualConfirmadaEnVentana();
+        $ajeno = $this->makeUsuario('cliente', 'ajeno-cliente');
+        $room  = $cita->videoRoom;
+
+        $this->postBroadcastAuth($ajeno, 'private-video-room.'.$room->room_token)
+            ->assertForbidden();
+    }
+
+    /** 4. Participante pero cita presencial (aunque tenga sala) → 403. */
+    public function test_participante_cita_presencial_no_autoriza_canal_privado(): void
+    {
+        $cliente = $this->makeUsuario('cliente', 'cliente');
+        $abogado = $this->makeUsuario('abogado', 'abogado');
+        $ahora   = now();
+
+        $cita = Cita::create([
+            'codigo'      => Cita::generarCodigo(),
+            'cliente_id'  => $cliente->id,
+            'abogado_id'  => $abogado->id,
+            'fecha'       => $ahora->toDateString(),
+            'hora_inicio' => $ahora->format('H:i:s'),
+            'hora_fin'    => $ahora->copy()->addHour()->format('H:i:s'),
+            'tipo'        => 'consulta_general',
+            'modalidad'   => 'presencial',
+            'descripcion' => 'Cita presencial de prueba',
+            'estado'      => 'pendiente_pago',
+            'monto'       => 35.00,
+        ]);
+        app(CitaService::class)->confirmar($cita);
+        $cita->refresh();
+
+        $room = $this->forzarSala($cita);
+
+        $this->postBroadcastAuth($cliente, 'private-video-room.'.$room->room_token)
+            ->assertForbidden();
+    }
+
+    /** 5. room_token inexistente (no adivinable) → 403. */
+    public function test_room_token_inexistente_no_autoriza_canal_privado(): void
+    {
+        [$cliente, , $cita] = $this->citaVirtualConfirmadaEnVentana();
+
+        $this->postBroadcastAuth($cliente, 'private-video-room.token-que-no-existe')
+            ->assertForbidden();
+    }
+
+    /** 6. Sin autenticación → 403 (canal privado guarded). */
+    public function test_usuario_no_autenticado_no_autoriza_canal_privado(): void
+    {
+        [, , $cita] = $this->citaVirtualConfirmadaEnVentana();
+        $room = $cita->videoRoom;
+
+        $this->postBroadcastAuth(null, 'private-video-room.'.$room->room_token)
+            ->assertForbidden();
     }
 }
