@@ -60,12 +60,16 @@ return [
     |--------------------------------------------------------------------------
     |
     | Here you may specify the default timezone for your application, which
-    | will be used by the PHP date and date-time functions. The timezone
-    | is set to "UTC" by default as it is suitable for most use cases.
+    | will be used by the PHP date and date-time functions.
+    |
+    | LexCita opera en El Salvador (America/El_Salvador, UTC-6). Las fechas de
+    | citas (citas.fecha) y horas (hora_inicio/hora_fin) se guardan como hora
+    | local salvadoreña, así que "hoy", "próximas" y la ventana de videollamada
+    | deben calcularse en este huso, no en UTC. Configurable vía APP_TIMEZONE.
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'America/El_Salvador'),
 
     /*
     |--------------------------------------------------------------------------
