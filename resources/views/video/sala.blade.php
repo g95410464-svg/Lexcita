@@ -85,21 +85,21 @@
 {{-- Variables inyectadas por Blade (server-side) --}}
 <script id="datos-sala" type="application/json">
 {
-    "roomToken":  {{ Js::from($room->room_token) }},
-    "channel":    {{ Js::from('video-room.' . $room->room_token) }},
-    "myUserId":   {{ Js::from((string) $user->id) }},
-    "peerUserId": {{ Js::from((string) $peer->id) }},
-    "esAbogado":  {{ Js::from($esAbogado) }},
-    "esPrimero":  {{ Js::from($esPrimero) }},
-    "userNombre": {{ Js::from($user->nombre) }},
-    "peerNombre": {{ Js::from($peer->nombre) }},
-    "csrf":       {{ Js::from(csrf_token()) }},
-    "stun":       {{ Js::from($stun['iceServers'] ?? []) }},
-    "urlOffer":   {{ Js::from(route('video.offer', $room->room_token)) }},
-    "urlAnswer":  {{ Js::from(route('video.answer', $room->room_token)) }},
-    "urlIce":     {{ Js::from(route('video.ice', $room->room_token)) }},
-    "urlLeave":   {{ Js::from(route('video.leave', $room->room_token)) }},
-    "urlVolver":  {{ Js::from($esAbogado ? route('abogado.dashboard') : route('cliente.dashboard')) }}
+    "roomToken":  @json($room->room_token),
+    "channel":    @json('video-room.' . $room->room_token),
+    "myUserId":   @json((string) $user->id),
+    "peerUserId": @json((string) $peer->id),
+    "esAbogado":  @json($esAbogado),
+    "esPrimero":  @json($esPrimero),
+    "userNombre": @json($user->nombre),
+    "peerNombre": @json($peer->nombre),
+    "csrf":       @json(csrf_token()),
+    "stun":       @json($stun['iceServers'] ?? []),
+    "urlOffer":   @json(route('video.offer', $room->room_token)),
+    "urlAnswer":  @json(route('video.answer', $room->room_token)),
+    "urlIce":     @json(route('video.ice', $room->room_token)),
+    "urlLeave":   @json(route('video.leave', $room->room_token)),
+    "urlVolver":  @json($esAbogado ? route('abogado.dashboard') : route('cliente.dashboard'))
 }
 </script>
 
@@ -173,6 +173,14 @@
     async function empezarStreamLocal() {
         local = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         elVideoLocal.srcObject = local;
+        // FASE 5 — verificación local (corta y sin datos sensibles).
+        if (elVideoLocal.srcObject !== local) {
+            console.warn('[LexCita] no se pudo enlazar el stream local al <video>');
+        } else {
+            console.log('[LexCita] cámara y micrófono listos (' +
+                local.getVideoTracks().length + ' vídeo, ' +
+                local.getAudioTracks().length + ' audio)');
+        }
         local.getTracks().forEach(function (t) { pc.addTrack(t, local); });
     }
 
