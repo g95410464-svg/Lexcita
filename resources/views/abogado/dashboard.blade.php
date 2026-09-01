@@ -44,6 +44,13 @@
                 <span class="text-[11px] font-grotesk font-bold tracking-widest uppercase border border-outline-variant px-3 py-1 text-on-surface-variant">
                     {{ ucfirst($cita->modalidad) }}
                 </span>
+                @if($cita->esVirtual() && $cita->videoRoom)
+                <a href="{{ route('video.sala', $cita->videoRoom->room_token) }}"
+                   class="inline-flex items-center gap-2 bg-secondary text-on-secondary text-[11px] font-grotesk font-bold tracking-widest uppercase px-3 py-1.5 hover:opacity-90 transition-opacity">
+                    <span class="material-symbols-outlined text-[14px]">videocam</span>
+                    Unirse a videollamada
+                </a>
+                @endif
             </div>
             @endforeach
         </div>
@@ -73,6 +80,13 @@
                     <p class="text-sm font-semibold text-on-surface">{{ $cita->cliente->nombre }}</p>
                     <p class="text-[12px] text-outline mt-0.5">{{ $cita->hora_inicio }} · {{ str_replace('_', ' ', ucfirst($cita->tipo)) }}</p>
                 </div>
+                @if($cita->esVirtual() && $cita->videoRoom)
+                <a href="{{ route('video.sala', $cita->videoRoom->room_token) }}"
+                   class="inline-flex items-center gap-2 bg-secondary text-on-secondary text-[11px] font-grotesk font-bold tracking-widest uppercase px-3 py-1.5 hover:opacity-90 transition-opacity">
+                    <span class="material-symbols-outlined text-[14px]">videocam</span>
+                    Videollamada
+                </a>
+                @endif
             </div>
             @endforeach
         </div>

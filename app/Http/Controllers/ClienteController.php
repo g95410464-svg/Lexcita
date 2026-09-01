@@ -19,7 +19,7 @@ class ClienteController extends Controller
         $proximasCitas = $cliente->citasComoCliente()
             ->where('estado', 'confirmada')
             ->where('fecha', '>=', today())
-            ->with('abogado')
+            ->with(['abogado', 'videoRoom'])
             ->orderBy('fecha')->orderBy('hora_inicio')
             ->take(3)
             ->get();
@@ -80,7 +80,7 @@ class ClienteController extends Controller
     public function misCitas()
     {
         $citas = Auth::user()->citasComoCliente()
-            ->with('abogado')
+            ->with(['abogado', 'videoRoom'])
             ->orderByDesc('fecha')
             ->paginate(10);
 

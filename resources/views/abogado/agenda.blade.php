@@ -53,8 +53,33 @@ document.addEventListener('DOMContentLoaded', function () {
             right:  'dayGridMonth,timeGridWeek'
         },
         buttonText: { today: 'Hoy', month: 'Mes', week: 'Semana' },
+        // Marca con un ícono de cámara las citas virtuales confirmadas que ya
+        // tienen sala creada, para indicar que se puede entrar a la videollamada.
+        eventContent: function(arg) {
+            var url = arg.event.extendedProps.url_sala;
+            var cont = document.createElement('div');
+            cont.style.cssText = 'display:flex;align-items:center;gap:4px;width:100%;overflow:hidden;';
+            var text = document.createElement('span');
+            text.textContent = arg.event.title;
+            text.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+            cont.appendChild(text);
+            if (url) {
+                var icon = document.createElement('span');
+                icon.textContent = '📹';
+                icon.style.cssText = 'flex-shrink:0;font-size:11px;';
+                icon.title = 'Unirse a videollamada';
+                cont.appendChild(icon);
+            }
+            return { domNodes: [cont] };
+        },
         eventClick: function(info) {
-            alert('Cita: ' + info.event.title);
+            var url = info.event.extendedProps.url_sala;
+            if (url) {
+                // Abre la MISMA sala (video.sala) en una pestaña nueva.
+                window.open(url, '_blank');
+            } else {
+                alert('Cita: ' + info.event.title);
+            }
         }
     });
     cal.render();

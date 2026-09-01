@@ -13,7 +13,10 @@ return [
     |
     */
 
-    'default' => env('BROADCAST_DRIVER', 'reverb'),
+    // Se prefiere BROADCAST_CONNECTION (estándar Laravel 11/12 y lo que define
+    // phpunit.xml); se mantiene BROADCAST_DRIVER como fallback por compatibilidad
+    // con entornos más antiguos que ya lo tenían configurado.
+    'default' => env('BROADCAST_CONNECTION', env('BROADCAST_DRIVER', 'reverb')),
 
     /*
     |--------------------------------------------------------------------------

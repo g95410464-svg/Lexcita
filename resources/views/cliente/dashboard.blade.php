@@ -136,6 +136,13 @@
                         {{ ucfirst($cita->modalidad) }}
                     </span>
                 </div>
+                @if($cita->esVirtual() && $cita->videoRoom)
+                <a href="{{ route('video.sala', $cita->videoRoom->room_token) }}"
+                   class="inline-flex items-center gap-2 mt-2 text-[11px] font-grotesk font-bold uppercase tracking-widest text-on-secondary bg-secondary px-3 py-1.5 hover:opacity-90 transition-opacity">
+                    <span class="material-symbols-outlined text-[14px]">videocam</span>
+                    Unirse a videollamada
+                </a>
+                @endif
             </div>
 
             {{-- Días restantes --}}

@@ -113,6 +113,15 @@
                             Ticket
                         </a>
                     @endif
+
+                    {{-- Botón unirse a videollamada (cita virtual confirmada con sala) --}}
+                    @if($cita->estaConfirmada() && $cita->esVirtual() && $cita->videoRoom)
+                        <a href="{{ route('video.sala', $cita->videoRoom->room_token) }}"
+                           class="inline-flex items-center gap-2 bg-secondary text-on-secondary text-[11px] font-grotesk font-bold tracking-widest uppercase px-4 py-2 hover:opacity-90 transition-opacity">
+                            <span class="material-symbols-outlined text-[15px]">videocam</span>
+                            Videollamada
+                        </a>
+                    @endif
                 </div>
 
             </div>

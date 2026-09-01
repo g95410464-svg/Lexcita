@@ -6,6 +6,7 @@ use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\AbogadoController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ApiController;
+use App\Http\Controllers\VideoRoomController;
 
 Route::get('/', fn() => redirect()->route('login'));
 Route::get('/login',    [AuthController::class, 'showLogin'])->name('login');
@@ -57,4 +58,15 @@ Route::middleware(['auth', 'verified', 'rol:admin'])->prefix('interno')->name('i
 
 Route::middleware(['auth'])->prefix('api')->name('api.')->group(function () {
     Route::get('/slots', [ApiController::class, 'slots'])->name('slots');
+});
+
+// Sala de videollamada: accesible por cliente Y abogado de la misma cita.
+// La autorización se resuelve server-side en VideoRoomController::salaAccesible
+// (VideoRoomService::validarAcceso). Ruta única GET compartida: video.sala.
+Route::middleware(['auth', 'verified'])->prefix('videollamada')->name('video.')->group(function () {
+    Route::get('/{roomToken}',                [VideoRoomController::class, 'show'])->name('sala');
+    Route::post('/{roomToken}/offer',         [VideoRoomController::class, 'offer'])->name('offer');
+    Route::post('/{roomToken}/answer',        [VideoRoomController::class, 'answer'])->name('answer');
+    Route::post('/{roomToken}/ice',           [VideoRoomController::class, 'ice'])->name('ice');
+    Route::post('/{roomToken}/leave',         [VideoRoomController::class, 'leave'])->name('leave');
 });

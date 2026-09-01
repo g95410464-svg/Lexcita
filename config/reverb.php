@@ -63,10 +63,10 @@ return [
     |
     */
 
-    'allowed_origins' => [
-        env('REVERB_ALLOWED_ORIGIN', 'http://localhost:8000'),
-        env('REVERB_ALLOWED_ORIGIN', 'http://127.0.0.1:8000'),
-    ],
+    'allowed_origins' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('REVERB_ALLOWED_ORIGINS', env('REVERB_ALLOWED_ORIGIN', 'http://localhost:8000,http://127.0.0.1:8000')))
+    ))),
 
     /*
     |--------------------------------------------------------------------------
