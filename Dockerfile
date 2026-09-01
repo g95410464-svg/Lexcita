@@ -27,6 +27,13 @@ ARG VITE_REVERB_HOST
 ARG VITE_REVERB_PORT
 ARG VITE_REVERB_SCHEME
 
+# Exponer las VITE_* públicas como ENV para que Vite las hornee en `npm run build`.
+# Son públicas (van al navegador) — NUNCA agregar REVERB_APP_SECRET/APP_KEY/db/paypal aquí.
+ENV VITE_REVERB_APP_KEY=$VITE_REVERB_APP_KEY \
+    VITE_REVERB_HOST=$VITE_REVERB_HOST \
+    VITE_REVERB_PORT=$VITE_REVERB_PORT \
+    VITE_REVERB_SCHEME=$VITE_REVERB_SCHEME
+
 RUN npm install && npm run build
 
 # ── Caches ─────────────────────────────────────────────────────
