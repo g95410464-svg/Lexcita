@@ -50,6 +50,11 @@
     </div>
 </header>
 
+{{-- TEMPORAL Fase 7: diagnóstico visible en dispositivo movil (retirar al confirmar en prod). --}}
+<div id="diag-visor" class="hidden px-6 py-2 text-[11px] font-grotesk text-on-surface bg-surface-container-high border-b border-white/10">
+    <span class="uppercase tracking-widest text-outline">Diag:</span> <span id="diag-txt">iniciando…</span>
+</div>
+
 {{-- Grid de video --}}
 <main class="flex-1 flex flex-col md:flex-row gap-4 p-4 overflow-auto">
     <div class="flex-1 flex items-center justify-center relative rounded overflow-hidden bg-black/50 min-h-[220px]">
@@ -116,6 +121,7 @@
     var camActiva  = true;
     var conectado  = false;
     var cuelgaEnviado = false;
+    var respuestaRecibida = false;
 
     var elVideoLocal = document.getElementById('video-local');
     var elVideoRemoto = document.getElementById('video-remoto');
@@ -128,6 +134,17 @@
     function setEstado(texto, color) {
         estadoTxt.textContent = texto;
         estadoDot.style.background = color || '#8e9192';
+    }
+
+    // TEMPORAL Fase 7: diagnóstico visible (NO imprime SDP/ICE/tokens).
+    var diagVisor = document.getElementById('diag-visor');
+    var diagTxt   = document.getElementById('diag-txt');
+    function diag(msg) {
+        console.log('[LexCita:diag] ' + msg);
+        if (diagVisor && diagTxt) {
+            diagVisor.classList.remove('hidden');
+            diagTxt.textContent = msg;
+        }
     }
 
     function headers(fn) {
@@ -186,33 +203,58 @@
 
     async function despacharPendientes() {
         if (!pc.remoteDescription) return;
-        while (pendientes.length) { await pc.addIceCandidate(pendientes.shift()); }
+        while (pendientes.length) {
+            await pc.addIceCandidate(pendientes.shift()).catch(function () { /* candidato obsoleto */ });
+        }
     }
 
     async function enviarOferta() {
+        diag('Enviando offer…');
+        console.log('[LexCita RTC] creando offer');
         var offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         setEstado('Esperando a ' + datos.peerNombre + '…', '#e9c349');
+        console.log('[LexCita RTC] offer enviada al backend');
         await post(datos.urlOffer, { sdp: pc.localDescription, target_user_id: datos.peerUserId });
+        diag('Offer enviado. Esperando answer…');
     }
 
     async function alRecibirOferta(data) {
+        // La oferta debe ir dirigida a mí (como en alRecibirIce).
         if (String(data.target_user_id) !== datos.myUserId) return;
+        // Y no puede provenir de mí mismo (Laravel broadcast incluye al emisor):
+        // responder a una oferta propia haría setRemoteDescription(offer) con una
+        // oferta local ya fijada → InvalidStateError en Chrome.
+        if (String(data.user_id) === datos.myUserId) return;
+        // Si la oferta llega ANTES de que iniciar() cree `pc` (carrera de arranque),
+        // no podemos procesarla todavía: el abogado reenviará la oferta (reintento).
+        if (!pc) {
+            console.log('[LexCita RTC] offer llegó antes de iniciar pc; será reenviada');
+            return;
+        }
+        diag('Offer recibida de ' + data.user_id);
+        console.log('[LexCita RTC] offer recibida');
         setEstado('Conectando…', '#e9c349');
         await pc.setRemoteDescription({ type: data.sdp.type, sdp: data.sdp.sdp });
-        await despacharPendientes();
+        console.log('[LexCita RTC] creando answer');
         var answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         await post(datos.urlAnswer, { sdp: pc.localDescription, target_user_id: datos.peerUserId });
+        console.log('[LexCita RTC] answer enviada');
+        diag('Respuesta enviada');
     }
 
     async function alRecibirAnswer(data) {
-        if (String(data.target_user_id) !== datos.myUserId) return;
+        if (String(data.user_id) === datos.myUserId) return;
+        respuestaRecibida = true;
+        diag('Answer recibida de ' + data.user_id);
+        console.log('[LexCita RTC] answer recibida');
         await pc.setRemoteDescription({ type: data.sdp.type, sdp: data.sdp.sdp });
         await despacharPendientes();
     }
 
     async function alRecibirIce(data) {
+        diag('ICE recibido (candidato)');
         if (String(data.target_user_id) !== datos.myUserId) return;
         var cand = data.candidate || {};
         var ice = { candidate: cand.candidate, sdpMid: cand.sdpMid, sdpMLineIndex: cand.sdpMLineIndex };
@@ -231,18 +273,43 @@
     // ── Negociación (FASE 13/14): ABOGADO inicia, CLIENTE responde. ──
     // El abogado SOLO crea la oferta cuando sabe que el cliente está presente,
     // para no emitir una oferta que se pierda si el otro aún no se ha suscrito.
+    //
+    // CAUSA de la carrera (bug de producción): ParticipantJoined se emite en el
+    // controller `show()` ANTES de que el cliente haya arrancado su JS y se
+    // haya suscrito al canal. La oferta del abogado puede volver al cliente
+    // mientras su página aún carga: si llega antes de `pc = crearPeer()`, el
+    // handler la descarta y NADIE genera answer → ambos quedan esperando.
+    // Por eso: además de ignorar las ofertas propias, el abogado REENVÍA la
+    // oferta cada 1.5s hasta recibir answer (renegociación válida).
     var ofertaEnviada = false;
+    var REINTENTO_OFFER_MS = 1500;
 
     async function iniciarNegociacionSiAbogado() {
         if (!datos.esAbogado) return;
-        if (ofertaEnviada) return;
+        if (conectado || respuestaRecibida || ofertaEnviada) return;
         ofertaEnviada = true;
-        await enviarOferta();
+        try {
+            await enviarOferta();
+        } catch (e) {
+            console.log('[LexCita RTC] error al enviar offer, se reintentará: ' + e.message);
+        }
+        programarReintentoOferta();
+    }
+
+    function programarReintentoOferta() {
+        setTimeout(function () {
+            if (conectado || respuestaRecibida) return;
+            ofertaEnviada = false;          // rearmar: permite reenviar
+            iniciarNegociacionSiAbogado();  // re-oferta si el peer no respondió
+        }, REINTENTO_OFFER_MS);
     }
 
     function alRecibirJoined(data) {
+        diag('participant.joined de user_id=' + data.user_id);
+        console.log('[LexCita RTC] participant.joined user_id=' + data.user_id + ' peerUserId=' + datos.peerUserId);
         // Solo nos interesa la llegada del PEER (el otro participante).
         if (String(data.user_id) !== datos.peerUserId) return;
+        console.log('[LexCita RTC] peer detectado, esAbogado=' + datos.esAbogado);
         // Si soy el abogado y el cliente acaba de unirse → iniciar la oferta.
         iniciarNegociacionSiAbogado();
     }
@@ -278,6 +345,7 @@
             .listen('.webrtc.ice-candidate',   alRecibirIce)
             .listen('.participant.joined',     alRecibirJoined)
             .listen('.participant.left',       alRecibirLeft);
+        diag('Suscrito a private-' + datos.channel);
 
         try {
             await empezarStreamLocal();
