@@ -2,463 +2,225 @@
 <html lang="es" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Sala de Videollamada — LexCita</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+    {{-- FASE TEMPORAL: Jitsi IFrame API (incrustado, nunca redirección). --}}
+    <script src="https://meet.jit.si/external_api.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0&display=swap" rel="stylesheet">
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "surface": "#121412", "surface-container": "#1f201e",
-                        "surface-container-high": "#292a29", "on-surface": "#e3e2e0",
-                        "on-surface-variant": "#c4c7c7", "outline": "#8e9192",
-                        "outline-variant": "#444748", "secondary": "#e9c349",
-                        "on-secondary": "#3c2f00", "error": "#ffb4ab", "error-container": "#93000a",
-                    },
-                    fontFamily: { "caslon": ["Libre Caslon Text","serif"], "grotesk": ["Hanken Grotesk","sans-serif"] },
-                    borderRadius: { DEFAULT: "0", lg: "0", xl: "0", full: "9999px" },
-                }
-            }
-        }
-    </script>
-    <style>
-        .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; vertical-align: middle; }
-        body { background-color: #121412; color: #e3e2e0; font-family: 'Hanken Grotesk', sans-serif; }
-        video { background: #0a0b0a; }
-    </style>
+
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    @vite(['resources/js/app.js'])
+
+    <style>
+        :root {
+            --surface: #121412;
+            --surface-container: #1f201e;
+            --surface-container-high: #292a29;
+            --on-surface: #e3e2e0;
+            --on-surface-variant: #c4c7c7;
+            --outline: #8e9192;
+            --secondary: #e9c349;
+            --on-secondary: #3c2f00;
+            --error: #ffb4ab;
+        }
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            margin: 0;
+            min-height: 100dvh;
+            background-color: var(--surface);
+            color: var(--on-surface);
+            font-family: 'Hanken Grotesk', sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.10);
+            background: rgba(0,0,0,0.40);
+        }
+        .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .brand-logo {
+            width: 34px; height: 34px; flex: none;
+            border-radius: 50%;
+            background: var(--secondary); color: var(--on-secondary);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700;
+        }
+        .brand-title { margin: 0; font-size: 13px; font-weight: 700; line-height: 1.1; color: var(--on-surface); }
+        .brand-sub { margin: 0; font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--outline); }
+        #estado-conexion {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--outline);
+            flex: none;
+        }
+        #estado-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--outline); }
+
+        .meta-strip {
+            display: flex; flex-wrap: wrap; gap: 6px 10px;
+            padding: 8px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: var(--surface-container);
+        }
+        .meta-item { font-size: 11px; color: var(--on-surface-variant); }
+        .meta-item strong { color: var(--on-surface); font-weight: 600; }
+
+        main {
+            flex: 1 1 auto;
+            min-height: 0;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+        #jitsi-container {
+            flex: 1 1 auto;
+            min-height: 0;
+            width: 100%;
+            overflow: hidden;
+            background: var(--surface-container);
+        }
+        #jitsi-container.hidden, .hidden { display: none; }
+        .error-box {
+            margin-top: 12px;
+            padding: 12px 14px;
+            border: 1px solid var(--error);
+            background: rgba(255,180,171,0.10);
+            color: var(--error);
+            font-size: 13px;
+            border-radius: 4px;
+        }
+    </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body>
 
-{{-- Encabezado de sala --}}
-<header class="flex items-center justify-between px-6 py-3 border-b border-white/10 bg-black/40">
-    <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-on-secondary text-xs font-bold">GC</div>
-        <div>
-            <p class="font-grotesk text-sm text-on-surface leading-tight">Videollamada — Cita {{ $cita->codigo }}</p>
-            <p class="text-[11px] text-outline font-grotesk uppercase tracking-widest">{{ $esAbogado ? 'Abogado' : 'Cliente' }} · con {{ $peer->nombre }} · Virtual</p>
+    {{-- Encabezado LexCita — la llamada permanece incrustada en la vista. --}}
+    <header>
+        <div class="brand">
+            <div class="brand-logo">GC</div>
+            <div>
+                <p class="brand-title">TU CONEXIÓN LEGAL</p>
+                <p class="brand-sub">Videollamada</p>
+            </div>
         </div>
-    </div>
-    <div id="estado-conexion" class="flex items-center gap-2 text-[11px] font-grotesk uppercase tracking-widest text-outline">
-        <span id="estado-dot" class="w-2 h-2 rounded-full bg-outline"></span>
-        <span id="estado-txt">Conectando…</span>
-    </div>
-</header>
-
-{{-- TEMPORAL Fase 7: visor de diagnóstico SIEMPRE visible para el móvil (sin DevTools). --}}
-{{-- Retirar junto con toda la instrumentación diag() al confirmar en producción. --}}
-<div id="diag-visor" class="px-6 py-2 text-[11px] font-grotesk text-on-surface bg-surface-container-high border-b border-white/10 max-h-48 overflow-y-auto">
-    <span class="uppercase tracking-widest text-outline">Diag:</span>
-    <div id="diag-txt" class="mt-1 whitespace-pre-wrap break-words">esperando…</div>
-</div>
-
-{{-- Grid de video --}}
-<main class="flex-1 flex flex-col md:flex-row gap-4 p-4 overflow-auto">
-    <div class="flex-1 flex items-center justify-center relative rounded overflow-hidden bg-black/50 min-h-[220px]">
-        <video id="video-remoto" autoplay playsinline class="w-full h-full object-cover"></video>
-        <div id="placeholder-remoto" class="absolute inset-0 hidden flex-col items-center justify-center gap-2 text-outline">
-            <span class="material-symbols-outlined text-[40px]">videocam_off</span>
-            <p class="text-sm font-grotesk">Esperando a {{ $peer->nombre }}…</p>
+        <div id="estado-conexion">
+            <span id="estado-dot"></span>
+            <span id="estado-txt">Conectando…</span>
         </div>
-        <span class="absolute bottom-2 left-2 text-[11px] font-grotesk uppercase tracking-widest text-on-surface bg-black/70 px-2 py-1 rounded">{{ $peer->nombre }}</span>
-    </div>
-    <div class="w-full md:w-80 flex flex-col items-center justify-center relative rounded overflow-hidden bg-black/50 min-h-[180px]">
-        <video id="video-local" autoplay playsinline muted class="w-full h-full object-cover"></video>
-        <span class="absolute bottom-2 left-2 text-[11px] font-grotesk uppercase tracking-widest text-on-surface bg-black/70 px-2 py-1 rounded">Tú ({{ $user->nombre }})</span>
-    </div>
-</main>
+    </header>
 
-{{-- Barra de controles --}}
-<footer class="flex items-center justify-center gap-3 px-6 py-4 border-t border-white/10 bg-black/40">
-    <button id="btn-mic" onclick="tc.toggleMic()"
-        class="flex flex-col items-center gap-1 text-[11px] font-grotesk uppercase tracking-widest text-on-surface px-4 py-2 rounded bg-surface-container-high hover:brightness-125 transition">
-        <span class="material-symbols-outlined text-[22px]">mic</span> Micrófono
-    </button>
-    <button id="btn-cam" onclick="tc.toggleCam()"
-        class="flex flex-col items-center gap-1 text-[11px] font-grotesk uppercase tracking-widest text-on-surface px-4 py-2 rounded bg-surface-container-high hover:brightness-125 transition">
-        <span class="material-symbols-outlined text-[22px]">videocam</span> Cámara
-    </button>
-    <button id="btn-cuelga" onclick="tc.cuelga()"
-        class="flex flex-col items-center gap-1 text-[11px] font-grotesk uppercase tracking-widest text-on-error px-5 py-2 rounded bg-error-container hover:brightness-125 transition">
-        <span class="material-symbols-outlined text-[22px]">call_end</span> Colgar
-    </button>
-</footer>
+    {{-- Datos de la consulta. --}}
+    <section class="meta-strip">
+        <span class="meta-item">Cita <strong>{{ $cita->codigo }}</strong></span>
+        <span class="meta-item">Cliente: <strong>{{ $cita->cliente->nombre }}</strong></span>
+        <span class="meta-item">Abogado: <strong>{{ $cita->abogado->nombre }}</strong></span>
+        <span class="meta-item">Fecha: <strong>{{ $cita->fecha->format('d/m/Y') }}</strong></span>
+        <span class="meta-item">Hora: <strong>{{ \Illuminate\Support\Carbon::parse($cita->hora_inicio)->format('H:i') }} – {{ \Illuminate\Support\Carbon::parse($cita->hora_fin)->format('H:i') }}</strong></span>
+    </section>
 
-{{-- Variables inyectadas por Blade (server-side) --}}
-<script id="datos-sala" type="application/json">
-{
-    "roomToken":  @json($room->room_token),
-    "channel":    @json('video-room.' . $room->room_token),
-    "myUserId":   @json((string) $user->id),
-    "peerUserId": @json((string) $peer->id),
-    "esAbogado":  @json($esAbogado),
-    "esPrimero":  @json($esPrimero),
-    "userNombre": @json($user->nombre),
-    "peerNombre": @json($peer->nombre),
-    "csrf":       @json(csrf_token()),
-    "stun":       @json($stun['iceServers'] ?? []),
-    "urlOffer":   @json(route('video.offer', $room->room_token)),
-    "urlAnswer":  @json(route('video.answer', $room->room_token)),
-    "urlIce":     @json(route('video.ice', $room->room_token)),
-    "urlLeave":   @json(route('video.leave', $room->room_token)),
-    "urlVolver":  @json($esAbogado ? route('abogado.dashboard') : route('cliente.dashboard'))
-}
-</script>
+    {{-- Jitsi ocupa la mayor parte de la pantalla (PC, tablet y móvil). --}}
+    <main>
+        <div id="jitsi-container"></div>
+        <div id="jitsi-error" class="error-box hidden"></div>
+    </main>
 
-<script>
-(function () {
-    'use strict';
+    {{-- Variables inyectadas por Blade (solo datos públicos necesarios). --}}
+    <script id="datos-sala" type="application/json">
+    {
+        "roomName":     @json($room->jitsiRoomName()),
+        "userNombre":   @json($user->nombre),
+        "esAbogado":    @json($esAbogado),
+        "urlVolver":    @json($esAbogado ? route('abogado.dashboard') : route('cliente.dashboard'))
+    }
+    </script>
 
-    // ── TEMPORAL Fase 7: visor de diagnóstico SIEMPRE visible (móvil sin DevTools). ──
-    // BOOT se imprime lo más pronto posible: este inline script corre de forma
-    // síncrona al parsear el body, ANTES de cualquier operación que pueda lanzar
-    // excepción (parseo de datos, Echo, RTCPeerConnection, red).
-    function diag(msg) {
-        console.log('[LexCita:diag] ' + msg);
-        var visor = document.getElementById('diag-visor');
-        var texto = document.getElementById('diag-txt');
-        if (visor) { visor.classList.remove('hidden'); }
-        if (texto) {
-            texto.textContent = (texto.textContent && texto.textContent.indexOf('esperando') === 0 ? '' : texto.textContent ? texto.textContent + '\n' : '') + '▶ ' + msg;
-            if (visor) { visor.scrollTop = visor.scrollHeight; }
+    <script>
+    (function () {
+        'use strict';
+
+        var datos;
+        try {
+            datos = JSON.parse(document.getElementById('datos-sala').textContent);
+        } catch (e) {
+            mostrarError('Datos de sala inválidos: ' + (e && e.message ? e.message : e));
+            return;
         }
-    }
-    function diagError(nombre, e) {
-        diag('ERROR: ' + nombre + ': ' + (e && e.message ? e.message : e));
-    }
-    diag('BOOT');
 
-    // Que ninguna excepción no capturada quede muda en el visor.
-    window.addEventListener('error', function (ev) {
-        diag('ERROR: global: ' + ev.message);
-    });
-    window.addEventListener('unhandledrejection', function (ev) {
-        diagError('promesa', (ev && ev.reason) || 'sin razón');
-    });
+        var contenedor = document.getElementById('jitsi-container');
+        var estadoTxt  = document.getElementById('estado-txt');
+        var estadoDot  = document.getElementById('estado-dot');
+        var volviendo  = false;
 
-    var datos;
-    try {
-        datos = JSON.parse(document.getElementById('datos-sala').textContent);
-    } catch (e) {
-        diagError('datosSala', e);
-        return;
-    }
-    var csrf    = datos.csrf;
-    var pc      = null;
-    var local   = null;
-    var pendientes = [];   // cola de ICE hasta tener remoteDescription
-    var micActivo  = true;
-    var camActiva  = true;
-    var conectado  = false;
-    var cuelgaEnviado = false;
-    var respuestaRecibida = false;
+        function setEstado(texto, color) {
+            if (estadoTxt) estadoTxt.textContent = texto;
+            if (estadoDot) estadoDot.style.background = color || '#8e9192';
+        }
 
-    var elVideoLocal = document.getElementById('video-local');
-    var elVideoRemoto = document.getElementById('video-remoto');
-    var elPlaceholder = document.getElementById('placeholder-remoto');
-    var estadoDot = document.getElementById('estado-dot');
-    var estadoTxt = document.getElementById('estado-txt');
-    var btnMic = document.getElementById('btn-mic');
-    var btnCam = document.getElementById('btn-cam');
-
-    function setEstado(texto, color) {
-        estadoTxt.textContent = texto;
-        estadoDot.style.background = color || '#8e9192';
-    }
-
-    // diag()/diagError() se definen al inicio del script (ver BOOT arriba).
-
-    function headers(fn) {
-        var h = { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf };
-        if (fn) h['X-Socket-ID'] = fn;
-        return h;
-    }
-
-    async function post(url, body) {
-        var res = await fetch(url, { method: 'POST', headers: headers(), body: JSON.stringify(body || {}) });
-        if (!res.ok) { throw new Error('POST ' + url + ' -> ' + res.status); }
-        return res.json();
-    }
-
-    function crearPeer() {
-        pc = new RTCPeerConnection({ iceServers: datos.stun });
-
-        pc.addEventListener('icecandidate', function (e) {
-            if (e.candidate) {
-                post(datos.urlIce, {
-                    candidate: { candidate: e.candidate.candidate, sdpMid: e.candidate.sdpMid, sdpMLineIndex: e.candidate.sdpMLineIndex },
-                    target_user_id: datos.peerUserId,
-                }).catch(function (e) { diagError('icecandidate_POST', e); });
+        function mostrarError(msg) {
+            var err = document.getElementById('jitsi-error');
+            if (err) {
+                err.classList.remove('hidden');
+                err.textContent = msg;
             }
-        });
-
-        pc.addEventListener('track', function (e) {
-            if (e.streams && e.streams[0]) {
-                elVideoRemoto.srcObject = e.streams[0];
-                elPlaceholder.classList.add('hidden');
-            }
-        });
-
-        pc.addEventListener('connectionstatechange', function () {
-            if (pc.connectionState === 'connected') { conectado = true; setEstado('En llamada', '#4caf82'); }
-            else if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
-                if (!cuelgaEnviado) setEstado('Reconectando…', '#e9c349');
-            }
-        });
-        return pc;
-    }
-
-    async function empezarStreamLocal() {
-        local = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        elVideoLocal.srcObject = local;
-        // FASE 5 — verificación local (corta y sin datos sensibles).
-        if (elVideoLocal.srcObject !== local) {
-            console.warn('[LexCita] no se pudo enlazar el stream local al <video>');
-        } else {
-            console.log('[LexCita] cámara y micrófono listos (' +
-                local.getVideoTracks().length + ' vídeo, ' +
-                local.getAudioTracks().length + ' audio)');
+            if (contenedor) contenedor.classList.add('hidden');
         }
-        local.getTracks().forEach(function (t) { pc.addTrack(t, local); });
-    }
 
-    async function despacharPendientes() {
-        if (!pc.remoteDescription) return;
-        while (pendientes.length) {
-            try { await pc.addIceCandidate(pendientes.shift()); }
-            catch (e) { diagError('addIceCandidate_pendiente', e); }
-        }
-    }
-
-    async function enviarOferta() {
-        diag('OFRECER: creando offer…');
-        var offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        diag('OFRECER: local desc fijada (offer)');
-        setEstado('Esperando a ' + datos.peerNombre + '…', '#e9c349');
-        await post(datos.urlOffer, { sdp: pc.localDescription, target_user_id: datos.peerUserId });
-        diag('OFRECER: POST /offer enviado');
-    }
-
-    async function alRecibirOferta(data) {
-        diag('OFFER RX de user_id=' + data.user_id + ' target=' + data.target_user_id);
-        // La oferta debe ir dirigida a mí (como en alRecibirIce).
-        if (String(data.target_user_id) !== datos.myUserId) {
-            diag('OFFER ignorada (target=' + data.target_user_id + ' ≠ my=' + datos.myUserId + ')');
-            return;
-        }
-        diag('TARGET OK');
-        // Y no puede provenir de mí mismo (Laravel broadcast incluye al emisor):
-        // responder a una oferta propia haría setRemoteDescription(offer) con una
-        // oferta local ya fijada → InvalidStateError en Chrome.
-        if (String(data.user_id) === datos.myUserId) {
-            diag('OFFER propia ignorada');
-            return;
-        }
-        // Si la oferta llega ANTES de que iniciar() cree `pc` (carrera de arranque),
-        // no podemos procesarla todavía: el abogado reenviará la oferta (reintento).
-        if (!pc) {
-            diag('ERROR: pcNull: offer llegó con pc null (se espera el reintento del abogado)');
-            return;
-        }
-        setEstado('Conectando…', '#e9c349');
-        try {
-            await pc.setRemoteDescription({ type: data.sdp.type, sdp: data.sdp.sdp });
-            diag('REMOTE DESC OK');
-        } catch (e) {
-            diagError('setRemoteDescription', e);
-            return;
-        }
-        try {
-            var answer = await pc.createAnswer();
-            diag('ANSWER CREADA');
-        } catch (e) {
-            diagError('createAnswer', e);
-            return;
-        }
-        try {
-            await pc.setLocalDescription(answer);
-            diag('LOCAL DESC OK');
-        } catch (e) {
-            diagError('setLocalDescription', e);
-            return;
-        }
-        try {
-            await post(datos.urlAnswer, { sdp: pc.localDescription, target_user_id: datos.peerUserId });
-            diag('POST ANSWER 200');
-        } catch (e) {
-            diagError('postAnswer', e);
-        }
-    }
-
-    async function alRecibirAnswer(data) {
-        if (String(data.user_id) === datos.myUserId) { diag('ANSWER propia ignorada'); return; }
-        respuestaRecibida = true;
-        diag('ANSWER RX de user_id=' + data.user_id);
-        try {
-            await pc.setRemoteDescription({ type: data.sdp.type, sdp: data.sdp.sdp });
-            diag('REMOTE ANSWER OK');
-        } catch (e) {
-            diagError('setRemoteDescription_answer', e);
-        }
-        try {
-            await despacharPendientes();
-        } catch (e) {
-            diagError('despacharPendientes', e);
-        }
-    }
-
-    async function alRecibirIce(data) {
-        diag('ICE RX');
-        if (String(data.target_user_id) !== datos.myUserId) { diag('ICE ignorado (target≠my)'); return; }
-        var cand = data.candidate || {};
-        var ice = { candidate: cand.candidate, sdpMid: cand.sdpMid, sdpMLineIndex: cand.sdpMLineIndex };
-        if (pc && pc.remoteDescription) {
-            try { await pc.addIceCandidate(ice); } catch (e) { diagError('addIceCandidate', e); }
-        } else {
-            pendientes.push(ice);
-        }
-    }
-
-    function alRecibirLeft(data) {
-        if (String(data.user_id) === datos.myUserId) return;
-        setEstado(datos.peerNombre + ' abandonó la llamada', '#ffb4ab');
-        if (elVideoRemoto.srcObject) { elVideoRemoto.srcObject.getTracks().forEach(function (t) { t.stop(); }); }
-        elVideoRemoto.srcObject = null;
-        elPlaceholder.classList.remove('hidden');
-    }
-
-    // ── Negociación (FASE 13/14): ABOGADO inicia, CLIENTE responde. ──
-    // El abogado SOLO crea la oferta cuando sabe que el cliente está presente,
-    // para no emitir una oferta que se pierda si el otro aún no se ha suscrito.
-    //
-    // CAUSA de la carrera (bug de producción): ParticipantJoined se emite en el
-    // controller `show()` ANTES de que el cliente haya arrancado su JS y se
-    // haya suscrito al canal. La oferta del abogado puede volver al cliente
-    // mientras su página aún carga: si llega antes de `pc = crearPeer()`, el
-    // handler la descarta y NADIE genera answer → ambos quedan esperando.
-    // Por eso: además de ignorar las ofertas propias, el abogado REENVÍA la
-    // oferta cada 1.5s hasta recibir answer (renegociación válida).
-    var ofertaEnviada = false;
-    var REINTENTO_OFFER_MS = 1500;
-
-    async function iniciarNegociacionSiAbogado() {
-        if (!datos.esAbogado) return;
-        if (conectado || respuestaRecibida || ofertaEnviada) return;
-        ofertaEnviada = true;
-        try {
-            await enviarOferta();
-        } catch (e) {
-            diagError('enviarOferta', e);
-        }
-        programarReintentoOferta();
-    }
-
-    function programarReintentoOferta() {
-        setTimeout(function () {
-            if (conectado || respuestaRecibida) return;
-            ofertaEnviada = false;          // rearmar: permite reenviar
-            iniciarNegociacionSiAbogado();  // re-oferta si el peer no respondió
-        }, REINTENTO_OFFER_MS);
-    }
-
-    function alRecibirJoined(data) {
-        diag('participant.joined de user_id=' + data.user_id);
-        console.log('[LexCita RTC] participant.joined user_id=' + data.user_id + ' peerUserId=' + datos.peerUserId);
-        // Solo nos interesa la llegada del PEER (el otro participante).
-        if (String(data.user_id) !== datos.peerUserId) return;
-        console.log('[LexCita RTC] peer detectado, esAbogado=' + datos.esAbogado);
-        // Si soy el abogado y el cliente acaba de unirse → iniciar la oferta.
-        iniciarNegociacionSiAbogado();
-    }
-
-    window.tc = {
-        toggleMic: function () {
-            micActivo = !micActivo;
-            if (local) local.getAudioTracks().forEach(function (t) { t.enabled = micActivo; });
-            btnMic.querySelector('.material-symbols-outlined').textContent = micActivo ? 'mic' : 'mic_off';
-        },
-        toggleCam: function () {
-            camActiva = !camActiva;
-            if (local) local.getVideoTracks().forEach(function (t) { t.enabled = camActiva; });
-            btnCam.querySelector('.material-symbols-outlined').textContent = camActiva ? 'videocam' : 'videocam_off';
-        },
-        cuelga: function () {
-            if (cuelgaEnviado) return;
-            cuelgaEnviado = true;
-            post(datos.urlLeave, {}).catch(function () {});
-            if (local) local.getTracks().forEach(function (t) { t.stop(); });
-            if (pc) pc.close();
+        // Al colgar: volver SOLO al dashboard según rol. No se cancela la cita,
+        // no se toca payment_status y no se elimina la VideoRoom.
+        function volver() {
+            if (volviendo) return;
+            volviendo = true;
             window.location.href = datos.urlVolver;
-        },
-    };
+        }
 
-    async function iniciar() {
-        if (!window.Echo) {
-            diag('ERROR: echoNoDefinido: window.Echo es undefined');
-            setEstado('Servicio de tiempo real no disponible', '#ffb4ab');
+        if (typeof JitsiMeetExternalAPI === 'undefined') {
+            mostrarError('No se pudo cargar el módulo de videollamada (Jitsi). Comprueba la conexión y recarga la página.');
             return;
         }
 
+        var api;
         try {
-            pc = crearPeer();
-            diag('PC CREADO');
-
-            window.Echo.private(datos.channel)
-                .listen('.webrtc.offer',           alRecibirOferta)
-                .listen('.webrtc.answer',          alRecibirAnswer)
-                .listen('.webrtc.ice-candidate',   alRecibirIce)
-                .listen('.participant.joined',     alRecibirJoined)
-                .listen('.participant.left',       alRecibirLeft);
-            diag('ECHO SUSCRITO a private-' + datos.channel);
-
-            await empezarStreamLocal();
-            diag('STREAM LOCAL OK');
-            setEstado('Listo. Conectando…', '#e9c349');
-
-            if (datos.esAbogado) {
-                // ABOGADO = iniciador, pero solo ofrece cuando el cliente está presente.
-                if (!datos.esPrimero) {
-                    // Ya hay otro participante (el cliente) → ofrecer ahora.
-                    await iniciarNegociacionSiAbogado();
-                } else {
-                    // Soy el primero en llegar: espero el participant.joined del cliente.
-                    setEstado('Esperando a ' + datos.peerNombre + '…', '#e9c349');
+            api = new JitsiMeetExternalAPI('meet.jit.si', {
+                roomName: datos.roomName,
+                width: '100%',
+                height: '100%',
+                parentNode: contenedor,
+                configOverwrite: {
+                    prejoinPageEnabled: false,
+                    MOBILE_APP_PROMO: false
+                },
+                interfaceConfigOverwrite: {
+                    TOOLBAR_BUTTONS: ['microphone', 'camera', 'desktop', 'chat', 'tileview', 'fullscreen', 'hangup'],
+                    SHOW_JITSI_WATERMARK: false,
+                    SHOW_WATERMARK_FOR_GUESTS: false
+                },
+                userInfo: {
+                    displayName: datos.userNombre
                 }
-            } else {
-                // CLIENTE = respondedor: espera la oferta del abogado.
-                setEstado('Esperando a ' + datos.peerNombre + '…', '#e9c349');
-            }
+            });
         } catch (e) {
-            diagError('iniciar', e);
-            setEstado('No se pudo acceder a cámara/micrófono', '#ffb4ab');
-            elPlaceholder.classList.remove('hidden');
+            mostrarError('Error al iniciar la videollamada: ' + (e && e.message ? e.message : e));
+            return;
         }
-    }
 
-    // FASE 18: al cerrar/abandonar la pestaña, avisar al peer incluso si el
-    // usuario no pulsó "Colgar". sendBeacon no depende de un fetch normal.
-    window.addEventListener('pagehide', function () {
-        if (cuelgaEnviado) return; // ya se notificó con el botón Colgar
-        if (navigator.sendBeacon) {
-            var fd = new FormData();
-            fd.append('_token', csrf);
-            navigator.sendBeacon(datos.urlLeave, fd);
-        }
-    });
+        api.on('videoConferenceJoined', function () {
+            setEstado('En llamada', '#4caf82');
+        });
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', iniciar);
-    } else {
-        iniciar();
-    }
-})();
-</script>
+        api.on('participantLeft', function () {
+            setEstado('Esperando al otro participante…', '#e9c349');
+        });
+
+        // Colgar / salir: el usuario ya colgó dentro de Jitsi.
+        api.on('videoConferenceLeft', volver);
+        api.on('readyToClose', volver);
+    })();
+    </script>
 
 </body>
 </html>

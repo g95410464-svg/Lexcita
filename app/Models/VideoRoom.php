@@ -107,4 +107,17 @@ class VideoRoom extends Model
     {
         return $query->whereIn('status', ['disponible', 'en_espera', 'en_consulta']);
     }
+
+    /**
+     * Nombre de sala para Jitsi (fase temporal incrustada).
+     *
+     * Deriva EXCLUSIVAMENTE del room_token (no adivinable) de modo que cliente y
+     * abogado de la MISMA VideoRoom obtienen exactamente el mismo nombre, dos
+     * salas distintas producen nombres distintos, y no se filtra código de cita,
+     * emails, nombres ni ids internos. El room_token de BD no se modifica.
+     */
+    public function jitsiRoomName(): string
+    {
+        return 'LexCita-' . hash('sha256', $this->room_token);
+    }
 }
