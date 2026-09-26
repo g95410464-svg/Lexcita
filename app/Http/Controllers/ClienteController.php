@@ -35,7 +35,7 @@ class ClienteController extends Controller
         return view('cliente.nueva-cita', compact('abogados'));
     }
 
-    public function crearCita(Request $request)
+    public function crearCita(Request $request, CitaService $citaService)
     {
         $data = $request->validate([
             'abogado_id'  => 'required|exists:usuarios,id',
@@ -45,6 +45,14 @@ class ClienteController extends Controller
             'modalidad'   => 'required|in:presencial,virtual',
             'descripcion' => 'nullable|string|max:500',
         ]);
+
+        // Revalidar el horario al guardar: disponibilidad, fecha y hora futura.
+        $slots = $citaService->getSlotsDisponibles((int) $data['abogado_id'], $data['fecha']);
+        if (!in_array($data['hora_inicio'], array_column($slots, 'hora'), true)) {
+            return back()->withErrors([
+                'hora_inicio' => 'Ese horario ya no está disponible. Por favor elige otro.',
+            ])->withInput();
+        }
 
         // Calcular hora_fin (slots de 60 min)
         $horaFin = Carbon::createFromFormat('H:i', $data['hora_inicio'])->addHour()->format('H:i');

@@ -335,6 +335,7 @@ window.addEventListener('load', function () {
         const ajuste    = (primerDia === 0) ? 6 : primerDia - 1;
         const diasMes   = new Date(store.anio, store.mes + 1, 0).getDate();
         const hoy       = new Date(); hoy.setHours(0,0,0,0);
+        const fechaFeria = @json(\App\Services\CitaService::FECHA_FERIA);
 
         for (let i = 0; i < ajuste; i++) {
             const vacio = document.createElement('div');
@@ -348,14 +349,15 @@ window.addEventListener('load', function () {
             const esFinSem   = (diaSemana === 0 || diaSemana === 6);
             const esPasado   = fecha < hoy;
             const fechaStr   = store.anio + '-' + String(store.mes+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+            const bloqueado  = esPasado || (esFinSem && fechaStr !== fechaFeria);
 
             const div = document.createElement('div');
             div.className = 'cal-day selectable-card selectable-day transition-all duration-200' +
-                (esFinSem || esPasado ? ' disabled' : '') +
+                (bloqueado ? ' disabled' : '') +
                 (fechaStr === store.fechaSeleccionada ? ' selected' : '');
             div.textContent = d;
 
-            if (!esFinSem && !esPasado) {
+            if (!bloqueado) {
                 div.dataset.fecha = fechaStr;
                 div.addEventListener('click', function() {
                     window.seleccionarFecha(this.dataset.fecha, this);

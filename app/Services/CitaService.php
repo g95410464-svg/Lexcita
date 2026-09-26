@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\DB;
 
 class CitaService
 {
+    // Excepción temporal de feria: reutiliza el horario activo del viernes.
+    public const FECHA_FERIA = '2026-09-26';
+
     /**
      * Retorna slots disponibles para un abogado en una fecha dada.
      * Genera slots de 60 min dentro del horario disponible del día,
@@ -16,7 +19,9 @@ class CitaService
     public function getSlotsDisponibles(int $abogadoId, string $fecha): array
     {
         $carbon   = Carbon::parse($fecha);
-        $diaNombre = $this->carbonDayToSpanish($carbon->dayOfWeekIso); // 1=lun .. 5=vie
+        $diaNombre = $carbon->toDateString() === self::FECHA_FERIA
+            ? 'viernes'
+            : $this->carbonDayToSpanish($carbon->dayOfWeekIso);
 
         if (!$diaNombre) {
             return []; // fin de semana
@@ -44,9 +49,14 @@ class CitaService
         $fin      = Carbon::createFromFormat('H:i:s', $horario->hora_fin);
         $horaFin  = $fin->copy()->subHour(); // último slot empieza 1h antes del cierre
 
+        $ahora = Carbon::now();
+
         while ($inicio <= $horaFin) {
             $hora = $inicio->format('H:i');
-            if (!in_array($hora . ':00', $reservadas) && !in_array($hora, $reservadas)) {
+            $inicioSlot = $carbon->copy()->setTimeFromTimeString($hora . ':00');
+            if ($inicioSlot->gt($ahora)
+                && !in_array($hora . ':00', $reservadas)
+                && !in_array($hora, $reservadas)) {
                 $slots[] = [
                     'hora'       => $hora,
                     'hora_label' => $inicio->format('g:i A'),
