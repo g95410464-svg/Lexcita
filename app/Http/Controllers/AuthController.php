@@ -41,9 +41,19 @@ class AuthController extends Controller
     {
         $data = $request->validate([
             'nombre'             => 'required|string|max:120',
-            'email'              => 'required|email|unique:usuarios,email',
-            'password'           => 'required|min:8|confirmed',
+            'email'              => 'required|email|max:255|unique:usuarios,email',
+            'password'           => 'required|string|min:8|confirmed',
             'telefono_whatsapp'  => 'required|string|max:20',
+        ], [
+            'nombre.required' => 'Ingresa tu nombre completo.',
+            'email.unique' => 'Este correo ya está registrado. Inicia sesión con tu cuenta.',
+            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
+            'password.confirmed' => 'Las contraseñas no coinciden.',
+        ], [
+            'nombre' => 'nombre completo',
+            'email' => 'correo electrónico',
+            'password' => 'contraseña',
+            'telefono_whatsapp' => 'teléfono de WhatsApp',
         ]);
 
         $usuario = Usuario::create([
@@ -52,9 +62,11 @@ class AuthController extends Controller
             'password'          => Hash::make($data['password']),
             'rol'               => 'cliente',
             'telefono_whatsapp' => $data['telefono_whatsapp'],
+            'activo'            => true,
         ]);
 
         Auth::login($usuario);
+        $request->session()->regenerate();
 
         return redirect()->route('cliente.dashboard');
     }

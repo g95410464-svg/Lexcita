@@ -252,12 +252,11 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/booking-slots.js') }}"></script>
 <script>
 // Alpine.js store para manejo de estado global – inicializado vía alpine:init
-console.log('[LEXCITA] nueva-cita script cargado');
 
 document.addEventListener('alpine:init', () => {
-    console.log('[LEXCITA] alpine:init recibido');
     Alpine.store('booking', {
         step: 1,
         abogadoId: null,
@@ -268,6 +267,11 @@ document.addEventListener('alpine:init', () => {
         mes: new Date().getMonth(),
 
         setAbogado(id, nombre) {
+            if (this.abogadoId !== id) {
+                this.fechaSeleccionada = null;
+                this.horaSeleccionada = null;
+                window.limpiarSlots?.();
+            }
             this.abogadoId = id;
             this.abogadoNom = nombre;
             this.step = 2;
@@ -276,6 +280,7 @@ document.addEventListener('alpine:init', () => {
         setFecha(fecha) {
             this.fechaSeleccionada = fecha;
             this.horaSeleccionada = null;
+            this.step = 2;
         },
 
         setHora(hora) {
@@ -295,7 +300,6 @@ document.addEventListener('alpine:init', () => {
         }
     });
 
-    console.log('[LEXCITA] booking store creado');
 });
 
 window.addEventListener('load', function () {
@@ -389,22 +393,15 @@ window.addEventListener('load', function () {
     };
 
     // ─── Slots ─────────────────────────────────────────────
-    function cargarSlots(fecha) {
-        const store = Alpine.store('booking');
-        const cont = document.getElementById('slots-container');
-        cont.innerHTML = '<div class="flex items-center gap-2 py-6 justify-center">' +
+    const cont = document.getElementById('slots-container');
+    const slotsLoader = window.createSlotLoader({
+        url: @json(route('api.slots')),
+        onLoading() {
+            cont.innerHTML = '<div class="flex items-center gap-2 py-6 justify-center">' +
             '<span class="material-symbols-outlined text-outline animate-spin" style="font-size:22px;">refresh</span>' +
             '<p class="text-outline text-xs">Cargando horarios...</p></div>';
-
-        fetch('/api/slots?abogado_id=' + store.abogadoId + '&fecha=' + fecha, {
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(r => r.json())
-        .then(slots => {
+        },
+        onSuccess(slots) {
             cont.innerHTML = '';
             if (!slots.length) {
                 cont.innerHTML = '<div class="flex flex-col items-center py-8 gap-2">' +
@@ -426,11 +423,25 @@ window.addEventListener('load', function () {
                 grid.appendChild(b);
             });
             cont.appendChild(grid);
-        })
-        .catch(() => {
+        },
+        onError() {
             cont.innerHTML = '<p class="text-error text-xs py-4">Error al cargar horarios. Intenta de nuevo.</p>';
-        });
+        },
+    });
+
+    function cargarSlots(fecha) {
+        slotsLoader.select(Alpine.store('booking').abogadoId, fecha);
     }
+
+    window.limpiarSlots = function () {
+        slotsLoader.reset();
+        document.getElementById('fecha_input').value = '';
+        document.getElementById('hora_inicio').value = '';
+        cont.innerHTML = '<p class="text-outline text-xs py-4">Selecciona una fecha para ver los horarios.</p>';
+        document.getElementById('resumen').replaceChildren();
+        window.renderCalendario();
+    };
+    window.addEventListener('pagehide', () => slotsLoader.reset());
 
     window.seleccionarSlot = function(hora, horaLabel, btn) {
         Alpine.store('booking').setHora(hora);
@@ -473,6 +484,7 @@ window.addEventListener('load', function () {
 
     window.volverPaso2 = function() {
         Alpine.store('booking').volverPaso2();
+        document.getElementById('hora_inicio').value = '';
         document.getElementById('step-ind-3').classList.remove('step-active');
         document.getElementById('step-ind-3').classList.add('step-inactive');
     };

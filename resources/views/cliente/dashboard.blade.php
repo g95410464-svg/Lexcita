@@ -24,11 +24,6 @@
 
 {{-- ── Stats ───────────────────────────────────────────────── --}}
 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-    @php
-        $pendientes  = auth()->user()->citasComoCliente()->where('estado','pendiente_pago')->count();
-        $completadas = auth()->user()->citasComoCliente()->where('estado','completada')->count();
-    @endphp
-
     <div class="bg-surface-container border border-outline-variant p-5 flex flex-col gap-3">
         <span class="material-symbols-outlined text-outline text-[20px]">calendar_month</span>
         <div>
@@ -63,13 +58,12 @@
 </div>
 
 {{-- ── Citas pendientes de pago (alerta) ──────────────────── --}}
-@php $citasPendPago = auth()->user()->citasComoCliente()->where('estado','pendiente_pago')->with('abogado')->orderBy('fecha')->get(); @endphp
 @if($citasPendPago->isNotEmpty())
 <div class="bg-[#1a1400] border border-[#3a3000] p-4 mb-6 flex items-start gap-3">
     <span class="material-symbols-outlined text-secondary text-[20px] mt-0.5">warning</span>
     <div class="flex-1 min-w-0">
         <p class="text-secondary text-sm font-grotesk font-semibold mb-1">
-            {{ $citasPendPago->count() }} cita(s) pendiente(s) de pago
+            {{ $pendientes }} cita(s) pendiente(s) de pago
         </p>
         <div class="flex flex-wrap gap-2 mt-2">
             @foreach($citasPendPago as $cp)
@@ -80,6 +74,11 @@
                 Pagar — {{ $cp->fecha->format('d/m') }} {{ $cp->hora_inicio }}
             </a>
             @endforeach
+            @if($pendientes > $citasPendPago->count())
+            <a href="{{ route('cliente.mis-citas') }}" class="text-secondary text-sm underline">
+                Ver todas mis citas
+            </a>
+            @endif
         </div>
     </div>
 </div>
