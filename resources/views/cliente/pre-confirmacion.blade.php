@@ -50,22 +50,23 @@
     @if(config('services.paypal.client_id'))
     <script src="https://www.paypal.com/sdk/js?client-id={{ urlencode(config('services.paypal.client_id')) }}&currency=USD&components=buttons"></script>
     @endif
+    <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
 </head>
-<body class="min-h-screen flex items-center justify-center p-6">
+<body class="document-page min-h-screen flex items-center justify-center p-4 sm:p-6">
 
-<div class="w-full max-w-lg border border-outline-variant rounded-lg p-8 bg-surface-container-lowest mx-auto">
+<div class="w-full max-w-lg border border-outline-variant rounded-lg p-4 sm:p-8 bg-surface-container-lowest mx-auto">
 
     {{-- Mensaje destacado --}}
-    <div class="bg-surface-container border border-outline-variant p-6 mb-8 rounded-lg">
+    <div class="bg-surface-container border border-outline-variant p-4 sm:p-6 mb-6 rounded-lg">
         <p class="text-[13px] font-grotesk font-semibold tracking-[.18em] uppercase text-outline mb-4">Estado de tu cita</p>
         <h2 class="font-caslon text-2xl font-normal text-on-surface mb-2">Tu cita está en proceso de agendación</h2>
-        <p class="text-lg text-on-surface leading-relaxed">
+        <p class="text-base sm:text-lg text-on-surface leading-relaxed">
             Tu cita está en proceso de agendación. Por favor continua con el pago. Si el pago no se efectúa o no se realiza con éxito, la cita no será confirmada y quedará cancelada/sin reservar.
         </p>
     </div>
 
     {{-- Sección de pago con PayPal inline (JS SDK + Orders API v2) --}}
-    <div class="bg-surface-container border border-outline-variant p-6 mb-8 rounded-lg">
+    <div class="bg-surface-container border border-outline-variant p-4 sm:p-6 mb-6 rounded-lg">
         <p class="text-[13px] font-grotesk font-semibold tracking-[.18em] uppercase text-outline mb-1">Paga tu cita</p>
         <p class="font-caslon text-3xl font-normal text-on-surface mb-4">${{ number_format($cita->monto, 2) }}</p>
 
@@ -101,7 +102,7 @@
     {{-- Información de la cita --}}
     <div class="mt-6 p-4 bg-surface-container border border-outline-variant rounded-lg">
         <p class="text-[11px] font-grotesk font-semibold uppercase tracking-widest text-outline mb-3">Datos de la cita</p>
-        <div class="grid grid-cols-2 gap-2 text-[11px] font-grotesk text-on-surface-variant">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px] font-grotesk text-on-surface-variant">
             <div>
                 <span class="text-outline uppercase tracking-widest">Código</span>
                 <p class="font-grotesk font-medium text-on-surface">{{ $cita->codigo }}</p>

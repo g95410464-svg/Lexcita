@@ -1,0 +1,96 @@
+/* Shared responsive layout. Keep content in the document flow on every screen. */
+[x-cloak] { display: none !important; }
+body.app-shell { display: block; min-width: 0; }
+.app-header { background: #131317; border-bottom: 1px solid #444748; }
+.app-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    max-width: 80rem;
+    margin-inline: auto;
+    padding: 1rem clamp(1rem, 3vw, 2rem);
+}
+.app-brand { display: flex; flex: 0 0 auto; align-items: center; gap: .75rem; }
+.app-brand-label { max-width: 8rem; font-size: .625rem; line-height: 1.5; text-transform: uppercase; letter-spacing: .12em; color: #8e9192; }
+.app-profile { display: flex; align-items: center; justify-content: flex-end; gap: .625rem; min-width: 0; max-width: 22rem; }
+.app-profile-info { min-width: 0; }
+.app-avatar { display: grid; place-items: center; flex: 0 0 2rem; height: 2rem; border-radius: 50%; background: #e9c349; color: #3c2f00; font-size: .75rem; font-weight: 700; }
+.app-profile form { flex-shrink: 0; }
+.app-logout { display: flex; align-items: center; justify-content: center; gap: .375rem; min-width: 44px; min-height: 44px; color: #c4c7c7; font-size: .875rem; }
+.app-desktop-nav { display: none; align-items: center; gap: .25rem; }
+.app-nav-link { display: flex; align-items: center; gap: .5rem; min-height: 44px; padding: .65rem .8rem; color: #c4c7c7; font-size: .875rem; text-decoration: none; }
+.app-nav-link:hover, .app-nav-link[aria-current="page"] { background: rgba(233,195,73,.08); color: #e9c349; }
+.app-nav-link .material-symbols-outlined { font-size: 20px; }
+.app-mobile-menu { border-top: 1px solid #292a29; }
+.app-mobile-menu summary { display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: .65rem 1rem; color: #e9c349; font-size: .875rem; cursor: pointer; list-style: none; }
+.app-mobile-menu summary::-webkit-details-marker { display: none; }
+.app-mobile-menu[open] summary .material-symbols-outlined { transform: rotate(180deg); }
+.app-mobile-menu nav { display: grid; gap: .25rem; padding: 0 1rem 1rem; }
+.app-mobile-menu .app-nav-link { border-left: 2px solid transparent; }
+.app-mobile-menu .app-nav-link[aria-current="page"] { border-left-color: #e9c349; }
+.app-main { width: 100%; max-width: 80rem; min-width: 0; margin-inline: auto; padding: 2rem clamp(1rem, 3vw, 2rem) 3rem; }
+.app-main .grid > *, .document-page .grid > * { min-width: 0; }
+.app-main h1, .app-main h2, .app-main p, .document-page p { overflow-wrap: anywhere; }
+.app-main .material-symbols-outlined { flex-shrink: 0; }
+.app-main input:not([type="checkbox"]):not([type="radio"]), .app-main select, .app-main textarea { min-width: 0; max-width: 100%; }
+.app-main .overflow-x-auto { max-width: 100%; overscroll-behavior-x: contain; }
+.app-main .overflow-x-auto > table { min-width: 42rem; }
+.app-main button, .app-main a.inline-flex, .app-main a.inline-block { min-height: 44px; }
+.app-main .slot-btn { min-height: 44px; }
+.app-main #cal-celdas .cal-day { min-height: 44px; }
+.app-main .appointment-actions { max-width: 100%; }
+.app-main .appointment-actions > a, .app-main .appointment-actions button { justify-content: center; }
+.app-main #resumen { overflow-wrap: anywhere; }
+.app-main #calendario { min-width: 0; }
+.app-main .fc .fc-toolbar { flex-wrap: wrap; gap: .75rem; }
+.app-main .fc .fc-toolbar-chunk { min-width: 0; }
+.app-main .fc .fc-toolbar-title { font-size: clamp(1rem, 3vw, 1.25rem); }
+.app-main .fc .fc-button { min-height: 44px; }
+.revenue-chart { display: flex; align-items: stretch; gap: .75rem; overflow-x: auto; padding-block: .5rem; }
+.revenue-column { display: flex; flex: 1 0 3.5rem; min-width: 0; flex-direction: column; align-items: center; gap: .5rem; }
+.revenue-track { display: flex; align-items: flex-end; width: 100%; height: 9rem; }
+.app-skip-link { position: absolute; top: .5rem; left: 1rem; z-index: 100; transform: translateY(-200%); background: #e9c349; color: #3c2f00; padding: .75rem 1rem; }
+.app-skip-link:focus { transform: none; }
+.app-header :focus-visible, .app-main :focus-visible { outline: 2px solid #e9c349; outline-offset: 3px; }
+
+/* Authentication pages must stay scrollable when a mobile keyboard opens. */
+body.auth-page { min-height: 100svh; padding-top: clamp(1.5rem, 5vh, 3rem); }
+.auth-atmosphere { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.auth-page .auth-main { flex: 1 0 auto; padding-inline: 1rem; }
+.auth-page .auth-footer { position: relative; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 1rem; width: 100%; margin-top: 2rem; padding: 1.5rem; text-align: center; }
+.auth-footer nav { max-width: 100%; }
+.auth-page input { min-width: 0; max-width: 100%; font-size: 16px; }
+.auth-page .glass-panel { min-width: 0; }
+.auth-page main > div:last-child { text-align: center; }
+body.document-page { min-height: 100svh; }
+.document-page > div { min-width: 0; margin-block: auto; }
+.document-page a { overflow-wrap: anywhere; }
+
+@media (min-width: 1280px) {
+    .app-desktop-nav { display: flex; }
+    .app-mobile-menu { display: none; }
+}
+@media (max-width: 639px) {
+    .app-header-inner { gap: .75rem; padding-block: .75rem; }
+    .app-brand { gap: .5rem; }
+    .app-brand-label { display: none; }
+    .app-avatar { display: none; }
+    .app-profile { max-width: calc(100% - 4rem); }
+    .app-logout-label { display: none; }
+    .app-main { padding-top: 1.5rem; }
+    .app-main h1 { font-size: 1.875rem; line-height: 1.2; }
+    .app-main input:not([type="checkbox"]):not([type="radio"]), .app-main select, .app-main textarea { font-size: 16px; }
+    .appointment-row .appointment-info { flex-basis: calc(100% - 9rem); }
+    .appointment-row > a { flex-basis: 100%; justify-content: center; }
+    .app-main .appointment-actions > a, .app-main .appointment-actions > form { flex: 1 1 100%; }
+    .app-main .appointment-actions button { width: 100%; }
+    .app-main .fc .fc-toolbar { align-items: stretch; }
+    .app-main .fc .fc-toolbar-chunk { display: flex; justify-content: center; width: 100%; }
+    .app-main .fc .fc-toolbar-chunk:nth-child(2) { order: -1; }
+    .app-main .fc .fc-daygrid-day-number { padding-inline: 3px; }
+    #modal-abogado > div { max-height: calc(100dvh - 2rem); overflow-y: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .app-shell *, .auth-page * { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
+}

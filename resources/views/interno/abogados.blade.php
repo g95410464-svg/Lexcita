@@ -16,7 +16,7 @@
 
 {{-- Tabla --}}
 <div class="bg-surface-container border border-outline-variant">
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Tabla desplazable horizontalmente">
         <table class="w-full text-sm">
             <thead>
                 <tr class="border-b border-outline-variant bg-surface-container-lowest">
@@ -72,10 +72,10 @@
 </div>
 
 {{-- Modal registro de abogado --}}
-<div id="modal-abogado" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-    <div class="bg-surface-container-low border border-outline-variant w-full max-w-lg">
+<div id="modal-abogado" class="hidden fixed inset-0 bg-black/70 z-50 flex items-start sm:items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="modal-abogado-titulo">
+    <div class="bg-surface-container-low border border-outline-variant w-full max-w-lg my-auto">
         <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
-            <h2 class="font-caslon text-xl text-on-surface">Registrar Abogado</h2>
+            <h2 id="modal-abogado-titulo" class="font-caslon text-xl text-on-surface">Registrar Abogado</h2>
             <button onclick="document.getElementById('modal-abogado').classList.add('hidden')"
                 class="text-outline hover:text-on-surface transition-colors">
                 <span class="material-symbols-outlined">close</span>
@@ -98,7 +98,7 @@
                 <input type="text" name="especialidad" required placeholder="Derecho Familiar"
                     class="w-full bg-transparent border-b border-outline-variant text-on-surface font-grotesk text-sm py-2 px-0 focus:outline-none focus:border-secondary transition-colors placeholder-outline">
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-[11px] font-grotesk font-semibold tracking-[.12em] uppercase text-on-surface-variant mb-2">Contraseña Inicial</label>
                     <input type="password" name="password" required placeholder="Mín. 8 caracteres"
@@ -110,7 +110,7 @@
                         class="w-full bg-transparent border-b border-outline-variant text-on-surface font-grotesk text-sm py-2 px-0 focus:outline-none focus:border-secondary transition-colors placeholder-outline">
                 </div>
             </div>
-            <div class="flex gap-3 pt-2">
+            <div class="flex flex-col sm:flex-row gap-3 pt-2">
                 <button type="submit"
                     class="flex-1 bg-secondary text-on-secondary font-grotesk text-[13px] font-bold tracking-[.1em] uppercase py-3 hover:opacity-90 transition-opacity">
                     REGISTRAR

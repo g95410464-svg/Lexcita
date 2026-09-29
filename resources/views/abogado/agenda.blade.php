@@ -30,7 +30,7 @@
     <p class="text-outline mt-1 text-sm">Visualiza todas tus citas del mes.</p>
 </div>
 
-<div class="bg-surface-container border border-outline-variant p-6">
+<div class="bg-surface-container border border-outline-variant p-3 sm:p-6">
     <div id="calendario"></div>
 </div>
 

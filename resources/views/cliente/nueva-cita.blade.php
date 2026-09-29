@@ -127,7 +127,7 @@
 </div>
 
 {{-- ── PASO 2: Fecha y hora ───────────────────────────── --}}
-<div id="paso2" x-show="$store.booking.step >= 2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-4" class="mt-8">
+<div id="paso2" x-cloak x-show="$store.booking.step >= 2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-4" class="mt-8">
     <p class="text-[11px] font-grotesk font-semibold tracking-[.18em] uppercase text-outline mb-4">
         Paso 2 — Selecciona fecha y horario
     </p>
@@ -175,7 +175,7 @@
 </div>
 
 {{-- ── PASO 3: Detalles ───────────────────────────────── --}}
-<div id="paso3" x-show="$store.booking.step === 3" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" style="display:none" class="mt-8">
+<div id="paso3" x-cloak x-show="$store.booking.step === 3" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" style="display:none" class="mt-8">
     <p class="text-[11px] font-grotesk font-semibold tracking-[.18em] uppercase text-outline mb-4">
         Paso 3 — Detalles de la consulta
     </p>
@@ -188,7 +188,7 @@
                     Tipo de consulta
                 </label>
                 <select name="tipo" required
-                    class="w-100 bg-surface-container-high border border-outline-variant text-on-surface
+                    class="w-full min-w-0 bg-surface-container-high border border-outline-variant text-on-surface
                            text-sm font-grotesk px-3 py-2.5 focus:outline-none focus:border-secondary transition-colors">
                     <option value="">Selecciona...</option>
                     <option value="consulta_general">Consulta general</option>
@@ -205,7 +205,7 @@
                     Modalidad
                 </label>
                 <select name="modalidad" required
-                    class="w-100 bg-surface-container-high border border-outline-variant text-on-surface
+                    class="w-full min-w-0 bg-surface-container-high border border-outline-variant text-on-surface
                            text-sm font-grotesk px-3 py-2.5 focus:outline-none focus:border-secondary transition-colors">
                     <option value="presencial">Presencial</option>
                     <option value="virtual">Virtual</option>
@@ -220,25 +220,25 @@
             </label>
             <textarea name="descripcion" rows="3"
                 placeholder="Describe brevemente el motivo de tu consulta..."
-                class="w-100 bg-surface-container-high border border-outline-variant text-on-surface text-sm
+                class="w-full min-w-0 bg-surface-container-high border border-outline-variant text-on-surface text-sm
                        font-grotesk px-3 py-2.5 resize-none focus:outline-none focus:border-secondary transition-colors
                        placeholder:text-outline"></textarea>
         </div>
 
         {{-- Resumen --}}
-        <div id="resumen" x-show="$store.booking.horaSeleccionada" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="bg-surface-container-high border border-outline-variant p-4 mb-5 hidden">
+        <div id="resumen" x-cloak x-show="$store.booking.horaSeleccionada" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="bg-surface-container-high border border-outline-variant p-4 mb-5">
         </div>
 
         {{-- Botones --}}
         <div class="flex flex-wrap items-center gap-3">
             <button type="submit"
-                class="inline-flex items-center gap-2 bg-secondary text-on-secondary text-[11px] font-grotesk
+                class="w-full sm:w-auto justify-center inline-flex items-center gap-2 bg-secondary text-on-secondary text-[11px] font-grotesk
                        font-bold tracking-widest uppercase px-6 py-3 hover:opacity-90 transition-opacity">
                 <span class="material-symbols-outlined text-[16px]">credit_card</span>
                 Pagar y Confirmar — $35.00
             </button>
             <button type="button" onclick="window.volverPaso2()"
-                class="inline-flex items-center gap-2 border border-outline-variant text-on-surface-variant
+                class="w-full sm:w-auto justify-center inline-flex items-center gap-2 border border-outline-variant text-on-surface-variant
                        text-[11px] font-grotesk font-bold tracking-widest uppercase px-5 py-3
                        hover:border-outline hover:text-on-surface transition-colors">
                 <span class="material-symbols-outlined text-[16px]">arrow_back</span>
@@ -464,10 +464,10 @@ window.addEventListener('load', function () {
     };
 
     function row(icon, label, value) {
-        return '<div class="flex items-center gap-2">' +
+        return '<div class="flex items-start gap-2">' +
             '<span class="material-symbols-outlined text-outline" style="font-size:15px;">' + icon + '</span>' +
-            '<span class="text-outline text-xs w-16">' + label + '</span>' +
-            '<span class="text-on-surface text-sm font-grotesk font-semibold">' + value + '</span>' +
+            '<span class="text-outline text-xs w-16 shrink-0">' + label + '</span>' +
+            '<span class="text-on-surface text-sm font-grotesk font-semibold min-w-0 break-words">' + value + '</span>' +
             '</div>';
     }
 

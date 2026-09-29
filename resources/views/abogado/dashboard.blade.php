@@ -11,7 +11,7 @@
 
 {{-- Citas de hoy --}}
 <div class="bg-surface-container border border-outline-variant mb-6">
-    <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
+    <div class="px-4 sm:px-6 py-4 border-b border-outline-variant flex flex-wrap items-center justify-between gap-2">
         <h2 class="font-caslon text-xl text-on-surface">Citas de Hoy</h2>
         <span class="text-[11px] font-grotesk font-semibold tracking-[.12em] uppercase text-outline">
             {{ $citasHoy->count() }} cita(s)
@@ -26,12 +26,12 @@
     @else
         <div class="divide-y divide-outline-variant">
             @foreach($citasHoy as $cita)
-            <div class="px-6 py-4 flex items-center gap-4">
+            <div class="appointment-row px-4 sm:px-6 py-4 flex flex-wrap items-center gap-4">
                 <div class="bg-secondary text-on-secondary text-center px-3 py-2 flex-shrink-0 min-w-[52px]">
                     <p class="text-[10px] font-grotesk font-bold tracking-widest uppercase">HOY</p>
                     <p class="font-caslon text-xl font-bold leading-none">{{ $cita->hora_inicio }}</p>
                 </div>
-                <div class="flex-1">
+                <div class="appointment-info flex-1 min-w-0">
                     <p class="text-[11px] font-grotesk font-bold tracking-[.1em] uppercase text-on-surface">
                         {{ str_replace('_', ' ', strtoupper($cita->tipo)) }}
                     </p>
@@ -70,13 +70,13 @@
     @else
         <div class="divide-y divide-outline-variant">
             @foreach($proximasCitas as $cita)
-            <div class="px-6 py-4 flex items-center gap-4">
+            <div class="appointment-row px-4 sm:px-6 py-4 flex flex-wrap items-center gap-4">
                 <div class="w-12 text-center flex-shrink-0">
                     <p class="text-[10px] font-grotesk font-bold tracking-widest uppercase text-outline">{{ $cita->fecha->format('M') }}</p>
                     <p class="font-caslon text-2xl text-on-surface leading-none">{{ $cita->fecha->format('d') }}</p>
                 </div>
                 <div class="w-px h-8 bg-outline-variant flex-shrink-0"></div>
-                <div class="flex-1">
+                <div class="appointment-info flex-1 min-w-0">
                     <p class="text-sm font-semibold text-on-surface">{{ $cita->cliente->nombre }}</p>
                     <p class="text-[12px] text-outline mt-0.5">{{ $cita->hora_inicio }} · {{ str_replace('_', ' ', ucfirst($cita->tipo)) }}</p>
                 </div>
