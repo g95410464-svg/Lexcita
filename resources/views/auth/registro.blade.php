@@ -116,7 +116,7 @@
         }
     </style>
 </head>
-<body class="bg-background text-on-surface font-body-md min-h-screen relative overflow-hidden flex flex-col items-center justify-center selection:bg-primary-container selection:text-on-primary-container">
+<body class="bg-background text-on-surface font-body-md min-h-screen relative overflow-x-hidden flex flex-col items-center justify-center py-8 selection:bg-primary-container selection:text-on-primary-container">
 <!-- Atmospheric Glows -->
 <div class="glow-orb glow-orb-purple w-[600px] h-[600px] top-[-100px] right-[-100px]"></div>
 <div class="glow-orb glow-orb-gold w-[500px] h-[500px] bottom-[-50px] left-[-100px]"></div>
@@ -134,19 +134,29 @@
             <h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface font-semibold">Crear Cuenta</h2>
             <p class="font-label-sm text-label-sm text-on-surface-variant mt-2">Regístrate para comenzar.</p>
         </div>
-        <form method="POST" action="{{ route('registro.post') }}" class="space-y-6">
+        @if($errors->any())
+        <div role="alert" class="mb-6 rounded-lg border border-error p-4 text-error">
+            <p class="font-semibold">No se pudo crear la cuenta. Revisa estos datos:</p>
+            <ul class="mt-2 list-disc pl-5 text-sm">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
+        <form method="POST" action="{{ route('registro.post') }}" class="space-y-6" id="registro-form">
             @csrf
             <!-- Name Input -->
             <div class="space-y-2">
-                <label class="font-label-sm text-label-sm text-on-surface block" for="name">Nombre Completo</label>
-                <input class="w-full bg-surface-container-high border border-outline-variant text-on-surface font-body-md py-3 pl-4 pr-6 focus:ring-0 focus:border-tertiary-fixed-dim transition-all duration-300 placeholder:text-on-surface-variant/50 rounded-full" id="name" name="name" placeholder="Juan Pérez" required="" type="text">
+                <label class="font-label-sm text-label-sm text-on-surface block" for="nombre">Nombre Completo</label>
+                <input class="w-full bg-surface-container-high border border-outline-variant text-on-surface font-body-md py-3 pl-4 pr-6 focus:ring-0 focus:border-tertiary-fixed-dim transition-all duration-300 placeholder:text-on-surface-variant/50 rounded-full" id="nombre" name="nombre" value="{{ old('nombre') }}" autocomplete="name" maxlength="120" placeholder="Juan Pérez" required type="text">
             </div>
             <!-- Email Input -->
             <div class="space-y-2">
                 <label class="font-label-sm text-label-sm text-on-surface block" for="email">Correo Electrónico</label>
                 <div class="relative">
                     <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">mail</span>
-                    <input class="w-full bg-surface-container-high border border-outline-variant text-on-surface font-body-md py-3 pl-10 pr-4 focus:ring-0 focus:border-tertiary-fixed-dim transition-all duration-300 placeholder:text-on-surface-variant/50 rounded-full" id="email" name="email" placeholder="juan@ejemplo.com" required="" type="email">
+                    <input class="w-full bg-surface-container-high border border-outline-variant text-on-surface font-body-md py-3 pl-10 pr-4 focus:ring-0 focus:border-tertiary-fixed-dim transition-all duration-300 placeholder:text-on-surface-variant/50 rounded-full" id="email" name="email" value="{{ old('email') }}" autocomplete="email" maxlength="255" placeholder="juan@ejemplo.com" required type="email">
                 </div>
             </div>
             <!-- Password Input -->
@@ -154,21 +164,22 @@
                 <label class="font-label-sm text-label-sm text-on-surface block" for="password">Contraseña</label>
                 <div class="relative">
                     <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">lock</span>
-                    <input class="w-full bg-surface-container-high border border-outline-variant text-on-surface font-body-md py-3 pl-10 pr-10 focus:ring-0 focus:border-tertiary-fixed-dim transition-all duration-300 placeholder:text-on-surface-variant/50 rounded-full" id="password" name="password" placeholder="••••••••" required="" type="password">
-                    <button class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors" type="button">
+                    <input class="w-full bg-surface-container-high border border-outline-variant text-on-surface font-body-md py-3 pl-10 pr-10 focus:ring-0 focus:border-tertiary-fixed-dim transition-all duration-300 placeholder:text-on-surface-variant/50 rounded-full" id="password" name="password" autocomplete="new-password" minlength="8" placeholder="••••••••" required type="password" aria-describedby="password-help">
+                    <button class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors" type="button" id="toggle-password" aria-label="Mostrar contraseña" aria-pressed="false">
                         <span class="material-symbols-outlined text-lg">visibility</span>
                     </button>
                 </div>
+                <p id="password-help" class="text-sm text-on-surface-variant">Usa al menos 8 caracteres.</p>
             </div>
             <!-- Password Confirmation -->
             <div class="space-y-2">
-                <label class="font-label-sm text-label-sm text-on-surface block" for="password_confirmation">Confirmarcontraseña</label>
-                <input class="w-full bg-surface-container-high border border-outline-variant text-on-surface font-body-md py-3 pl-10 pr-4 focus:ring-0 focus:border-tertiary-fixed-dim transition-all duration-300 placeholder:text-on-surface-variant/50 rounded-full" id="password_confirmation" name="password_confirmation" placeholder="••••••••" required="" type="password">
+                <label class="font-label-sm text-label-sm text-on-surface block" for="password_confirmation">Confirmar contraseña</label>
+                <input class="w-full bg-surface-container-high border border-outline-variant text-on-surface font-body-md py-3 pl-10 pr-4 focus:ring-0 focus:border-tertiary-fixed-dim transition-all duration-300 placeholder:text-on-surface-variant/50 rounded-full" id="password_confirmation" name="password_confirmation" autocomplete="new-password" minlength="8" placeholder="••••••••" required type="password">
             </div>
             <!-- WhatsApp Phone -->
             <div class="space-y-2">
                 <label class="font-label-sm text-label-sm text-on-surface block" for="telefono_whatsapp">Teléfono WhatsApp</label>
-                <input class="w-full bg-surface-container-high border border-outline-variant text-on-surface font-body-md py-3 pl-4 pr-6 focus:ring-0 focus:border-tertiary-fixed-dim transition-all duration-300 placeholder:text-on-surface-variant/50 rounded-full" id="telefono_whatsapp" name="telefono_whatsapp" placeholder="+52 55 1234 5678" required="" type="text">
+                <input class="w-full bg-surface-container-high border border-outline-variant text-on-surface font-body-md py-3 pl-4 pr-6 focus:ring-0 focus:border-tertiary-fixed-dim transition-all duration-300 placeholder:text-on-surface-variant/50 rounded-full" id="telefono_whatsapp" name="telefono_whatsapp" value="{{ old('telefono_whatsapp') }}" autocomplete="tel" maxlength="20" placeholder="+503 7123 4567" required type="tel">
             </div>
             <!-- Primary Action -->
             <button class="w-full bg-primary hover:bg-primary-fixed text-on-primary font-body-md font-semibold py-3 transition-all duration-300 shadow-[0_0_15px_rgba(242,202,80,0.2)] hover:shadow-[0_0_20px_rgba(242,202,80,0.4)] flex justify-center items-center gap-2 rounded-full" type="submit">
@@ -190,7 +201,7 @@
     </div>
 </main>
 <!-- Footer Component Execution -->
-<footer class="flex flex-col md:flex-row justify-between items-center px-margin-desktop py-8 w-full absolute bottom-0 z-40 bg-transparent">
+<footer class="flex flex-col md:flex-row justify-between items-center px-margin-desktop py-8 w-full mt-8 z-10 bg-transparent">
 <div class="text-on-surface font-bold font-body-md text-body-md mb-4 md:mb-0">© 2026 Lex Cita. All rights reserved.</div>
 <nav class="flex gap-6">
     <a class="text-on-surface-variant hover:text-primary transition-colors opacity-80 hover:opacity-100 font-label-sm text-label-sm" href="#">Privacy Policy</a>
@@ -199,4 +210,38 @@
     <a class="text-on-surface-variant hover:text-primary transition-colors opacity-80 hover:opacity-100 font-label-sm text-label-sm" href="#">Support</a>
 </nav>
 </footer>
+<script>
+const form = document.getElementById('registro-form');
+const password = document.getElementById('password');
+const confirmation = document.getElementById('password_confirmation');
+const submitButton = form.querySelector('button[type="submit"]');
+let submitting = false;
+
+function validateConfirmation() {
+    confirmation.setCustomValidity(confirmation.value !== password.value ? 'Las contraseñas no coinciden.' : '');
+}
+password.addEventListener('input', validateConfirmation);
+confirmation.addEventListener('input', validateConfirmation);
+form.addEventListener('submit', (event) => {
+    validateConfirmation();
+    if (submitting || !form.reportValidity()) {
+        event.preventDefault();
+        return;
+    }
+    submitting = true;
+    submitButton.disabled = true;
+    submitButton.querySelector('span').textContent = 'Creando cuenta...';
+});
+window.addEventListener('pageshow', () => {
+    submitting = false;
+    submitButton.disabled = false;
+    submitButton.querySelector('span').textContent = 'Registrarse';
+});
+document.getElementById('toggle-password').addEventListener('click', (event) => {
+    const visible = password.type === 'password';
+    password.type = visible ? 'text' : 'password';
+    event.currentTarget.setAttribute('aria-pressed', String(visible));
+    event.currentTarget.setAttribute('aria-label', visible ? 'Ocultar contraseña' : 'Mostrar contraseña');
+});
+</script>
 </body></html>

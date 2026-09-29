@@ -24,9 +24,22 @@ class ClienteController extends Controller
             ->take(3)
             ->get();
 
-        $totalCitas = $cliente->citasComoCliente()->count();
+        $resumen = $cliente->citasComoCliente()
+            ->selectRaw('COUNT(*) as total, SUM(CASE WHEN estado = ? THEN 1 ELSE 0 END) as pendientes, SUM(CASE WHEN estado = ? THEN 1 ELSE 0 END) as completadas', ['pendiente_pago', 'completada'])
+            ->first();
 
-        return view('cliente.dashboard', compact('proximasCitas', 'totalCitas'));
+        $totalCitas = (int) $resumen->total;
+        $pendientes = (int) $resumen->pendientes;
+        $completadas = (int) $resumen->completadas;
+
+        // El dashboard muestra una vista previa acotada; el historial está paginado.
+        $citasPendPago = $cliente->citasComoCliente()
+            ->where('estado', 'pendiente_pago')
+            ->orderBy('fecha')->orderBy('hora_inicio')->orderBy('id')
+            ->limit(5)
+            ->get(['id', 'fecha', 'hora_inicio']);
+
+        return view('cliente.dashboard', compact('proximasCitas', 'totalCitas', 'pendientes', 'completadas', 'citasPendPago'));
     }
 
     public function nuevaCita()
