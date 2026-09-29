@@ -9,7 +9,7 @@
 </div>
 
 <div class="bg-surface-container border border-outline-variant">
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Tabla desplazable horizontalmente">
         <table class="w-full text-sm">
             <thead>
                 <tr class="border-b border-outline-variant bg-surface-container-lowest">

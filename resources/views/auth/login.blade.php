@@ -119,19 +119,22 @@
             border-image-slice: 1;
         }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
 </head>
-<body class="bg-background text-on-surface font-body-md min-h-screen relative overflow-hidden flex flex-col items-center justify-center selection:bg-primary-container selection:text-on-primary-container">
+<body class="auth-page bg-background text-on-surface font-body-md min-h-screen relative flex flex-col items-center selection:bg-primary-container selection:text-on-primary-container">
 <!-- Atmospheric Glows -->
+<div class="auth-atmosphere" aria-hidden="true">
 <div class="glow-orb glow-orb-purple w-[600px] h-[600px] top-[-100px] right-[-100px]"></div>
 <div class="glow-orb glow-orb-gold w-[500px] h-[500px] bottom-[-50px] left-[-100px]"></div>
-<main class="w-full max-w-md px-margin-mobile relative z-10 flex flex-col items-center justify-center">
+</div>
+<main class="auth-main w-full max-w-md px-margin-mobile relative z-10 flex flex-col items-center justify-center">
 <!-- Brand Anchor -->
 <div class="mb-10 text-center">
 <h1 class="font-headline-lg text-headline-lg font-bold text-primary tracking-tight">Lex Cita</h1>
 
 </div>
 <!-- Glassmorphism Login Card -->
-<div class="glass-panel w-full rounded-xl p-8 shadow-2xl relative overflow-hidden group">
+<div class="glass-panel w-full rounded-xl p-5 sm:p-8 shadow-2xl relative overflow-hidden group">
 <!-- Subtle hover edge light -->
 <div class="absolute inset-0 border border-primary/0 group-hover:border-primary/20 rounded-xl transition-colors duration-500 pointer-events-none"></div>
 <div class="text-center mb-8">
@@ -150,7 +153,7 @@
 </div>
 <!-- Password Input -->
 <div class="space-y-2">
-<div class="flex justify-between items-center">
+<div class="flex flex-wrap justify-between items-center gap-2">
 <label class="font-label-sm text-label-sm text-on-surface block" for="password">Contraseña</label>
 <a class="font-label-sm text-label-sm text-primary hover:text-primary-fixed transition-colors" href="#">¿Olvidaste tu contraseña?</a>
 </div>
@@ -202,16 +205,16 @@
 </div>
 </div>
 <!-- Footer Links outside card for cleaner look -->
-<div class="mt-8 flex gap-4 font-label-sm text-label-sm text-on-surface-variant/70">
+<div class="mt-8 flex flex-wrap justify-center gap-x-4 gap-y-2 font-label-sm text-label-sm text-on-surface-variant/70">
 <a class="hover:text-on-surface transition-colors" href="#">Términos y Condiciones</a>
 <span class="">•</span>
 <a class="hover:text-on-surface transition-colors" href="#">Soporte</a>
 </div>
 </main>
 <!-- Footer Component Execution -->
-<footer class="flex flex-col md:flex-row justify-between items-center px-margin-desktop py-8 w-full absolute bottom-0 z-40 bg-transparent">
+<footer class="auth-footer">
 <div class="text-on-surface font-bold font-body-md text-body-md mb-4 md:mb-0">© 2026 Lex Cita. All rights reserved.</div>
-<nav class="flex gap-6">
+<nav class="flex flex-wrap justify-center gap-x-6 gap-y-3" aria-label="Enlaces del pie de página">
 <a class="text-on-surface-variant hover:text-primary transition-colors opacity-80 hover:opacity-100 font-label-sm text-label-sm" href="#">Privacy Policy</a>
 <a class="text-on-surface-variant hover:text-primary transition-colors opacity-80 hover:opacity-100 font-label-sm text-label-sm" href="#">Terms of Service</a>
 <a class="text-on-surface-variant hover:text-primary transition-colors opacity-80 hover:opacity-100 font-label-sm text-label-sm" href="#">Legal Advice</a>

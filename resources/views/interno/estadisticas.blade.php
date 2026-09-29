@@ -17,12 +17,12 @@
             $meses = ['', 'Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
             $max   = $ingresosMes->max('total') ?: 1;
         @endphp
-        <div class="flex items-end gap-3 h-48">
+        <div class="revenue-chart" tabindex="0" role="region" aria-label="Ingresos mensuales, desplazar horizontalmente para ver todos los meses">
             @foreach($ingresosMes as $fila)
             @php $altura = round(($fila->total / $max) * 100); @endphp
-            <div class="flex flex-col items-center gap-2 flex-1">
+            <div class="revenue-column">
                 <p class="text-[11px] font-grotesk font-bold text-secondary">${{ number_format($fila->total, 0) }}</p>
-                <div class="w-full bg-secondary" style="height: {{ $altura }}%; min-height: 4px;"></div>
+                <div class="revenue-track"><div class="w-full bg-secondary" style="height: {{ $altura }}%; min-height: 4px;"></div></div>
                 <p class="text-[11px] font-grotesk font-semibold uppercase tracking-wider text-outline">
                     {{ $meses[$fila->mes] }}
                 </p>

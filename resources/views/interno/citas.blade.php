@@ -10,20 +10,20 @@
 
 {{-- Filtros --}}
 <form method="GET" action="{{ route('interno.citas') }}" class="bg-surface-container border border-outline-variant px-6 py-4 flex flex-wrap gap-4 mb-6 items-end">
-    <div>
+    <div class="w-full sm:w-auto min-w-0">
         <label class="block text-[11px] font-grotesk font-semibold tracking-[.12em] uppercase text-outline mb-2">Estado</label>
         <select name="estado"
-            class="bg-surface-container-high border border-outline-variant text-on-surface font-grotesk text-sm px-3 py-2 focus:outline-none focus:border-secondary transition-colors">
+            class="w-full bg-surface-container-high border border-outline-variant text-on-surface font-grotesk text-sm px-3 py-2 focus:outline-none focus:border-secondary transition-colors">
             <option value="">Todos</option>
             <option value="confirmada"    {{ request('estado') === 'confirmada'    ? 'selected' : '' }}>Confirmada</option>
             <option value="pendiente_pago"{{ request('estado') === 'pendiente_pago'? 'selected' : '' }}>Pendiente de Pago</option>
             <option value="cancelada"     {{ request('estado') === 'cancelada'     ? 'selected' : '' }}>Cancelada</option>
         </select>
     </div>
-    <div>
+    <div class="w-full sm:w-auto min-w-0 sm:max-w-xs">
         <label class="block text-[11px] font-grotesk font-semibold tracking-[.12em] uppercase text-outline mb-2">Abogado</label>
         <select name="abogado_id"
-            class="bg-surface-container-high border border-outline-variant text-on-surface font-grotesk text-sm px-3 py-2 focus:outline-none focus:border-secondary transition-colors">
+            class="w-full bg-surface-container-high border border-outline-variant text-on-surface font-grotesk text-sm px-3 py-2 focus:outline-none focus:border-secondary transition-colors">
             <option value="">Todos</option>
             @foreach($abogados as $ab)
                 <option value="{{ $ab->id }}" {{ request('abogado_id') == $ab->id ? 'selected' : '' }}>
@@ -32,7 +32,7 @@
             @endforeach
         </select>
     </div>
-    <div class="flex-1 min-w-[200px]">
+    <div class="w-full sm:w-auto flex-1 min-w-0">
         <label class="block text-[11px] font-grotesk font-semibold tracking-[.12em] uppercase text-outline mb-2">Buscar</label>
         <input type="text" name="buscar" value="{{ request('buscar') }}" placeholder="Código o nombre de cliente..."
             class="w-full bg-surface-container-high border border-outline-variant text-on-surface font-grotesk text-sm px-3 py-2 focus:outline-none focus:border-secondary transition-colors placeholder-outline">
@@ -51,7 +51,7 @@
 
 {{-- Tabla --}}
 <div class="bg-surface-container border border-outline-variant">
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Tabla desplazable horizontalmente">
         <table class="w-full text-sm">
             <thead>
                 <tr class="border-b border-outline-variant bg-surface-container-lowest">

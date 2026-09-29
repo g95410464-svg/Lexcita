@@ -57,101 +57,48 @@
     </style>
 
     {{-- Estilos adicionales empujados por cada vista (@push('styles')) --}}
+    <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
     @stack('styles')
 </head>
-<body class="min-h-screen flex" x-cloak>
+<body class="app-shell min-h-screen">
 
-{{-- ── TOP NAVBAR ────────────────────────────────────────── --}}
-<nav class="fixed w-full bg-[#131317] border-b border-neutral-800 px-6 py-3 z-50">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
-        <!-- Left: Brand -->
-        <div class="flex items-baseline gap-2">
-            <p class="text-2xl font-caslon text-gradient-gold">GC</p>
-            <p class="text-[10px] font-grotesk uppercase text-neutral-400">PORTAL DEL CLIENTE</p>
+<a href="#contenido-principal" class="app-skip-link">Saltar al contenido</a>
+<header class="app-header">
+    <div class="app-header-inner">
+        <div class="app-brand">
+            <p class="text-2xl font-caslon text-secondary">GC</p>
+            <p class="app-brand-label">{{ auth()->user()->esAdmin() ? 'Gestión interna' : (auth()->user()->esAbogado() ? 'Portal del abogado' : 'Portal del cliente') }}</p>
         </div>
 
-        <!-- Middle: Navigation Links -->
-        <div class="hidden md:flex items-center gap-6">
-            @auth
-                @if(auth()->user()->esCliente())
-                    <a href="{{ route('cliente.dashboard') }}"
-                       class="relative text-on-surface hover:text-primary transition-colors group cursor-pointer">
-                        Dashboard
-                        <span class="absolute bottom-0 left-0 hidden group-hover:block w-full border-b-2 border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                    </a>
-                    <a href="{{ route('cliente.nueva-cita') }}"
-                       class="relative text-on-surface hover:text-primary transition-colors group cursor-pointer">
-                        Nueva Cita
-                        <span class="absolute bottom-0 left-0 hidden group-hover:block w-full border-b-2 border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                    </a>
-                    <a href="{{ route('cliente.mis-citas') }}"
-                       class="relative text-on-surface hover:text-primary transition-colors group cursor-pointer">
-                        Mis Citas
-                        <span class="absolute bottom-0 left-0 hidden group-hover:block w-full border-b-2 border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                    </a>
-                @elseif(auth()->user()->esAbogado())
-                    <a href="{{ route('abogado.dashboard') }}"
-                       class="relative text-on-surface hover:text-primary transition-colors group cursor-pointer">
-                        Dashboard
-                        <span class="absolute bottom-0 left-0 hidden group-hover:block w-full border-b-2 border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                    </a>
-                    <a href="{{ route('abogado.agenda') }}"
-                       class="relative text-on-surface hover:text-primary transition-colors group cursor-pointer">
-                        Mi Agenda
-                        <span class="absolute bottom-0 left-0 hidden group-hover:block w-full border-b-2 border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                    </a>
-                @elseif(auth()->user()->esAdmin())
-                    <a href="{{ route('interno.dashboard') }}"
-                       class="relative text-on-surface hover:text-primary transition-colors group cursor-pointer">
-                        Dashboard
-                        <span class="absolute bottom-0 left-0 hidden group-hover:block w-full border-b-2 border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                    </a>
-                    <a href="{{ route('interno.abogados') }}"
-                       class="relative text-on-surface hover:text-primary transition-colors group cursor-pointer">
-                        Abogados
-                        <span class="absolute bottom-0 left-0 hidden group-hover:block w-full border-b-2 border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                    </a>
-                    <a href="{{ route('interno.clientes') }}"
-                       class="relative text-on-surface hover:text-primary transition-colors group cursor-pointer">
-                        Clientes
-                        <span class="absolute bottom-0 left-0 hidden group-hover:block w-full border-b-2 border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                    </a>
-                    <a href="{{ route('interno.citas') }}"
-                       class="relative text-on-surface hover:text-primary transition-colors group cursor-pointer">
-                        Todas las Citas
-                        <span class="absolute bottom-0 left-0 hidden group-hover:block w-full border-b-2 border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                    </a>
-                    <a href="{{ route('interno.estadisticas') }}"
-                       class="relative text-on-surface hover:text-primary transition-colors group cursor-pointer">
-                       Estadísticas
-                        <span class="absolute bottom-0 left-0 hidden group-hover:block w-full border-b-2 border-primary/50 opacity-0 group-hover:opacity-100 transition-opacity"></span>
-                    </a>
-                @endif
-            @endauth
-        </div>
+        <nav class="app-desktop-nav" aria-label="Navegación principal">
+            @include('layouts.navigation')
+        </nav>
 
-        <!-- Right: User Profile -->
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-on-secondary text-xs font-bold">
-                G
-            </div>
-            <div class="min-w-0">
-                <p class="font-grotesk text-on-surface truncate">{{ auth()->user()->nombre }}</p>
-                <p class="text-[10px] uppercase text-neutral-500">{{ ucfirst(auth()->user()->rol) }}</p>
+        <div class="app-profile">
+            <div class="app-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr(auth()->user()->nombre, 0, 1)) }}</div>
+            <div class="app-profile-info">
+                <p class="truncate text-sm font-semibold" title="{{ auth()->user()->nombre }}">{{ auth()->user()->nombre }}</p>
+                <p class="text-[10px] uppercase text-outline">{{ ucfirst(auth()->user()->rol) }}</p>
             </div>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" class="flex items-center gap-2 text-on-surface-variant hover:text-secondary text-sm py-1">
-                    <span class="material-symbols-outlined text-[16px]">logout</span>
-                    Cerrar sesión
+                <button type="submit" class="app-logout" aria-label="Cerrar sesión" title="Cerrar sesión">
+                    <span class="material-symbols-outlined" aria-hidden="true">logout</span>
+                    <span class="app-logout-label">Salir</span>
                 </button>
             </form>
         </div>
     </div>
-</nav>
 
-{{-- ── MAIN CONTENT ────────────────────────────────────────── --}}
-<main class="w-full container mx-auto py-8">
+    <details class="app-mobile-menu">
+        <summary><span>Menú principal</span><span class="material-symbols-outlined" aria-hidden="true">expand_more</span></summary>
+        <nav aria-label="Navegación móvil">
+            @include('layouts.navigation')
+        </nav>
+    </details>
+</header>
+
+<main id="contenido-principal" class="app-main" tabindex="-1">
 
     {{-- Alertas globales --}}
     @if(session('success'))

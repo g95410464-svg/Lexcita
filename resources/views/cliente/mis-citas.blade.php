@@ -43,7 +43,7 @@
         @endphp
 
         <div class="bg-surface-container border border-outline-variant hover:border-outline transition-colors duration-150 selectable-card">
-            <div class="flex flex-col md:flex-row md:items-center gap-4 px-6 py-5">
+            <div class="flex flex-col lg:flex-row lg:items-center gap-4 px-4 sm:px-6 py-5">
 
                 {{-- Fecha destacada --}}
                 <div class="flex-shrink-0 w-14 flex flex-col items-center justify-center bg-surface-container-high border border-outline-variant py-2 px-1">
@@ -83,7 +83,7 @@
                 </div>
 
                 {{-- Acción --}}
-                <div class="flex-shrink-0 flex items-center gap-2 md:justify-end">
+                <div class="appointment-actions flex flex-wrap items-center gap-2 md:justify-end">
                     @if($cita->estaPendiente())
                         <a href="{{ route('cliente.hacer-pago', $cita->id) }}"
                            class="inline-flex items-center gap-2 bg-secondary text-on-secondary text-[11px] font-grotesk font-bold tracking-widest uppercase px-4 py-2 hover:opacity-90 transition-opacity">

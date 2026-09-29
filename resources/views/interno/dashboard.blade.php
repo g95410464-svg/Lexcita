@@ -39,14 +39,14 @@
 
 {{-- Citas recientes --}}
 <div class="bg-surface-container border border-outline-variant">
-    <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
+    <div class="px-4 sm:px-6 py-4 border-b border-outline-variant flex flex-wrap items-center justify-between gap-2">
         <h2 class="font-caslon text-xl text-on-surface">Citas Recientes</h2>
         <a href="{{ route('interno.citas') }}"
            class="text-[11px] font-grotesk font-semibold tracking-[.1em] uppercase text-secondary hover:underline">
             Ver todas
         </a>
     </div>
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Tabla desplazable horizontalmente">
         <table class="w-full text-sm">
             <thead>
                 <tr class="border-b border-outline-variant bg-surface-container-lowest">

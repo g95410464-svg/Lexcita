@@ -41,6 +41,8 @@
             align-items: center;
             justify-content: space-between;
             gap: 12px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
             padding: 12px 16px;
             border-bottom: 1px solid rgba(255,255,255,0.10);
             background: rgba(0,0,0,0.40);
@@ -68,7 +70,7 @@
             border-bottom: 1px solid rgba(255,255,255,0.06);
             background: var(--surface-container);
         }
-        .meta-item { font-size: 11px; color: var(--on-surface-variant); }
+        .meta-item { min-width: 0; overflow-wrap: anywhere; font-size: 11px; color: var(--on-surface-variant); }
         .meta-item strong { color: var(--on-surface); font-weight: 600; }
 
         main {
@@ -80,7 +82,7 @@
         }
         #jitsi-container {
             flex: 1 1 auto;
-            min-height: 0;
+            min-height: 240px;
             width: 100%;
             overflow: hidden;
             background: var(--surface-container);

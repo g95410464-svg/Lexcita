@@ -87,7 +87,7 @@
 {{-- ── Próximas citas confirmadas ──────────────────────────── --}}
 @if($proximasCitas->isNotEmpty())
 <div class="bg-surface-container border border-outline-variant mb-8">
-    <div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
+    <div class="px-4 sm:px-6 py-4 border-b border-outline-variant flex flex-wrap items-center justify-between gap-2">
         <h2 class="font-caslon text-xl text-on-surface">Próximas Citas</h2>
         <span class="text-[11px] font-grotesk font-semibold tracking-widest uppercase text-outline">
             {{ $proximasCitas->count() }} confirmada(s)
@@ -98,7 +98,7 @@
         @php
             $diasRestantes = now()->startOfDay()->diffInDays($cita->fecha->startOfDay(), false);
         @endphp
-        <div class="px-6 py-5 flex items-center gap-4">
+        <div class="px-4 sm:px-6 py-5 flex items-start gap-3 sm:gap-4">
             {{-- Bloque fecha --}}
             <div class="bg-secondary text-on-secondary text-center px-3 py-2 flex-shrink-0 w-14">
                 <p class="text-[9px] font-grotesk font-bold tracking-widest uppercase">
@@ -165,7 +165,7 @@
 
 @else
 {{-- Sin próximas citas --}}
-<div class="bg-surface-container border border-outline-variant flex flex-col items-center justify-center py-16 gap-4 mb-8">
+<div class="bg-surface-container border border-outline-variant flex flex-col items-center justify-center px-4 text-center py-16 gap-4 mb-8">
     <span class="material-symbols-outlined text-outline" style="font-size:44px;">event_available</span>
     <p class="text-on-surface-variant text-sm font-grotesk">No tienes citas confirmadas próximas.</p>
     <a href="{{ route('cliente.nueva-cita') }}"
