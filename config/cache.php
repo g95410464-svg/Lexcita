@@ -17,6 +17,9 @@ return [
 
     'default' => env('CACHE_STORE', 'database'),
 
+    // Use the shared cache by default; Redis can be selected independently later.
+    'limiter' => env('RATE_LIMIT_STORE'),
+
     /*
     |--------------------------------------------------------------------------
     | Cache Stores

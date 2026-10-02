@@ -82,18 +82,27 @@ class AdminController extends Controller
 
     public function citas(Request $request)
     {
+        $data = $request->validate([
+            'estado' => 'nullable|string|in:pendiente_pago,confirmada,cancelada,completada',
+            'abogado_id' => 'nullable|integer|min:1',
+            'buscar' => 'nullable|string|max:120',
+        ]);
         $query = Cita::with(['cliente', 'abogado']);
 
         if ($request->filled('estado')) {
-            $query->where('estado', $request->estado);
+            $query->where('estado', $data['estado']);
         }
         if ($request->filled('abogado_id')) {
-            $query->where('abogado_id', $request->abogado_id);
+            $query->where('abogado_id', $data['abogado_id']);
         }
         if ($request->filled('buscar')) {
-            $buscar = $request->buscar;
-            $query->whereHas('cliente', fn($q) => $q->where('nombre', 'like', "%{$buscar}%"))
-                  ->orWhere('codigo', 'like', "%{$buscar}%");
+            $buscar = $data['buscar'];
+            // Group OR conditions so searching cannot bypass the other filters.
+            // Eloquent binds the pattern as a value; it is never concatenated into SQL.
+            $query->where(function ($q) use ($buscar) {
+                $q->whereHas('cliente', fn($cliente) => $cliente->where('nombre', 'like', "%{$buscar}%"))
+                    ->orWhere('codigo', 'like', "%{$buscar}%");
+            });
         }
 
         $citas    = $query->orderByDesc('fecha')->paginate(20);

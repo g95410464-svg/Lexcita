@@ -8,6 +8,14 @@
         let controller;
         let pendingKey = null;
         let version = 0;
+        let blockedUntil = 0;
+
+        function rateLimitError(seconds) {
+            const error = new Error(`Demasiadas consultas. Espera ${seconds} segundos para volver a cargar horarios.`);
+            error.status = 429;
+            error.retryAfter = seconds;
+            return error;
+        }
 
         function reset() {
             version++;
@@ -35,6 +43,11 @@
                 return;
             }
 
+            if (blockedUntil > Date.now()) {
+                onError(rateLimitError(Math.ceil((blockedUntil - Date.now()) / 1000)));
+                return;
+            }
+
             pendingKey = key;
             onLoading();
             timer = setTimeout(async () => {
@@ -46,6 +59,13 @@
                         cache: 'no-store',
                         headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                     });
+                    if (response.status === 429) {
+                        const retryAfter = Number(response.headers?.get('Retry-After'));
+                        const seconds = Number.isFinite(retryAfter) && retryAfter > 0
+                            ? Math.ceil(retryAfter) : 60;
+                        if (requestVersion === version) blockedUntil = Date.now() + seconds * 1000;
+                        throw rateLimitError(seconds);
+                    }
                     if (!response.ok) throw new Error(`HTTP ${response.status}`);
                     const slots = await response.json();
                     if (!Array.isArray(slots)) throw new Error('Respuesta de horarios inválida');
