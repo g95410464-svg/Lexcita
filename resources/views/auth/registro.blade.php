@@ -135,6 +135,9 @@
         <div class="absolute inset-0 border border-primary/0 group-hover:border-primary/20 rounded-xl transition-colors duration-500 pointer-events-none"></div>
         <div class="text-center mb-8">
             <h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface font-semibold">Crear Cuenta</h2>
+            @if(config('organization.isolated'))
+                <p class="mt-2 text-sm text-on-surface-variant">{{ config('organization.name') }}</p>
+            @endif
             <p class="font-label-sm text-label-sm text-on-surface-variant mt-2">Regístrate para comenzar.</p>
         </div>
         @if($errors->any())

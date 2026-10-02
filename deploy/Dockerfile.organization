@@ -1,0 +1,36 @@
+FROM dunglas/frankenphp:1-php8.3-bookworm AS php-app
+
+RUN install-php-extensions pdo_pgsql mbstring xml pcntl zip opcache
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+WORKDIR /app
+COPY . .
+ENV COMPOSER_ALLOW_SUPERUSER=1
+RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+FROM node:22-bookworm-slim AS frontend
+WORKDIR /app
+COPY --from=php-app /app /app
+# These values are public. Never add database, APP_KEY or Reverb secrets here.
+ARG VITE_REVERB_APP_KEY
+ARG VITE_REVERB_HOST
+ARG VITE_REVERB_PORT=443
+ARG VITE_REVERB_SCHEME=https
+ENV VITE_REVERB_APP_KEY=$VITE_REVERB_APP_KEY \
+    VITE_REVERB_HOST=$VITE_REVERB_HOST \
+    VITE_REVERB_PORT=$VITE_REVERB_PORT \
+    VITE_REVERB_SCHEME=$VITE_REVERB_SCHEME
+RUN npm ci && npm run build
+
+FROM php-app
+COPY --from=frontend /app/public/build /app/public/build
+COPY deploy/Caddyfile.organization /etc/caddy/Caddyfile
+RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
+    && mkdir -p /data/caddy /config/caddy \
+    && chown -R www-data:www-data /app/storage /app/bootstrap/cache /data/caddy /config/caddy \
+    && setcap -r /usr/local/bin/frankenphp
+USER www-data
+ENV PORT=8080
+EXPOSE 8080
+# Laravel credentials are provided at runtime, never baked into this image.
+ENTRYPOINT []
+CMD ["sh", "-c", "php artisan config:clear && php artisan organization:check && exec frankenphp run --config /etc/caddy/Caddyfile"]
