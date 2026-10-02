@@ -12,6 +12,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->prepend(\App\Http\Middleware\VerifyOrigin::class);
+        $middleware->prepend(\App\Http\Middleware\VerifyOrganizationHost::class);
         $middleware->web(append: [\App\Http\Middleware\PrivateWebResponses::class]);
         // Registrar alias del middleware de rol
         $middleware->alias([

@@ -139,6 +139,9 @@
 <div class="absolute inset-0 border border-primary/0 group-hover:border-primary/20 rounded-xl transition-colors duration-500 pointer-events-none"></div>
 <div class="text-center mb-8">
 <h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface font-semibold">Iniciar Sesión</h2>
+@if(config('organization.isolated'))
+<p class="mt-2 text-sm text-on-surface-variant">{{ config('organization.name') }}</p>
+@endif
 <p class="font-label-sm text-label-sm text-on-surface-variant mt-2">Bienvenido de nuevo.</p>
 </div>
 <form method="POST" action="{{ route('login') }}" class="space-y-6">
