@@ -136,6 +136,20 @@ class OrganizationPostgresTest extends TestCase
             $this->assertDatabaseHas('usuarios', ['nombre' => 'Cliente Bravo']);
             $this->assertDatabaseMissing('usuarios', ['nombre' => 'Cliente Alpha']);
 
+            putenv('ORGANIZATION_ADMIN_PASSWORD='.base64_encode(random_bytes(24)));
+            try {
+                $this->artisan('organization:create-admin', ['email' => 'admin@example.test', 'name' => 'Administración'])
+                    ->assertSuccessful();
+                $this->assertDatabaseHas('usuarios', ['email' => 'admin@example.test', 'rol' => 'admin']);
+                $this->artisan('organization:create-admin', ['email' => 'same@example.test', 'name' => 'No promover'])
+                    ->assertFailed();
+                $this->assertDatabaseHas('usuarios', ['email' => 'same@example.test', 'rol' => 'cliente']);
+                $adminUser = \App\Models\Usuario::where('email', 'admin@example.test')->sole();
+                $this->assertTrue(\Illuminate\Support\Facades\Hash::check(getenv('ORGANIZATION_ADMIN_PASSWORD'), $adminUser->password));
+            } finally {
+                putenv('ORGANIZATION_ADMIN_PASSWORD');
+            }
+
             config(['organization.name' => 'Wrong organization']);
             $this->artisan('organization:check')->assertFailed();
         } finally {

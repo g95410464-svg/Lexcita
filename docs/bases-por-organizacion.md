@@ -54,6 +54,14 @@ Cada despliegue debe tener almacenamiento privado propio y persistente si se gua
 
 PayPal, Google OAuth y WhatsApp requieren sus propias decisiones de cuenta, callbacks y credenciales antes de habilitar esos flujos en la nueva dirección. El registro clásico no depende de Google.
 
+Para crear la primera cuenta administradora, ejecutar desde un proceso privado con el perfil y el rol limitado de la organización:
+
+```sh
+php artisan organization:create-admin servicioslegales209@gmail.com "Administración SLI"
+```
+
+La contraseña se suministra mediante `ORGANIZATION_ADMIN_PASSWORD`, entre 20 y 64 caracteres, generada aleatoriamente y entregada al responsable por un medio privado. No se incluye en argumentos, repositorio ni salida del comando. Retirar esa variable del proceso después del alta. El comando verifica el aislamiento y rechaza correos existentes sin cambiar contraseñas o elevar roles.
+
 ## Cloudflare
 
 Mientras se use exclusivamente el dominio generado por Railway, Cloudflare no está conectado a esta organización. Mantener `CLOUDFLARE_ORIGIN_SECRET` sin definir. Cuando exista un dominio propio, configurar DNS/proxy y la cabecera de origen, cambiar `APP_URL`, callbacks y frontend Reverb, y después activar el bloqueo de origen. Un cambio de host invalida la continuidad de las cookies del navegador y exige volver a iniciar sesión.
