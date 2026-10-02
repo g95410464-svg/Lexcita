@@ -11,6 +11,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->prepend(\App\Http\Middleware\VerifyOrigin::class);
+        $middleware->web(append: [\App\Http\Middleware\PrivateWebResponses::class]);
         // Registrar alias del middleware de rol
         $middleware->alias([
             'rol' => \App\Http\Middleware\RolMiddleware::class,
@@ -22,5 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             return redirect()->route('login');
         });
     })
-    ->withBroadcasting(__DIR__.'/../routes/channels.php')
+    ->withBroadcasting(__DIR__.'/../routes/channels.php', [
+        'middleware' => ['web', 'throttle:broadcast'],
+    ])
     ->create();

@@ -87,7 +87,7 @@ test('una respuesta antigua no sustituye los horarios del abogado nuevo', async 
 
 test('un error HTTP permite reintentar y no se guarda en caché', async (t) => {
     let fail = true;
-    const { loader, requests, shown, errors } = setup(t, async () => fail ? { ok: false, status: 429 } : ok('10:00'));
+    const { loader, requests, shown, errors } = setup(t, async () => fail ? { ok: false, status: 500 } : ok('10:00'));
     loader.select(1, '2026-10-01');
     t.mock.timers.tick(200);
     await setImmediate();
@@ -98,6 +98,41 @@ test('un error HTTP permite reintentar y no se guarda en caché', async (t) => {
     await setImmediate();
     assert.equal(requests.length, 2);
     assert.deepEqual(shown, ['10:00']);
+});
+
+test('429 respeta Retry-After aunque cambien fecha y abogado', async (t) => {
+    let limited = true;
+    const { loader, requests, shown, errors } = setup(t, async () => limited
+        ? { ok: false, status: 429, headers: { get: () => '10' } } : ok('10:00'));
+    loader.select(1, '2026-10-01');
+    t.mock.timers.tick(200);
+    await setImmediate();
+    assert.equal(errors[0].retryAfter, 10);
+    loader.reset();
+    loader.select(2, '2026-10-02');
+    t.mock.timers.tick(200);
+    await setImmediate();
+    assert.equal(requests.length, 1);
+    assert.equal(errors[1].status, 429);
+    limited = false;
+    t.mock.timers.tick(10000);
+    loader.select(2, '2026-10-02');
+    t.mock.timers.tick(200);
+    await setImmediate();
+    assert.equal(requests.length, 2);
+    assert.deepEqual(shown, ['10:00']);
+});
+
+test('429 sin cabecera aplica espera de 60 segundos', async (t) => {
+    const { loader, requests, errors } = setup(t, async () => ({ ok: false, status: 429 }));
+    loader.select(1, '2026-10-01');
+    t.mock.timers.tick(200);
+    await setImmediate();
+    assert.equal(errors[0].retryAfter, 60);
+    loader.select(1, '2026-10-01');
+    t.mock.timers.tick(200);
+    await setImmediate();
+    assert.equal(requests.length, 1);
 });
 
 test('cambiar abogado antes del envío cancela la consulta pendiente', async (t) => {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -51,8 +52,8 @@ class ClienteController extends Controller
     public function crearCita(Request $request, CitaService $citaService)
     {
         $data = $request->validate([
-            'abogado_id'  => 'required|exists:usuarios,id',
-            'fecha'       => 'required|date|after_or_equal:today',
+            'abogado_id'  => ['required', 'integer', Rule::exists('usuarios', 'id')->where('rol', 'abogado')->where('activo', true)],
+            'fecha'       => 'required|date_format:Y-m-d|after_or_equal:today',
             'hora_inicio' => 'required|date_format:H:i',
             'tipo'        => 'required|in:consulta_general,derecho_familiar,derecho_penal,derecho_laboral,derecho_civil,otro',
             'modalidad'   => 'required|in:presencial,virtual',
@@ -182,6 +183,7 @@ class ClienteController extends Controller
      */
     public function capture(Request $request)
     {
+        $request->validate(['token' => 'nullable|string|max:255']);
         $orderId = $request->input('token');
         if (blank($orderId)) {
             return redirect()->route('cliente.mis-citas')
@@ -232,6 +234,7 @@ class ClienteController extends Controller
      */
     public function cancel(Request $request)
     {
+        $request->validate(['token' => 'nullable|string|max:255']);
         $orderId = $request->input('token');
         if (!blank($orderId)) {
             $cita = Cita::where('paypal_order_id', $orderId)

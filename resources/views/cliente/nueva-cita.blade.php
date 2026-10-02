@@ -424,8 +424,12 @@ window.addEventListener('load', function () {
             });
             cont.appendChild(grid);
         },
-        onError() {
-            cont.innerHTML = '<p class="text-error text-xs py-4">Error al cargar horarios. Intenta de nuevo.</p>';
+        onError(error) {
+            const message = document.createElement('p');
+            message.className = 'text-error text-xs py-4';
+            message.textContent = error.status === 429
+                ? error.message : 'Error al cargar horarios. Intenta de nuevo.';
+            cont.replaceChildren(message);
         },
     });
 
