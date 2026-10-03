@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\{ParticipantJoined, ParticipantLeft, WebRTCAnswer, WebRTCOffer, WebRTCIceCandidate};
 use App\Models\{VideoRoom, Usuario};
 use App\Services\VideoRoomService;
+use App\Services\JitsiMeetingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -55,6 +56,7 @@ class VideoRoomController extends Controller
         }
 
         $service = app(VideoRoomService::class);
+        $jitsi = app(JitsiMeetingService::class)->forParticipant($room, $user);
 
         // ¿Soy el primero en llegar? (antes de registrar esta entrada)
         $otrosConectado = $room->participantes()
@@ -76,7 +78,9 @@ class VideoRoomController extends Controller
         $peer       = $this->peerDe($room, $user);
         $stun       = app(VideoRoomService::class)->getStunConfig();
 
-        return view('video.sala', compact('room', 'cita', 'user', 'esAbogado', 'peer', 'esPrimero', 'stun'));
+        return response()->view('video.sala', compact('room', 'cita', 'user', 'esAbogado', 'peer', 'esPrimero', 'stun', 'jitsi'))
+            ->header('Cache-Control', 'private, no-store')
+            ->header('Referrer-Policy', 'no-referrer');
     }
 
     /**
