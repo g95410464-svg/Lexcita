@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Sala de Videollamada — LexCita</title>
 
-    {{-- FASE TEMPORAL: Jitsi IFrame API (incrustado, nunca redirección). --}}
-    <script src="https://meet.jit.si/external_api.js"></script>
+    <script src="{{ $jitsi['scriptUrl'] }}" referrerpolicy="no-referrer"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -104,9 +103,9 @@
     {{-- Encabezado LexCita — la llamada permanece incrustada en la vista. --}}
     <header>
         <div class="brand">
-            <div class="brand-logo">GC</div>
+            <div class="brand-logo">LC</div>
             <div>
-                <p class="brand-title">TU CONEXIÓN LEGAL</p>
+                <p class="brand-title">{{ config('organization.isolated') ? config('organization.name') : 'Lexcita' }}</p>
                 <p class="brand-sub">Videollamada</p>
             </div>
         </div>
@@ -125,16 +124,28 @@
         <span class="meta-item">Hora: <strong>{{ \Illuminate\Support\Carbon::parse($cita->hora_inicio)->format('H:i') }} – {{ \Illuminate\Support\Carbon::parse($cita->hora_fin)->format('H:i') }}</strong></span>
     </section>
 
+    @if ($jitsi['provider'] === 'public')
+        <aside class="meta-strip" role="note">
+            @if ($esAbogado)
+                Para iniciar la consulta, autentícate cuando Jitsi lo solicite. Activa la sala de espera y admite únicamente a tu cliente.
+            @else
+                Si Jitsi indica que espera al moderador, espera a que tu abogado inicie la consulta.
+            @endif
+        </aside>
+    @endif
+
     {{-- Jitsi ocupa la mayor parte de la pantalla (PC, tablet y móvil). --}}
     <main>
         <div id="jitsi-container"></div>
         <div id="jitsi-error" class="error-box hidden"></div>
     </main>
 
-    {{-- Variables inyectadas por Blade (solo datos públicos necesarios). --}}
+    {{-- Solo la credencial temporal de este participante; nunca claves privadas. --}}
     <script id="datos-sala" type="application/json">
     {
-        "roomName":     @json($room->jitsiRoomName()),
+        "roomName":     @json($jitsi['roomName']),
+        "domain":       @json($jitsi['domain']),
+        "jwt":          @json($jitsi['jwt']),
         "userNombre":   @json($user->nombre),
         "esAbogado":    @json($esAbogado),
         "urlVolver":    @json($esAbogado ? route('abogado.dashboard') : route('cliente.dashboard'))
@@ -187,17 +198,19 @@
 
         var api;
         try {
-            api = new JitsiMeetExternalAPI('meet.jit.si', {
+            api = new JitsiMeetExternalAPI(datos.domain, {
                 roomName: datos.roomName,
+                jwt: datos.jwt || undefined,
+                lang: 'es',
                 width: '100%',
                 height: '100%',
                 parentNode: contenedor,
                 configOverwrite: {
-                    prejoinPageEnabled: false,
-                    MOBILE_APP_PROMO: false
+                    prejoinConfig: { enabled: true },
+                    disableDeepLinking: true,
+                    toolbarButtons: ['microphone', 'camera', 'desktop', 'chat', 'tileview', 'fullscreen', 'security', 'hangup']
                 },
                 interfaceConfigOverwrite: {
-                    TOOLBAR_BUTTONS: ['microphone', 'camera', 'desktop', 'chat', 'tileview', 'fullscreen', 'hangup'],
                     SHOW_JITSI_WATERMARK: false,
                     SHOW_WATERMARK_FOR_GUESTS: false
                 },

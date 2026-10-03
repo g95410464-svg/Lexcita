@@ -6,7 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Usuario;
-use Google\Client;
+use App\Services\GoogleLoginService;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -71,52 +73,64 @@ class AuthController extends Controller
         return redirect()->route('cliente.dashboard');
     }
 
-    public function googleRedirect()
+    public function googleRedirect(Request $request, GoogleLoginService $google)
     {
-        $client = new Client();
-        $client->setClientId(config('google.client_id') ?: getenv('GOOGLE_CLIENT_ID'));
-        $client->setClientSecret(config('google.client_secret') ?: getenv('GOOGLE_CLIENT_SECRET'));
-        $client->setRedirectUri(config('google.redirect_uri') ?: getenv('GOOGLE_REDIRECT_URI'));
-        $client->addScope('email');
-        $client->addScope('profile');
-
-        return redirect()->away($client->createAuthUrl());
-    }
-
-    public function googleCallback(Request $request)
-    {
-        $client = new Client();
-        $client->setClientId(config('google.client_id') ?: getenv('GOOGLE_CLIENT_ID'));
-        $client->setClientSecret(config('google.client_secret') ?: getenv('GOOGLE_CLIENT_SECRET'));
-        $client->setRedirectUri(config('google.redirect_uri') ?: getenv('GOOGLE_REDIRECT_URI'));
-
-        if ($request->has('code')) {
-            $token = $client->fetchAccessTokenWithAuthCode($request->get('code'));
-            if (!isset($token['error'])) {
-                $client->setAccessToken($token['access_token']);
-                $googleOauth = new \Google\Service\Oauth2($client);
-                $googleAccount = $googleOauth->userinfo->get();
-
-                $usuario = Usuario::where('email', $googleAccount->email)->first();
-
-                if (!$usuario) {
-                    $usuario = Usuario::create([
-                        'nombre'            => $googleAccount->name ?? $googleAccount->email,
-                        'email'             => $googleAccount->email,
-                        'password'          => Hash::make(\Illuminate\Support\Str::random(24)),
-                        'rol'               => 'cliente',
-                        'telefono_whatsapp' => '',
-                    ]);
-                }
-
-                Auth::login($usuario);
-                $request->session()->regenerate();
-
-                return $this->redireccionPorRol($usuario);
-            }
+        if (!$google->configured()) {
+            return redirect()->route('login')->withErrors(['email' => 'Google no está disponible. Ingresa con tu correo y contraseña.']);
         }
 
-        return redirect()->route('login')->withErrors(['email' => 'Error al autenticar con Google.']);
+        $state = Str::random(64);
+        $nonce = Str::random(64);
+        $request->session()->put('google.oauth', [
+            'state' => $state,
+            'nonce' => $nonce,
+            'expires_at' => now()->addMinutes(10)->timestamp,
+            'redirect_uri' => config('google.redirect_uri'),
+        ]);
+
+        return redirect()->away($google->authorizationUrl($state, $nonce));
+    }
+
+    public function googleCallback(Request $request, GoogleLoginService $google)
+    {
+        // Consume once, including cancelled or malformed callbacks.
+        $pending = $request->session()->pull('google.oauth');
+        $state = $request->query('state');
+        $code = $request->query('code');
+        if (!is_array($pending)
+            || !is_string($state) || strlen($state) !== 64
+            || !hash_equals($pending['state'], $state)
+            || $pending['expires_at'] <= now()->timestamp
+            || $pending['redirect_uri'] !== config('google.redirect_uri')
+            || $request->has('error')
+            || !is_string($code) || $code === '' || strlen($code) > 8192) {
+            return redirect()->route('login')->withErrors(['email' => 'La solicitud de Google venció o no es válida. Intenta iniciar sesión otra vez.']);
+        }
+
+        try {
+            $identity = $google->identity($code, $pending['nonce']);
+        } catch (\Exception $exception) {
+            // Never log OAuth codes, tokens, provider responses or account details.
+            Log::warning('Google login verification failed.', ['exception_type' => get_class($exception)]);
+            return redirect()->route('login')->withErrors(['email' => 'No fue posible verificar tu cuenta de Google. Usa una cuenta Gmail o Google Workspace, o ingresa con correo y contraseña.']);
+        }
+
+        $usuario = Usuario::firstOrCreate(['email' => $identity['email']], [
+            'nombre' => $identity['nombre'],
+            'password' => Hash::make(Str::random(48)),
+            'rol' => 'cliente',
+            'telefono_whatsapp' => '',
+            'activo' => true,
+        ]);
+
+        if (!$usuario->activo) {
+            return redirect()->route('login')->withErrors(['email' => 'La cuenta está inactiva. Contacta con la administración.']);
+        }
+
+        Auth::login($usuario);
+        $request->session()->regenerate();
+
+        return $this->redireccionPorRol($usuario);
     }
 
     public function logout(Request $request)
