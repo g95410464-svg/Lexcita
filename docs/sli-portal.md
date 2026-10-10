@@ -18,6 +18,11 @@ login, creación de cuenta, explicación del portal y contacto con el despacho.
 de regreso al inicio. La raíz de las demás organizaciones sigue redirigiendo al
 login. La selección depende de la configuración del servidor.
 
+La landing combina un fondo marfil, una sección independiente «Cómo funciona»
+en verde grisáceo y un retrato ilustrativo generado por IA. La imagen representa
+un personaje ficticio, no un integrante identificado del despacho. Se sirve desde
+`public/images/sli-abogado-retrato.webp`, optimizada en WebP; no depende de una URL externa.
+
 Incluye acceso, registro, paneles de los tres roles, reserva y consulta de citas,
 agenda, gestión de abogados y clientes, estadísticas, pago, comprobante imprimible,
 videollamada y aviso de límite de solicitudes. Mantiene los controladores, rutas,

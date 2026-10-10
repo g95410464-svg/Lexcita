@@ -26,29 +26,22 @@
                 <a class="sli-button sli-button-primary" href="{{ route('login') }}">Ingresar al portal<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
                 <a class="sli-button sli-button-outline" href="{{ route('registro') }}">Crear mi cuenta</a>
             </div>
-            <p class="sli-landing-caption">Tu despacho. Tus consultas. Un mismo lugar.</p>
+            <a class="sli-landing-caption" href="#como-funciona">Conoce cómo funciona<span class="material-symbols-outlined" aria-hidden="true">south</span></a>
         </div>
-        <aside class="sli-landing-promise" aria-label="Nuestro compromiso">
-            <p class="sli-landing-promise-label">TU CONEXIÓN LEGAL · EL SALVADOR</p>
-            <svg class="sli-landing-emblem" viewBox="0 0 240 180" fill="none" aria-hidden="true">
-                <path d="M28 166V97a92 92 0 0 1 184 0v69M42 166V97a78 78 0 0 1 156 0v69M56 166V97a64 64 0 0 1 128 0v69" stroke="currentColor" opacity=".2"/>
-                <g stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M120 49v91m-22 5h44m-16-80 38 9m-50-9-38 9M80 79l-16 35h32L80 79Zm80 0-16 35h32l-16-35Z"/>
-                    <path d="M64 114c2 15 30 15 32 0m48 0c2 15 30 15 32 0"/>
-                    <circle cx="120" cy="62" r="6" fill="#1d2a44"/>
-                </g>
-            </svg>
-            <h2>Tu confianza,<br><em>nuestra responsabilidad legal.</em></h2>
-            <div class="sli-landing-promise-footer"><span>Servicios Legales Integrados<br>S.A. de C.V.</span><span class="material-symbols-outlined" aria-hidden="true">north_east</span></div>
-        </aside>
+        <figure class="sli-landing-portrait">
+            <img src="{{ asset('images/sli-abogado-retrato.webp') }}" alt="Retrato ilustrativo de un abogado de cabello castaño rojizo en un despacho" width="1122" height="1402" fetchpriority="high">
+            <figcaption><span class="material-symbols-outlined" aria-hidden="true">balance</span><p>Tu confianza,<br><strong>nuestra responsabilidad legal.</strong></p></figcaption>
+        </figure>
     </section>
-    <section class="sli-landing-steps sli-landing-width" id="como-funciona" aria-labelledby="steps-title">
-        <div class="sli-landing-section-heading"><p class="sli-landing-eyebrow">ASÍ DE SENCILLO</p><h2 id="steps-title">El siguiente paso, a tu alcance.</h2></div>
-        <ol>
-            <li><span class="sli-landing-step-number">01</span><div><h3>Entra a tu espacio</h3><p>Crea tu cuenta o inicia sesión con tu correo o Google.</p></div></li>
-            <li><span class="sli-landing-step-number">02</span><div><h3>Agenda tu consulta</h3><p>Elige un abogado y un horario según la disponibilidad del despacho.</p></div></li>
-            <li><span class="sli-landing-step-number">03</span><div><h3>Mantén todo a la vista</h3><p>Revisa tus citas y accede a tu consulta virtual cuando corresponda.</p></div></li>
-        </ol>
+    <section class="sli-landing-how" id="como-funciona" aria-labelledby="steps-title">
+        <div class="sli-landing-steps sli-landing-width">
+            <div class="sli-landing-section-heading"><div><p class="sli-landing-eyebrow">DEL PRIMER PASO A TU CONSULTA</p><h2 id="steps-title">Cómo funciona</h2></div><p>Un proceso sencillo para organizar tus consultas y mantenerte cerca de tu despacho.</p></div>
+            <ol>
+                <li><div class="sli-landing-step-top"><span class="sli-landing-step-number">01</span><span class="material-symbols-outlined" aria-hidden="true">person_add</span></div><h3>Entra a tu espacio</h3><p>Crea tu cuenta o inicia sesión con tu correo o Google.</p></li>
+                <li><div class="sli-landing-step-top"><span class="sli-landing-step-number">02</span><span class="material-symbols-outlined" aria-hidden="true">calendar_month</span></div><h3>Agenda tu consulta</h3><p>Elige un abogado y un horario según la disponibilidad del despacho.</p></li>
+                <li><div class="sli-landing-step-top"><span class="sli-landing-step-number">03</span><span class="material-symbols-outlined" aria-hidden="true">forum</span></div><h3>Mantén todo a la vista</h3><p>Revisa tus citas y accede a tu consulta virtual cuando corresponda.</p></li>
+            </ol>
+        </div>
     </section>
     <section class="sli-landing-contact sli-landing-width" aria-labelledby="contact-title">
         <div><h2 id="contact-title">¿Prefieres hablar con nosotros?</h2><p>El despacho puede orientarte antes de agendar tu consulta.</p></div>
