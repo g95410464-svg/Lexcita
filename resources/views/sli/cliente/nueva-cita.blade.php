@@ -101,7 +101,7 @@
         Paso 1 — Selecciona un abogado
     </p>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        @if($abogados->isEmpty())<div class="sli-empty"><span class="material-symbols-outlined" aria-hidden="true">person_search</span><h3>Aún no hay abogados disponibles</h3><p>Contacta al despacho para recibir ayuda con tu consulta.</p><a class="sli-text-link" href="https://servicioslegalesint.com/contacto/" target="_blank" rel="noopener noreferrer">Contactar al despacho</a></div>@endif
+        @if($abogados->isEmpty())<div class="sli-empty col-span-full"><span class="material-symbols-outlined" aria-hidden="true">person_search</span><h3>Aún no hay abogados disponibles</h3><p>Contacta al despacho para recibir ayuda con tu consulta.</p><a class="sli-text-link" href="https://servicioslegalesint.com/contacto/" target="_blank" rel="noopener noreferrer">Contactar al despacho</a></div>@endif
         @foreach($abogados as $ab)
         <button type="button" class="text-left w-full abogado-card selectable-card bg-surface-container border border-outline-variant p-5 flex items-center gap-4 transition-all duration-300 hover:border-secondary hover:shadow-lg hover:shadow-secondary/10 hover:-translate-y-1"
              @click="$store.booking.setAbogado({{ $ab->id }}, {{ json_encode($ab->nombre) }}); window.triggerSelectAnim($el)"
