@@ -38,6 +38,24 @@ class SliPortalTest extends TestCase
             ->assertSee('images/sli-firma.png')->assertDontSee('cdn.tailwindcss.com');
     }
 
+    public function test_public_landing_is_exclusive_to_sli_and_keeps_authentication_links(): void
+    {
+        foreach ([null, 'otra-organizacion'] as $organization) {
+            config(['organization.id' => $organization]);
+            $this->get('/?organization=servicios-legales-integrados')->assertRedirect(route('login'));
+        }
+
+        $this->enableSli();
+        $this->get(route('home'))->assertOk()->assertSee('Tu gestión legal,')
+            ->assertSee('href="'.route('login').'"', false)
+            ->assertSee('href="'.route('registro').'"', false)
+            ->assertDontSee('name="password"', false);
+        $this->get(route('login'))->assertOk()
+            ->assertSee('action="'.route('login.post').'"', false)
+            ->assertSee('href="'.route('home').'"', false);
+        $this->get(route('cliente.dashboard'))->assertRedirect(route('login'));
+    }
+
     public function test_actual_sli_registration_fields_create_client_and_persist_session(): void
     {
         $this->enableSli();

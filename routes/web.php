@@ -11,7 +11,13 @@ use App\Http\Controllers\VideoRoomController;
 // Reject malformed identifiers before PHP type coercion or database queries.
 Route::pattern('id', '[0-9]+');
 
-Route::get('/', fn() => redirect()->route('login'))->middleware('throttle:portal');
+Route::get('/', function () {
+    if (config('organization.id') === 'servicios-legales-integrados') {
+        return view('sli.landing');
+    }
+
+    return redirect()->route('login');
+})->middleware('throttle:portal')->name('home');
 Route::get('/login',    [AuthController::class, 'showLogin'])->middleware('throttle:portal')->name('login');
 Route::post('/login',   [AuthController::class, 'login'])->middleware('throttle:login')->name('login.post');
 Route::get('/registro', [AuthController::class, 'showRegistro'])->middleware('throttle:portal')->name('registro');
