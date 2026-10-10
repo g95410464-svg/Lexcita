@@ -1,0 +1,1 @@
+<img class="sli-firm-logo" src="{{ asset('images/sli-firma.png') }}" alt="G.C. Tu Conexión Legal · Abogados y Notarios" width="1536" height="585"><span class="sli-brand-caption">Servicios Legales Integrados<br>S.A. de C.V.</span>
