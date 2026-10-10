@@ -6,8 +6,8 @@
             : [['cliente.dashboard', 'Mi resumen', 'space_dashboard'], ['cliente.nueva-cita', 'Agendar consulta', 'add_circle'], ['cliente.mis-citas', 'Mis citas', 'calendar_month']]);
 @endphp
 @foreach($navigation as [$route, $label, $icon])
-    <a href="{{ route($route) }}" class="sli-nav-link" @if(request()->routeIs($route)) aria-current="page" @endif>
-        <span class="material-symbols-outlined" aria-hidden="true">{{ $icon }}</span><span>{{ $label }}</span>
+    <div class="sli-nav-item"><a href="{{ route($route) }}" class="sli-nav-link" aria-label="{{ $label }}" @if(request()->routeIs($route)) aria-current="page" @endif>
+        <span class="material-symbols-outlined" aria-hidden="true">{{ $icon }}</span><span class="sli-nav-label">{{ $label }}</span>
         @if(request()->routeIs($route))<span class="sli-nav-dot" aria-hidden="true"></span>@endif
-    </a>
+    </a><span class="sli-nav-tooltip" aria-hidden="true">{{ $label }}</span></div>
 @endforeach

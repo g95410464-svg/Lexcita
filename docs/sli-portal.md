@@ -17,6 +17,14 @@ agenda, gestión de abogados y clientes, estadísticas, pago, comprobante imprim
 videollamada y aviso de límite de solicitudes. Mantiene los controladores, rutas,
 permisos, sesiones, OAuth y aislamiento de datos existentes.
 
+La barra lateral adapta la plantilla CodingNepal entregada por el usuario en
+`create-sidebar-menu-html-css-javascript.zip`: panel flotante con esquinas
+redondeadas, contracción a iconos, etiquetas al enfocar y menú desplegable en móvil.
+La preferencia de escritorio se conserva en almacenamiento local del navegador;
+no genera solicitudes al servidor. Los enlaces se generan según el rol y cerrar
+sesión sigue siendo una petición POST con CSRF. El menú móvil se cierra con Escape,
+al pulsar fuera o al mover el foco fuera de él.
+
 Los estilos y Alpine se compilan con Vite. Las páginas SLI no cargan el compilador
 Tailwind desde un CDN ni abren conexiones de Echo sin necesitarlas. La carga de
 horarios conserva su caché, cancelación de solicitudes y tratamiento de HTTP 429.
