@@ -17,6 +17,11 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Organization identity comes from server configuration, never the request.
+        if (config('organization.id') === 'servicios-legales-integrados') {
+            $this->app['view']->getFinder()->prependLocation(resource_path('views/sli'));
+        }
+
         // Forzar HTTPS bajo proxy (Railway) para evitar errores de Mixed Content.
         if (app()->environment('production') || request()->header('x-forwarded-proto') === 'https') {
             URL::forceScheme('https');
