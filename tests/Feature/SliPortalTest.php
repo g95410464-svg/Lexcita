@@ -48,7 +48,7 @@ class SliPortalTest extends TestCase
         $this->enableSli();
         $this->get(route('home'))->assertOk()->assertSee('Tu gestión legal,')
             ->assertSee('href="'.route('login').'"', false)
-            ->assertSee('href="'.route('registro').'"', false)
+            ->assertSee('href="'.route('sli.start').'"', false)
             ->assertDontSee('name="password"', false);
         $this->get(route('login'))->assertOk()
             ->assertSee('action="'.route('login.post').'"', false)
@@ -158,5 +158,79 @@ class SliPortalTest extends TestCase
         }
         $this->actingAs($this->user('admin'))->get(route('video.sala', $room->room_token))
             ->assertForbidden();
+    }
+    public function test_public_directory_only_exposes_active_lawyer_profiles(): void
+    {
+        $this->enableSli();
+        $lawyer = $this->user('abogado');
+        $lawyer->update(['especialidad' => 'Derecho familiar', 'telefono_whatsapp' => '70123456']);
+        $client = $this->user('cliente');
+        $admin = $this->user('admin');
+        $inactive = Usuario::create(['nombre' => 'Oculto', 'email' => 'oculto@example.test',
+            'password' => 'ClaveLocal123', 'rol' => 'abogado', 'activo' => false]);
+        $this->get('/abogados')->assertOk()->assertSee($lawyer->nombre)->assertSee('Derecho familiar')
+            ->assertDontSee($client->nombre)->assertDontSee($admin->nombre)->assertDontSee('Oculto')
+            ->assertDontSee($lawyer->email)->assertDontSee('70123456');
+        $this->get('/abogados/'.$lawyer->id)->assertOk()->assertSee('Derecho familiar')
+            ->assertDontSee($lawyer->email)->assertDontSee('70123456');
+        foreach ([$client->id, $admin->id, $inactive->id, 999999] as $id) {
+            $this->get('/abogados/'.$id)->assertNotFound();
+            $this->get('/abogados/'.$id.'/agendar')->assertNotFound();
+        }
+        foreach (['/conocenos', '/como-funciona'] as $path) {
+            $this->get($path)->assertOk();
+        }
+        config(['organization.id' => 'otra-organizacion']);
+        foreach (['/conocenos', '/como-funciona', '/abogados', '/agendar', '/abogados/'.$lawyer->id] as $path) {
+            $this->get($path)->assertNotFound();
+        }
+    }
+
+    public function test_booking_survives_registration_and_selects_the_public_profile(): void
+    {
+        $this->enableSli();
+        $lawyer = $this->user('abogado');
+        $this->get('/abogados/'.$lawyer->id.'/agendar')->assertRedirect(route('registro'));
+        $this->get('/registro')->assertOk()->assertSee('Continuar con Google')
+            ->assertSee('href="'.route('google.redirect').'"', false);
+        $this->post('/registro', ['nombre' => 'Cliente nuevo', 'email' => 'nuevo@example.test',
+            'password' => 'ClaveLocal123', 'password_confirmation' => 'ClaveLocal123',
+            'telefono_whatsapp' => '+50370000000'])
+            ->assertRedirect(route('cliente.nueva-cita', ['abogado' => $lawyer->id]));
+        $this->get(route('cliente.nueva-cita', ['abogado' => $lawyer->id]))->assertOk()
+            ->assertViewHas('abogadoSeleccionado', fn ($selected) => $selected->id === $lawyer->id);
+        $lawyer->update(['activo' => false]);
+        $this->get(route('cliente.nueva-cita', ['abogado' => $lawyer->id]))->assertOk()
+            ->assertViewHas('abogadoSeleccionado', null);
+    }
+
+    public function test_booking_survives_google_registration(): void
+    {
+        $this->enableSli();
+        $lawyer = $this->user('abogado');
+        $this->get('/abogados/'.$lawyer->id.'/agendar')->assertRedirect(route('registro'));
+        $state = str_repeat('a', 64);
+        $this->mock(\App\Services\GoogleLoginService::class, function ($mock) {
+            $mock->shouldReceive('identity')->once()->with('test-code', 'test-nonce')
+                ->andReturn(['email' => 'google@example.test', 'nombre' => 'Cliente Google']);
+        });
+        $this->withSession(['google.oauth' => ['state' => $state, 'nonce' => 'test-nonce',
+            'expires_at' => now()->addMinutes(10)->timestamp, 'redirect_uri' => config('google.redirect_uri')]])
+            ->get('/auth/google/callback?state='.$state.'&code=test-code')
+            ->assertRedirect(route('cliente.nueva-cita', ['abogado' => $lawyer->id]));
+        $this->assertDatabaseHas('usuarios', ['email' => 'google@example.test', 'rol' => 'cliente']);
+    }
+
+    public function test_booking_login_revalidates_lawyer_and_preserves_role_routes(): void
+    {
+        $this->enableSli();
+        $lawyer = $this->user('abogado');
+        $client = $this->user('cliente');
+        $this->get('/abogados/'.$lawyer->id.'/agendar')->assertRedirect(route('registro'));
+        $lawyer->update(['activo' => false]);
+        $this->post('/login', ['email' => $client->email, 'password' => 'ClaveLocal123'])
+            ->assertRedirect(route('cliente.nueva-cita'));
+        $this->assertNull(session('sli.booking_lawyer'));
+        $this->actingAs($this->user('admin'))->get('/agendar')->assertRedirect(route('interno.dashboard'));
     }
 }

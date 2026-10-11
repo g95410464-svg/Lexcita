@@ -7,6 +7,7 @@ use App\Http\Controllers\AbogadoController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\VideoRoomController;
+use App\Http\Controllers\SliPublicController;
 
 // Reject malformed identifiers before PHP type coercion or database queries.
 Route::pattern('id', '[0-9]+');
@@ -18,6 +19,14 @@ Route::get('/', function () {
 
     return redirect()->route('login');
 })->middleware('throttle:portal')->name('home');
+Route::middleware('throttle:portal')->name('sli.')->group(function () {
+    Route::get('/agendar', [SliPublicController::class, 'book'])->name('start');
+    Route::get('/conocenos', [SliPublicController::class, 'about'])->name('about');
+    Route::get('/como-funciona', [SliPublicController::class, 'how'])->name('how');
+    Route::get('/abogados', [SliPublicController::class, 'lawyers'])->name('lawyers');
+    Route::get('/abogados/{id}', [SliPublicController::class, 'profile'])->name('profile');
+    Route::get('/abogados/{id}/agendar', [SliPublicController::class, 'book'])->name('book');
+});
 Route::get('/login',    [AuthController::class, 'showLogin'])->middleware('throttle:portal')->name('login');
 Route::post('/login',   [AuthController::class, 'login'])->middleware('throttle:login')->name('login.post');
 Route::get('/registro', [AuthController::class, 'showRegistro'])->middleware('throttle:portal')->name('registro');
