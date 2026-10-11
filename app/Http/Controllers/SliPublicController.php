@@ -28,14 +28,14 @@ class SliPublicController extends Controller
     {
         $this->ensureSli();
         $abogados = Usuario::abogadosActivos()->orderBy('nombre')->orderBy('id')
-            ->paginate(12, ['id', 'nombre', 'especialidad']);
+            ->paginate(12, ['id', 'nombre', 'especialidad', 'perfil_biografia', 'perfil_imagen']);
         return view('sli.public.lawyers', compact('abogados'));
     }
 
     public function profile(int $id)
     {
         $this->ensureSli();
-        $abogado = Usuario::abogadosActivos()->select('id', 'nombre', 'especialidad')->findOrFail($id);
+        $abogado = Usuario::abogadosActivos()->select('id', 'nombre', 'especialidad', 'perfil_biografia', 'perfil_imagen')->findOrFail($id);
         return view('sli.public.profile', compact('abogado'));
     }
 

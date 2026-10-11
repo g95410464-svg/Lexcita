@@ -8,6 +8,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\VideoRoomController;
 use App\Http\Controllers\SliPublicController;
+use App\Http\Controllers\SliEditorController;
 
 // Reject malformed identifiers before PHP type coercion or database queries.
 Route::pattern('id', '[0-9]+');
@@ -20,6 +21,7 @@ Route::get('/', function () {
     return redirect()->route('login');
 })->middleware('throttle:portal')->name('home');
 Route::middleware('throttle:portal')->name('sli.')->group(function () {
+    Route::get('/sli-media/{file}', [SliEditorController::class, 'media'])->where('file', '[a-f0-9-]{36}\.(jpg|jpeg|png|webp)')->name('media');
     Route::get('/agendar', [SliPublicController::class, 'book'])->name('start');
     Route::get('/conocenos', [SliPublicController::class, 'about'])->name('about');
     Route::get('/como-funciona', [SliPublicController::class, 'how'])->name('how');
@@ -63,6 +65,9 @@ Route::middleware(['auth', 'verified', 'rol:abogado', 'throttle:portal'])->prefi
 });
 
 Route::middleware(['auth', 'verified', 'rol:admin', 'throttle:portal'])->prefix('interno')->name('interno.')->group(function () {
+    Route::get('/personalizar', [SliEditorController::class, 'index'])->name('personalizar');
+    Route::put('/personalizar', [SliEditorController::class, 'update'])->middleware('throttle:writes')->name('personalizar.update');
+    Route::put('/personalizar/abogados/{id}', [SliEditorController::class, 'updateLawyer'])->middleware('throttle:writes')->name('personalizar.abogado');
     Route::get('/dashboard',              [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/abogados',               [AdminController::class, 'abogados'])->name('abogados');
     Route::post('/abogados',              [AdminController::class, 'crearAbogado'])->middleware('throttle:writes')->name('abogados.crear');

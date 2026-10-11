@@ -6,9 +6,9 @@
 <div class="sli-public-grid">
 @forelse($abogados as $abogado)
 <article class="sli-lawyer-card">
-    <div class="sli-lawyer-monogram" aria-hidden="true">{{ mb_substr($abogado->nombre, 0, 1) }}</div>
+    @if($abogado->perfil_imagen)<img class="sli-lawyer-card-photo" src="{{ route('sli.media', $abogado->perfil_imagen) }}" alt="Retrato de {{ $abogado->nombre }}" loading="lazy">@else<div class="sli-lawyer-monogram" aria-hidden="true">{{ mb_substr($abogado->nombre, 0, 1) }}</div>@endif
     <p class="sli-landing-eyebrow">SERVICIOS LEGALES INTEGRADOS</p>
-    <h2>{{ $abogado->nombre }}</h2><p>{{ $abogado->especialidad ?: 'Consulta al despacho sobre su área de atención.' }}</p>
+    <h2>{{ $abogado->nombre }}</h2><p>{{ $abogado->especialidad ?: 'Consulta al despacho sobre su área de atención.' }}</p>@if($abogado->perfil_biografia)<p>{{ \Illuminate\Support\Str::limit($abogado->perfil_biografia, 130) }}</p>@endif
     <a class="sli-button sli-button-outline" href="{{ route('sli.profile', $abogado->id) }}">Conocer perfil <span aria-hidden="true">↗</span></a>
 </article>
 @empty

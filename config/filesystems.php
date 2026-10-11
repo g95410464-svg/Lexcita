@@ -60,6 +60,18 @@ return [
             'report' => false,
         ],
 
+        // SLI assets remain private and are served through the application.
+        'sli-assets' => [
+            'driver' => 's3',
+            'key' => env('SLI_ASSETS_ACCESS_KEY_ID'),
+            'secret' => env('SLI_ASSETS_SECRET_ACCESS_KEY'),
+            'region' => env('SLI_ASSETS_REGION', 'auto'),
+            'bucket' => env('SLI_ASSETS_BUCKET'),
+            'endpoint' => env('SLI_ASSETS_ENDPOINT'),
+            'use_path_style_endpoint' => env('SLI_ASSETS_USE_PATH_STYLE_ENDPOINT', false),
+            'throw' => true,
+        ],
+
     ],
 
     /*

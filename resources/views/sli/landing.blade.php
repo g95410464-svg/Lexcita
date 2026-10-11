@@ -3,9 +3,9 @@
 @section('public-content')
     <section class="sli-landing-hero sli-landing-width" aria-labelledby="landing-title">
         <div class="sli-landing-intro">
-            <p class="sli-landing-eyebrow"><span></span>SERVICIOS LEGALES INTEGRADOS</p>
-            <h1 id="landing-title">Tu gestión legal,<br><em>más cerca de ti.</em></h1>
-            <p class="sli-landing-lead">Un espacio para agendar tus consultas, conectar con tu abogado y dar seguimiento a tus citas.</p>
+            <p class="sli-landing-eyebrow"><span></span>{{ $sliSiteContent['home']['eyebrow'] }}</p>
+            <h1 id="landing-title">{{ $sliSiteContent['home']['title'] }}</h1>
+            <p class="sli-landing-lead">{{ $sliSiteContent['home']['description'] }}</p>
             <div class="sli-landing-actions">
                 <a class="sli-button sli-button-primary" href="{{ route('sli.start') }}">Agendar una cita<span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span></a>
                 <a class="sli-button sli-button-outline" href="{{ route('sli.lawyers') }}">Conocer a los abogados</a>
@@ -13,7 +13,7 @@
             <a class="sli-landing-caption" href="{{ route('sli.how') }}">Conoce cómo funciona<span class="material-symbols-outlined" aria-hidden="true">south</span></a>
         </div>
         <figure class="sli-landing-portrait">
-            <img src="{{ asset('images/sli-abogado-retrato.webp') }}" alt="Retrato ilustrativo de un abogado de cabello castaño rojizo en un despacho" width="1122" height="1402" fetchpriority="high">
+            <img src="{{ $sliSiteContent['home']['image'] ? route('sli.media', $sliSiteContent['home']['image']) : asset('images/sli-abogado-retrato.webp') }}" alt="Retrato del despacho Servicios Legales Integrados" width="1122" height="1402" fetchpriority="high">
             <figcaption><span class="material-symbols-outlined" aria-hidden="true">balance</span><p>Tu confianza,<br><strong>nuestra responsabilidad legal.</strong></p></figcaption>
         </figure>
     </section>

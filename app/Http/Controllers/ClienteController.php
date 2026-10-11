@@ -43,15 +43,10 @@ class ClienteController extends Controller
         return view('cliente.dashboard', compact('proximasCitas', 'totalCitas', 'pendientes', 'completadas', 'citasPendPago'));
     }
 
-    public function nuevaCita(Request $request)
+    public function nuevaCita()
     {
         $abogados = Usuario::abogadosActivos()->get();
-        $abogadoSeleccionado = null;
-        if (config('organization.id') === 'servicios-legales-integrados') {
-            $id = filter_var($request->query('abogado'), FILTER_VALIDATE_INT);
-            $abogadoSeleccionado = $id ? $abogados->firstWhere('id', $id) : null;
-        }
-        return view('cliente.nueva-cita', compact('abogados', 'abogadoSeleccionado'));
+        return view('cliente.nueva-cita', compact('abogados'));
     }
 
     public function crearCita(Request $request, CitaService $citaService)

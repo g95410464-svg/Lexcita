@@ -253,9 +253,9 @@
 
 document.addEventListener('alpine:init', () => {
     Alpine.store('booking', {
-        step: {{ $abogadoSeleccionado ? 2 : 1 }},
-        abogadoId: {{ Illuminate\Support\Js::from($abogadoSeleccionado?->id) }},
-        abogadoNom: {{ Illuminate\Support\Js::from($abogadoSeleccionado?->nombre ?? '') }},
+        step: 1,
+        abogadoId: null,
+        abogadoNom: '',
         fechaSeleccionada: null,
         horaSeleccionada: null,
         anio: new Date().getFullYear(),

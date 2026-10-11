@@ -70,7 +70,7 @@ class AuthController extends Controller
         Auth::login($usuario);
         $request->session()->regenerate();
 
-        return $this->redireccionPorRol($usuario);
+        return redirect()->route('cliente.dashboard');
     }
 
     public function googleRedirect(Request $request, GoogleLoginService $google)
@@ -143,18 +143,6 @@ class AuthController extends Controller
 
     private function redireccionPorRol(Usuario $usuario)
     {
-        $lawyerId = session()->pull('sli.booking_lawyer');
-        $bookingRequested = session()->pull('sli.booking_requested');
-        if (config('organization.id') === 'servicios-legales-integrados'
-            && $usuario->rol === 'cliente' && $lawyerId
-            && Usuario::abogadosActivos()->whereKey($lawyerId)->exists()) {
-            return redirect()->route('cliente.nueva-cita', ['abogado' => $lawyerId]);
-        }
-        if (config('organization.id') === 'servicios-legales-integrados'
-            && $usuario->rol === 'cliente' && $bookingRequested) {
-            return redirect()->route('cliente.nueva-cita');
-        }
-
         return match($usuario->rol) {
             'admin'   => redirect()->route('interno.dashboard'),
             'abogado' => redirect()->route('abogado.dashboard'),
