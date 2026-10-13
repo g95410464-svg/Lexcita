@@ -37,7 +37,10 @@ class CheckOrganization extends Command
                 'no_role_memberships' => !$privileges->memberships,
                 'no_other_organization_access' => !$privileges->other_organization_access,
                 'no_public_database_access' => !$privileges->public_access,
-                'schema_ready' => DB::getSchemaBuilder()->hasTable('usuarios') && DB::getSchemaBuilder()->hasTable('citas') && DB::getSchemaBuilder()->hasTable('sessions'),
+                'schema_ready' => DB::getSchemaBuilder()->hasTable('usuarios') && DB::getSchemaBuilder()->hasTable('citas') && DB::getSchemaBuilder()->hasTable('sessions')
+                    && (config('organization.id') !== 'servicios-legales-integrados'
+                        || (DB::getSchemaBuilder()->hasTable('sli_site_settings')
+                            && DB::getSchemaBuilder()->hasColumns('usuarios', ['perfil_biografia', 'perfil_imagen']))),
             ];
             $this->line(json_encode($checks, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
             return in_array(false, $checks, true) ? self::FAILURE : self::SUCCESS;

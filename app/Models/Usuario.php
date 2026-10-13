@@ -19,6 +19,8 @@ class Usuario extends Authenticatable
         'telefono_whatsapp',
         'especialidad',
         'activo',
+        'perfil_biografia',
+        'perfil_imagen',
     ];
 
     protected $hidden = ['password', 'remember_token'];

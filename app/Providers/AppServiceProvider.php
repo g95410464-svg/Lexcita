@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
 use App\Services\CitaService;
 use App\Services\HorarioService;
+use App\Support\SliSiteContent;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,6 +21,9 @@ class AppServiceProvider extends ServiceProvider
         // Organization identity comes from server configuration, never the request.
         if (config('organization.id') === 'servicios-legales-integrados') {
             $this->app['view']->getFinder()->prependLocation(resource_path('views/sli'));
+            $this->app['view']->composer(['sli.landing', 'sli.public.*'], function ($view): void {
+                $view->with('sliSiteContent', SliSiteContent::get());
+            });
         }
 
         // Forzar HTTPS bajo proxy (Railway) para evitar errores de Mixed Content.

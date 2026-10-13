@@ -7,11 +7,28 @@ use App\Http\Controllers\AbogadoController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\VideoRoomController;
+use App\Http\Controllers\SliPublicController;
+use App\Http\Controllers\SliEditorController;
 
 // Reject malformed identifiers before PHP type coercion or database queries.
 Route::pattern('id', '[0-9]+');
 
-Route::get('/', fn() => redirect()->route('login'))->middleware('throttle:portal');
+Route::get('/', function () {
+    if (config('organization.id') === 'servicios-legales-integrados') {
+        return view('sli.landing');
+    }
+
+    return redirect()->route('login');
+})->middleware('throttle:portal')->name('home');
+Route::middleware('throttle:portal')->name('sli.')->group(function () {
+    Route::get('/sli-media/{file}', [SliEditorController::class, 'media'])->where('file', '[a-f0-9-]{36}\.(jpg|jpeg|png|webp)')->name('media');
+    Route::get('/agendar', [SliPublicController::class, 'book'])->name('start');
+    Route::get('/conocenos', [SliPublicController::class, 'about'])->name('about');
+    Route::get('/como-funciona', [SliPublicController::class, 'how'])->name('how');
+    Route::get('/abogados', [SliPublicController::class, 'lawyers'])->name('lawyers');
+    Route::get('/abogados/{id}', [SliPublicController::class, 'profile'])->name('profile');
+    Route::get('/abogados/{id}/agendar', [SliPublicController::class, 'book'])->name('book');
+});
 Route::get('/login',    [AuthController::class, 'showLogin'])->middleware('throttle:portal')->name('login');
 Route::post('/login',   [AuthController::class, 'login'])->middleware('throttle:login')->name('login.post');
 Route::get('/registro', [AuthController::class, 'showRegistro'])->middleware('throttle:portal')->name('registro');
@@ -48,6 +65,9 @@ Route::middleware(['auth', 'verified', 'rol:abogado', 'throttle:portal'])->prefi
 });
 
 Route::middleware(['auth', 'verified', 'rol:admin', 'throttle:portal'])->prefix('interno')->name('interno.')->group(function () {
+    Route::get('/personalizar', [SliEditorController::class, 'index'])->name('personalizar');
+    Route::put('/personalizar', [SliEditorController::class, 'update'])->middleware('throttle:writes')->name('personalizar.update');
+    Route::put('/personalizar/abogados/{id}', [SliEditorController::class, 'updateLawyer'])->middleware('throttle:writes')->name('personalizar.abogado');
     Route::get('/dashboard',              [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/abogados',               [AdminController::class, 'abogados'])->name('abogados');
     Route::post('/abogados',              [AdminController::class, 'crearAbogado'])->middleware('throttle:writes')->name('abogados.crear');
