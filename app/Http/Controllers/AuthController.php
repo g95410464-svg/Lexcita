@@ -134,10 +134,27 @@ class AuthController extends Controller
         return back()->with('status', 'Enviamos un código nuevo. Revisa tu correo electrónico.');
     }
 
-    public function showGoogleRegistrationPhone(Request $request)
+    public function showGoogleRegistrationPhone(Request $request, RegistrationOtpService $otp)
     {
-        abort_unless($request->session()->has('sli.google_pending'), 404);
-        return view('auth.google-telefono');
+        $pending = $request->session()->get('sli.google_pending');
+        abort_unless(is_array($pending) && isset($pending['email'], $pending['nombre']), 404);
+
+        try {
+            $otp->begin($request->session()->getId(), [
+                'email' => $pending['email'],
+                'nombre' => $pending['nombre'],
+                'telefono_whatsapp' => null,
+                'password' => Str::random(64),
+            ]);
+        } catch (Throwable $exception) {
+            Log::warning('SLI Google email verification could not start.', ['exception_type' => get_class($exception)]);
+            return redirect()->route('login')->withErrors(['email' => $exception instanceof \RuntimeException
+                ? $exception->getMessage()
+                : 'No pudimos enviar el código al correo de Google. Inténtalo de nuevo.']);
+        }
+
+        $request->session()->forget('sli.google_pending');
+        return redirect()->route('registro.verificar')->with('status', 'Te enviamos un código al correo verificado de Google.');
     }
 
     public function startGoogleRegistrationVerification(Request $request, RegistrationOtpService $otp)
@@ -213,11 +230,21 @@ class AuthController extends Controller
         if (config('organization.id') === 'servicios-legales-integrados') {
             $usuario = Usuario::where('email', $identity['email'])->first();
             if (!$usuario) {
-                $request->session()->put('sli.google_pending', [
-                    'email' => $identity['email'],
-                    'nombre' => $identity['nombre'],
-                ]);
-                return redirect()->route('registro.google.telefono');
+                try {
+                    app(RegistrationOtpService::class)->begin($request->session()->getId(), [
+                        'email' => $identity['email'],
+                        'nombre' => $identity['nombre'],
+                        'telefono_whatsapp' => null,
+                        'password' => Str::random(64),
+                    ]);
+                } catch (Throwable $exception) {
+                    Log::warning('SLI Google email verification could not start.', ['exception_type' => get_class($exception)]);
+                    return redirect()->route('login')->withErrors(['email' => $exception instanceof \RuntimeException
+                        ? $exception->getMessage()
+                        : 'No pudimos enviar el código al correo de Google. Inténtalo de nuevo.']);
+                }
+
+                return redirect()->route('registro.verificar')->with('status', 'Te enviamos un código al correo verificado de Google.');
             }
         } else {
             $usuario = Usuario::firstOrCreate(['email' => $identity['email']], [

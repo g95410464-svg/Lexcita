@@ -23,7 +23,7 @@ class RegistrationOtpService
         $this->assertMailConfigured();
 
         $email = Str::lower(trim($data['email']));
-        $phone = $this->normalizePhone($data['telefono_whatsapp']);
+        $phone = $this->normalizePhone($data['telefono_whatsapp'] ?? null);
         $emailCode = (string) random_int(100000, 999999);
         $expiresAt = now()->addMinutes(self::CODE_TTL_MINUTES);
         $sessionHash = hash('sha256', $sessionId);
@@ -181,8 +181,11 @@ class RegistrationOtpService
         }
     }
 
-    private function normalizePhone(string $phone): string
+    private function normalizePhone(?string $phone): ?string
     {
+        if ($phone === null || trim($phone) === '') {
+            return null;
+        }
         $phone = preg_replace('/[\s().-]+/', '', trim($phone));
         if (str_starts_with($phone, '00')) {
             $phone = '+'.substr($phone, 2);
