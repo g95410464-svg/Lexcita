@@ -2,6 +2,10 @@
 
 return [
 
+    'brevo' => [
+        'api_key' => env('BREVO_API_KEY'),
+    ],
+
     // ─── PayPal REST (Orders API v2) ─────────────────────────
     'paypal' => [
         'client_id' => env('PAYPAL_CLIENT_ID'),

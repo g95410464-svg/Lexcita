@@ -7,7 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -20,7 +20,7 @@ class RegistrationOtpService
 
     public function begin(string $sessionId, array $data): void
     {
-        $this->assertMailConfigured();
+        $this->assertDeliveryConfigured();
 
         $email = Str::lower(trim($data['email']));
         $phone = $this->normalizePhone($data['telefono_whatsapp'] ?? null);
@@ -66,7 +66,7 @@ class RegistrationOtpService
 
     public function resend(string $sessionId): void
     {
-        $this->assertMailConfigured();
+        $this->assertDeliveryConfigured();
         $pending = $this->pending($sessionId);
         if (!$pending || now()->greaterThan(Carbon::parse($pending->expires_at))) {
             throw new RuntimeException('La verificación venció. Inicia el registro otra vez.');
@@ -77,6 +77,8 @@ class RegistrationOtpService
 
         $emailCode = (string) random_int(100000, 999999);
         $legacyPhoneCodeColumn = $this->phoneCodeHashColumn();
+        $this->sendEmailCode($pending->email, $emailCode);
+
         DB::table('registration_verifications')->where('id', $pending->id)->update([
             'email_code_hash' => Hash::make($emailCode),
             $legacyPhoneCodeColumn => Hash::make(Str::random(40)),
@@ -85,13 +87,10 @@ class RegistrationOtpService
             'last_sent_at' => now(),
             'updated_at' => now(),
         ]);
-
-        $this->sendEmailCode($pending->email, $emailCode);
     }
 
     public function verify(string $sessionId, string $emailCode): Usuario
     {
-        $this->assertMailConfigured();
         $pending = $this->pending($sessionId);
         if (!$pending || now()->greaterThan(Carbon::parse($pending->expires_at))) {
             throw new RuntimeException('La verificación venció. Inicia el registro otra vez.');
@@ -168,16 +167,11 @@ class RegistrationOtpService
             : 'sms_code_hash';
     }
 
-    private function assertMailConfigured(): void
+    private function assertDeliveryConfigured(): void
     {
-        $smtp = config('mail.mailers.smtp');
-        if (config('mail.default') !== 'smtp'
-            || empty($smtp['host'])
-            || empty($smtp['port'])
-            || empty($smtp['username'])
-            || empty($smtp['password'])
+        if (empty(config('services.brevo.api_key'))
             || !filter_var(config('mail.from.address'), FILTER_VALIDATE_EMAIL)) {
-            throw new RuntimeException('Faltan las credenciales SMTP de Brevo en las variables MAIL_* de SLI.');
+            throw new RuntimeException('Falta configurar BREVO_API_KEY y un correo remitente verificado en las variables de SLI.');
         }
     }
 
@@ -198,11 +192,19 @@ class RegistrationOtpService
 
     private function sendEmailCode(string $email, string $code): void
     {
-        Mail::raw(
-            "Tu código de verificación de Servicios Legales Integrados es {$code}. Vence en 10 minutos. Si no solicitaste esta cuenta, ignora este correo.",
-            function ($message) use ($email) {
-                $message->to($email)->subject('Código de verificación de tu cuenta SLI');
-            }
-        );
+        Http::acceptJson()
+            ->withHeaders(['api-key' => config('services.brevo.api_key')])
+            ->connectTimeout(3)
+            ->timeout(8)
+            ->post('https://api.brevo.com/v3/smtp/email', [
+                'sender' => [
+                    'name' => config('mail.from.name', 'Servicios Legales Integrados'),
+                    'email' => config('mail.from.address'),
+                ],
+                'to' => [['email' => $email]],
+                'subject' => 'Código de verificación de tu cuenta SLI',
+                'textContent' => "Tu código de verificación de Servicios Legales Integrados es {$code}. Vence en 10 minutos. Si no solicitaste esta cuenta, ignora este correo.",
+            ])
+            ->throw();
     }
 }
