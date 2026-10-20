@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -192,7 +193,7 @@ class RegistrationOtpService
 
     private function sendEmailCode(string $email, string $code): void
     {
-        Http::acceptJson()
+        $response = Http::acceptJson()
             ->withHeaders(['api-key' => config('services.brevo.api_key')])
             ->connectTimeout(3)
             ->timeout(8)
@@ -204,7 +205,24 @@ class RegistrationOtpService
                 'to' => [['email' => $email]],
                 'subject' => 'Código de verificación de tu cuenta SLI',
                 'textContent' => "Tu código de verificación de Servicios Legales Integrados es {$code}. Vence en 10 minutos. Si no solicitaste esta cuenta, ignora este correo.",
-            ])
-            ->throw();
+            ]);
+
+        if (!$response->successful()) {
+            $status = $response->status();
+            Log::warning('Brevo rejected SLI registration OTP email.', [
+                'http_status' => $status,
+                'provider_code' => $response->json('code'),
+            ]);
+
+            $message = match ($status) {
+                400 => 'Brevo rechazó el remitente o los datos del correo. Verifica que MAIL_FROM_ADDRESS sea un remitente validado en Brevo.',
+                401, 403 => 'Brevo rechazó la clave. Usa una API key de la sección API keys, no una clave SMTP, y revisa BREVO_API_KEY en SLI.',
+                402 => 'Brevo no tiene habilitado el envío transaccional para esta cuenta o alcanzó un límite.',
+                429 => 'Brevo recibió demasiadas solicitudes. Espera un momento e inténtalo otra vez.',
+                default => "Brevo no aceptó el correo (HTTP {$status}). Revisa la configuración de la cuenta y del remitente.",
+            };
+
+            throw new RuntimeException($message);
+        }
     }
 }
