@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use RuntimeException;
@@ -25,9 +25,10 @@ class RegistrationOtpService
         $email = Str::lower(trim($data['email']));
         $phone = $this->normalizePhone($data['telefono_whatsapp']);
         $emailCode = (string) random_int(100000, 999999);
-        $smsCode = (string) random_int(100000, 999999);
+        $whatsappCode = (string) random_int(100000, 999999);
         $expiresAt = now()->addMinutes(self::CODE_TTL_MINUTES);
         $sessionHash = hash('sha256', $sessionId);
+        $phoneCodeColumn = $this->phoneCodeHashColumn();
         DB::table('registration_verifications')->where('expires_at', '<=', now())->delete();
         $emailAlreadyPending = DB::table('registration_verifications')
             ->where('email', $email)
@@ -49,7 +50,7 @@ class RegistrationOtpService
                     'telefono_whatsapp' => $phone,
                 ], JSON_THROW_ON_ERROR)),
                 'email_code_hash' => Hash::make($emailCode),
-                'sms_code_hash' => Hash::make($smsCode),
+                $phoneCodeColumn => Hash::make($whatsappCode),
                 'expires_at' => $expiresAt,
                 'attempts' => 0,
                 'last_sent_at' => now(),
@@ -59,7 +60,7 @@ class RegistrationOtpService
         );
 
         $this->sendEmailCode($email, $emailCode);
-        $this->sendSmsCode($phone, $smsCode);
+        $this->sendWhatsappCode($phone, $whatsappCode);
     }
 
     public function resend(string $sessionId): void
@@ -74,11 +75,12 @@ class RegistrationOtpService
         }
 
         $emailCode = (string) random_int(100000, 999999);
-        $smsCode = (string) random_int(100000, 999999);
+        $whatsappCode = (string) random_int(100000, 999999);
+        $phoneCodeColumn = $this->phoneCodeHashColumn();
         $payload = json_decode(Crypt::decryptString($pending->registration_payload), true, 512, JSON_THROW_ON_ERROR);
         DB::table('registration_verifications')->where('id', $pending->id)->update([
             'email_code_hash' => Hash::make($emailCode),
-            'sms_code_hash' => Hash::make($smsCode),
+            $phoneCodeColumn => Hash::make($whatsappCode),
             'expires_at' => now()->addMinutes(self::CODE_TTL_MINUTES),
             'attempts' => 0,
             'last_sent_at' => now(),
@@ -86,10 +88,10 @@ class RegistrationOtpService
         ]);
 
         $this->sendEmailCode($pending->email, $emailCode);
-        $this->sendSmsCode($payload['telefono_whatsapp'], $smsCode);
+        $this->sendWhatsappCode($payload['telefono_whatsapp'], $whatsappCode);
     }
 
-    public function verify(string $sessionId, string $emailCode, string $smsCode): Usuario
+    public function verify(string $sessionId, string $emailCode, string $whatsappCode): Usuario
     {
         $this->assertProvidersConfigured();
         $pending = $this->pending($sessionId);
@@ -102,7 +104,7 @@ class RegistrationOtpService
 
         DB::table('registration_verifications')->where('id', $pending->id)->increment('attempts');
         if (!Hash::check($emailCode, $pending->email_code_hash)
-            || !Hash::check($smsCode, $pending->sms_code_hash)) {
+            || !Hash::check($whatsappCode, $pending->{$this->phoneCodeHashColumn()})) {
             throw new RuntimeException('Uno o ambos códigos no son correctos.');
         }
 
@@ -161,15 +163,29 @@ class RegistrationOtpService
             ->first();
     }
 
+    private function phoneCodeHashColumn(): string
+    {
+        // Keep requests working if the app and setup deployments overlap during the rename migration.
+        return Schema::hasColumn('registration_verifications', 'whatsapp_code_hash')
+            ? 'whatsapp_code_hash'
+            : 'sms_code_hash';
+    }
+
     private function assertProvidersConfigured(): void
     {
         $twilio = config('services.twilio');
-        $mailer = config('mail.default');
-        if (empty($twilio['account_sid']) || empty($twilio['auth_token']) || empty($twilio['sms_from'])) {
-            throw new RuntimeException('Falta configurar el número emisor SMS de Twilio en SLI.');
+        $sendgrid = config('services.sendgrid');
+        if (empty($twilio['account_sid']) || empty($twilio['auth_token'])) {
+            throw new RuntimeException('Faltan las credenciales de Twilio en SLI.');
         }
-        if (!$mailer || in_array($mailer, ['log', 'array'], true)) {
-            throw new RuntimeException('Falta configurar un servicio de correo real para enviar códigos OTP.');
+        if (!preg_match('/^whatsapp:\\+[1-9]\\d{7,14}$/', (string) ($twilio['whatsapp_from'] ?? ''))) {
+            throw new RuntimeException('Falta configurar en Twilio un emisor de WhatsApp habilitado para SLI.');
+        }
+        if (!preg_match('/^HX[0-9a-fA-F]{32}$/', (string) ($twilio['whatsapp_content_sid'] ?? ''))) {
+            throw new RuntimeException('Falta configurar en Twilio una plantilla de autenticación de WhatsApp aprobada.');
+        }
+        if (empty($sendgrid['api_key']) || !filter_var($sendgrid['from_email'] ?? null, FILTER_VALIDATE_EMAIL)) {
+            throw new RuntimeException('Faltan la API key de SendGrid o el remitente verificado para el correo OTP.');
         }
     }
 
@@ -187,30 +203,48 @@ class RegistrationOtpService
 
     private function sendEmailCode(string $email, string $code): void
     {
-        Mail::raw("Tu código de verificación de Servicios Legales Integrados es {$code}. Vence en 10 minutos. Si no solicitaste esta cuenta, ignora este correo.", function ($message) use ($email) {
-            $message->to($email)->subject('Código de verificación de tu cuenta SLI');
-        });
+        $sendgrid = config('services.sendgrid');
+        $response = Http::withToken($sendgrid['api_key'])
+            ->acceptJson()
+            ->asJson()
+            ->connectTimeout(5)
+            ->timeout(10)
+            ->post('https://api.sendgrid.com/v3/mail/send', [
+                'personalizations' => [[
+                    'to' => [['email' => $email]],
+                ]],
+                'from' => [
+                    'email' => $sendgrid['from_email'],
+                    'name' => $sendgrid['from_name'] ?: 'Servicios Legales Integrados',
+                ],
+                'subject' => 'Código de verificación de tu cuenta SLI',
+                'content' => [[
+                    'type' => 'text/plain',
+                    'value' => "Tu código de verificación de Servicios Legales Integrados es {$code}. Vence en 10 minutos. Si no solicitaste esta cuenta, ignora este correo.",
+                ]],
+            ]);
+
+        if (!$response->successful()) {
+            throw new RuntimeException('SendGrid no pudo enviar el código por correo. Revisa la API key y el remitente verificado.');
+        }
     }
 
-    private function sendSmsCode(string $phone, string $code): void
+    private function sendWhatsappCode(string $phone, string $code): void
     {
         $config = config('services.twilio');
-        if (!preg_match('/^\\+[1-9]\\d{7,14}$/', $config['sms_from'])) {
-            throw new RuntimeException('El número emisor SMS de Twilio debe estar en formato internacional.');
-        }
-
         $response = Http::asForm()
             ->withBasicAuth($config['account_sid'], $config['auth_token'])
             ->connectTimeout(5)
             ->timeout(10)
             ->post('https://api.twilio.com/2010-04-01/Accounts/'.rawurlencode($config['account_sid']).'/Messages.json', [
-                'To' => $phone,
-                'From' => $config['sms_from'],
-                'Body' => "SLI: Tu codigo es {$code}. Vence en 10 minutos. No lo compartas.",
+                'To' => 'whatsapp:'.$phone,
+                'From' => $config['whatsapp_from'],
+                'ContentSid' => $config['whatsapp_content_sid'],
+                'ContentVariables' => json_encode(['1' => $code], JSON_THROW_ON_ERROR),
             ]);
 
         if (!$response->successful() || !$response->json('sid')) {
-            throw new RuntimeException('Twilio no pudo enviar el código SMS. Revisa el emisor y los permisos de mensajería.');
+            throw new RuntimeException('Twilio no pudo enviar el código por WhatsApp. Revisa el emisor y la plantilla aprobada.');
         }
     }
 }
