@@ -162,6 +162,7 @@ summary::-webkit-details-marker { display:none; }
 .sli-status-pendiente_pago { background:#fbf4e5; color:#946d20; }
 .sli-status-completada { background:#eaf1f8; color:#355f85; }
 .sli-alert { display:flex; gap:12px; padding:15px 18px; border:1px solid var(--line); border-radius:6px; font-size:13px; line-height:1.6; margin-bottom:22px; }
+.sli-alert.hidden { display:none; }
 .sli-alert-success { background:#edf7f1; border-color:#d4e8db; color:#276b4d; }
 .sli-alert-error { background:#fff3f3; border-color:#efd4d7; color:#9b3440; }
 .sli-alert-warning { background:#fbf5e8; border-color:#ebddbf; color:#866627; }
