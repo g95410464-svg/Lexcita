@@ -75,7 +75,7 @@ class AuthController extends Controller
                     ->withInput($request->except('password', 'password_confirmation'));
             }
 
-            return redirect()->route('registro.verificar')->with('status', 'Te enviamos un código a tu correo y otro por WhatsApp.');
+            return redirect()->route('registro.verificar')->with('status', 'Te enviamos un código a tu correo electrónico.');
         }
 
         $usuario = Usuario::create([
@@ -105,11 +105,10 @@ class AuthController extends Controller
     {
         $data = $request->validate([
             'email_code' => ['required', 'digits:6'],
-            'whatsapp_code' => ['required', 'digits:6'],
         ]);
 
         try {
-            $usuario = $otp->verify($request->session()->getId(), $data['email_code'], $data['whatsapp_code']);
+            $usuario = $otp->verify($request->session()->getId(), $data['email_code']);
         } catch (Throwable $exception) {
             Log::notice('SLI registration OTP verification failed.', ['exception_type' => get_class($exception)]);
             return back()->withErrors(['email_code' => $exception instanceof \RuntimeException
@@ -132,7 +131,7 @@ class AuthController extends Controller
                 ? $exception->getMessage()
                 : 'No pudimos reenviar los códigos. Inténtalo más tarde.']);
         }
-        return back()->with('status', 'Enviamos códigos nuevos. Revisa tu correo y WhatsApp.');
+        return back()->with('status', 'Enviamos un código nuevo. Revisa tu correo electrónico.');
     }
 
     public function showGoogleRegistrationPhone(Request $request)
@@ -162,11 +161,11 @@ class AuthController extends Controller
             Log::warning('SLI Google registration verification could not start.', ['exception_type' => get_class($exception)]);
             return back()->withErrors(['telefono_whatsapp' => $exception instanceof \RuntimeException
                 ? $exception->getMessage()
-                : 'No pudimos enviar los códigos. Inténtalo de nuevo.'])->withInput();
+                : 'No pudimos enviar el código al correo. Inténtalo de nuevo.'])->withInput();
         }
 
         $request->session()->forget('sli.google_pending');
-        return redirect()->route('registro.verificar')->with('status', 'Confirma tu correo y WhatsApp para terminar de crear la cuenta.');
+        return redirect()->route('registro.verificar')->with('status', 'Confirma el correo de Google para terminar de crear la cuenta.');
     }
 
     public function googleRedirect(Request $request, GoogleLoginService $google)

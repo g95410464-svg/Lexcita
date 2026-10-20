@@ -19,4 +19,5 @@
     </div>
     <footer class="sli-auth-bottom"><span class="material-symbols-outlined" aria-hidden="true">balance</span><p>Servicios Legales Integrados S.A. de C.V.<br><span>© {{ now()->year }} · Todos los derechos reservados.</span></p></footer>
 </main>
+@stack('scripts')
 </body></html>
