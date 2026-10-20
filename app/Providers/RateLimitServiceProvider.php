@@ -30,6 +30,12 @@ class RateLimitServiceProvider extends ServiceProvider
                 ->by('hour:'.ClientAddress::key($request))),
         ]);
 
+        foreach (['otp-start', 'otp-verify', 'otp-resend'] as $name) {
+            $limitName = str_replace('-', '_', $name).'_minute';
+            RateLimiter::for($name, fn (Request $request) => $this->minute($limitName,
+                'session:'.hash('sha256', $request->session()->getId()).'|ip:'.ClientAddress::key($request)));
+        }
+
         RateLimiter::for('oauth', fn (Request $request) =>
             $this->minute('oauth', 'ip:'.ClientAddress::key($request)));
 

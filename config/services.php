@@ -2,11 +2,12 @@
 
 return [
 
-    // ─── Twilio WhatsApp ──────────────────────────────────────
+    // ─── Twilio WhatsApp and SLI SMS OTP delivery ────────────
     'twilio' => [
         'account_sid'   => env('TWILIO_ACCOUNT_SID'),
         'auth_token'    => env('TWILIO_AUTH_TOKEN'),
         'whatsapp_from' => env('TWILIO_WHATSAPP_FROM', 'whatsapp:+14155238886'),
+        'sms_from'      => env('TWILIO_SMS_FROM'),
     ],
 
     // ─── PayPal REST (Orders API v2) ─────────────────────────

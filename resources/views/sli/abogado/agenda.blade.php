@@ -26,7 +26,8 @@
 <div class="mb-8">
     <p class="text-[11px] font-grotesk font-semibold tracking-[.18em] uppercase text-secondary mb-2">Portal del Abogado</p>
     <h1 class="font-caslon text-4xl font-normal text-on-surface">Mi Agenda</h1>
-    <p class="text-outline mt-1 text-sm">Visualiza todas tus citas del mes.</p>
+    <p class="text-outline mt-1 text-sm">Tus citas confirmadas y tus bloques habituales de atención.</p>
+    <p class="text-outline mt-2 text-xs">Los bloques azul claro muestran las horas recurrentes definidas para tu agenda.</p>
 </div>
 
 <div class="bg-surface-container border border-outline-variant p-3 sm:p-6">
@@ -40,18 +41,25 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     var cal = new FullCalendar.Calendar(document.getElementById('calendario'), {
-        initialView: 'dayGridMonth',
+        initialView: 'timeGridWeek',
         locale: 'es',
         height: 'auto',
         events: @json($citas),
         eventColor: '#173b59',
         eventTextColor: '#ffffff',
+        slotMinTime: '07:00:00',
+        slotMaxTime: '19:00:00',
         headerToolbar: {
             left:   'prev,next today',
             center: 'title',
             right:  'dayGridMonth,timeGridWeek'
         },
         buttonText: { today: 'Hoy', month: 'Mes', week: 'Semana' },
+        eventDidMount: function(info) {
+            if (info.event.display === 'background') {
+                info.el.title = 'Horario habitual de atención';
+            }
+        },
         // Marca con un ícono de cámara las citas virtuales confirmadas que ya
         // tienen sala creada, para indicar que se puede entrar a la videollamada.
         eventContent: function(arg) {

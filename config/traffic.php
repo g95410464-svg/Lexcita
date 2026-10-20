@@ -20,5 +20,8 @@ return [
         'writes' => 30,
         'video' => 240,
         'broadcast' => 60,
+        'otp_start_minute' => 3,
+        'otp_verify_minute' => 10,
+        'otp_resend_minute' => 2,
     ],
 ];

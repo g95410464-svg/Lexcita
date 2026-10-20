@@ -32,7 +32,16 @@ Route::middleware('throttle:portal')->name('sli.')->group(function () {
 Route::get('/login',    [AuthController::class, 'showLogin'])->middleware('throttle:portal')->name('login');
 Route::post('/login',   [AuthController::class, 'login'])->middleware('throttle:login')->name('login.post');
 Route::get('/registro', [AuthController::class, 'showRegistro'])->middleware('throttle:portal')->name('registro');
-Route::post('/registro',[AuthController::class, 'registro'])->middleware('throttle:register')->name('registro.post');
+if (config('organization.id') === 'servicios-legales-integrados') {
+    Route::post('/registro',[AuthController::class, 'registro'])->middleware(['throttle:register', 'throttle:otp-start'])->name('registro.post');
+    Route::get('/registro/verificar', [AuthController::class, 'showRegistrationVerification'])->middleware('throttle:portal')->name('registro.verificar');
+    Route::post('/registro/verificar', [AuthController::class, 'verifyRegistration'])->middleware('throttle:otp-verify')->name('registro.verificar.post');
+    Route::post('/registro/verificar/reenviar', [AuthController::class, 'resendRegistrationVerification'])->middleware('throttle:otp-resend')->name('registro.verificar.resend');
+    Route::get('/registro/google/telefono', [AuthController::class, 'showGoogleRegistrationPhone'])->middleware('throttle:portal')->name('registro.google.telefono');
+    Route::post('/registro/google/telefono', [AuthController::class, 'startGoogleRegistrationVerification'])->middleware(['throttle:register', 'throttle:otp-start'])->name('registro.google.telefono.post');
+} else {
+    Route::post('/registro',[AuthController::class, 'registro'])->middleware('throttle:register')->name('registro.post');
+}
 Route::post('/logout',  [AuthController::class, 'logout'])->name('logout');
 
 Route::get('/auth/google/redirect', [AuthController::class, 'googleRedirect'])->middleware('throttle:oauth')->name('google.redirect');
