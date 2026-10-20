@@ -14,6 +14,8 @@ use Throwable;
 
 class AuthController extends Controller
 {
+    private const SLI_SUPPORT_ERROR = 'No pudimos completar la solicitud. Contacta con servicio técnico en g95410464@proton.me.';
+
     public function showLogin()
     {
         return view('auth.login');
@@ -69,9 +71,10 @@ class AuthController extends Controller
                 app(RegistrationOtpService::class)->begin($request->session()->getId(), $data);
             } catch (Throwable $exception) {
                 Log::warning('SLI registration verification could not start.', ['exception_type' => get_class($exception)]);
-                return back()->withErrors(['email' => $exception instanceof \RuntimeException
-                    ? $exception->getMessage()
-                    : 'No pudimos enviar los códigos. Revisa los datos e inténtalo de nuevo.'])
+                return back()->withErrors(['email' => $this->sliOtpError($exception, [
+                    'Ya hay una verificación pendiente para ese correo. Usa el código enviado o espera a que venza.',
+                    'Escribe el teléfono en formato internacional, por ejemplo +50371234567.',
+                ])])
                     ->withInput($request->except('password', 'password_confirmation'));
             }
 
@@ -111,9 +114,11 @@ class AuthController extends Controller
             $usuario = $otp->verify($request->session()->getId(), $data['email_code']);
         } catch (Throwable $exception) {
             Log::notice('SLI registration OTP verification failed.', ['exception_type' => get_class($exception)]);
-            return back()->withErrors(['email_code' => $exception instanceof \RuntimeException
-                ? $exception->getMessage()
-                : 'No pudimos validar los códigos. Inténtalo de nuevo.']);
+            return back()->withErrors(['email_code' => $this->sliOtpError($exception, [
+                'La verificación venció. Inicia el registro otra vez.',
+                'Se agotaron los intentos. Solicita un código nuevo.',
+                'El código no es correcto.',
+            ])]);
         }
 
         Auth::login($usuario);
@@ -127,9 +132,10 @@ class AuthController extends Controller
             $otp->resend($request->session()->getId());
         } catch (Throwable $exception) {
             Log::notice('SLI registration OTP resend failed.', ['exception_type' => get_class($exception)]);
-            return back()->withErrors(['email_code' => $exception instanceof \RuntimeException
-                ? $exception->getMessage()
-                : 'No pudimos reenviar los códigos. Inténtalo más tarde.']);
+            return back()->withErrors(['email_code' => $this->sliOtpError($exception, [
+                'La verificación venció. Inicia el registro otra vez.',
+                'Espera un minuto antes de pedir otro código.',
+            ])]);
         }
         return back()->with('status', 'Enviamos un código nuevo. Revisa tu correo electrónico.');
     }
@@ -148,9 +154,9 @@ class AuthController extends Controller
             ]);
         } catch (Throwable $exception) {
             Log::warning('SLI Google email verification could not start.', ['exception_type' => get_class($exception)]);
-            return redirect()->route('login')->withErrors(['email' => $exception instanceof \RuntimeException
-                ? $exception->getMessage()
-                : 'No pudimos enviar el código al correo de Google. Inténtalo de nuevo.']);
+            return redirect()->route('login')->withErrors(['email' => $this->sliOtpError($exception, [
+                'Ya hay una verificación pendiente para ese correo. Usa el código enviado o espera a que venza.',
+            ])]);
         }
 
         $request->session()->forget('sli.google_pending');
@@ -176,9 +182,10 @@ class AuthController extends Controller
             $otp->begin($request->session()->getId(), $data);
         } catch (Throwable $exception) {
             Log::warning('SLI Google registration verification could not start.', ['exception_type' => get_class($exception)]);
-            return back()->withErrors(['telefono_whatsapp' => $exception instanceof \RuntimeException
-                ? $exception->getMessage()
-                : 'No pudimos enviar el código al correo. Inténtalo de nuevo.'])->withInput();
+            return back()->withErrors(['telefono_whatsapp' => $this->sliOtpError($exception, [
+                'Ya hay una verificación pendiente para ese correo. Usa el código enviado o espera a que venza.',
+                'Escribe el teléfono en formato internacional, por ejemplo +50371234567.',
+            ])])->withInput();
         }
 
         $request->session()->forget('sli.google_pending');
@@ -239,9 +246,9 @@ class AuthController extends Controller
                     ]);
                 } catch (Throwable $exception) {
                     Log::warning('SLI Google email verification could not start.', ['exception_type' => get_class($exception)]);
-                    return redirect()->route('login')->withErrors(['email' => $exception instanceof \RuntimeException
-                        ? $exception->getMessage()
-                        : 'No pudimos enviar el código al correo de Google. Inténtalo de nuevo.']);
+                    return redirect()->route('login')->withErrors(['email' => $this->sliOtpError($exception, [
+                        'Ya hay una verificación pendiente para ese correo. Usa el código enviado o espera a que venza.',
+                    ])]);
                 }
 
                 return redirect()->route('registro.verificar')->with('status', 'Te enviamos un código al correo verificado de Google.');
@@ -281,5 +288,14 @@ class AuthController extends Controller
             'abogado' => redirect()->route('abogado.dashboard'),
             default   => redirect()->route('cliente.dashboard'),
         };
+    }
+
+    private function sliOtpError(Throwable $exception, array $safeMessages = []): string
+    {
+        if ($exception instanceof \RuntimeException && in_array($exception->getMessage(), $safeMessages, true)) {
+            return $exception->getMessage();
+        }
+
+        return self::SLI_SUPPORT_ERROR;
     }
 }
