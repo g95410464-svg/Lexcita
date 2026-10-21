@@ -484,6 +484,31 @@ summary::-webkit-details-marker { display:none; }
 .sli-editor-colors label { align-items:flex-start; }
 .sli-editor-colors input { width:56px; height:42px; border:1px solid var(--line); border-radius:6px; padding:3px; background:white; }
 .sli-editor-preview { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.sli-library-filters { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin:0 0 22px; }
+.sli-library-search { display:flex; align-items:center; gap:9px; flex:1 1 300px; min-height:45px; padding:0 12px; border:1px solid var(--line); border-radius:6px; background:white; color:var(--muted); }
+.sli-library-search input,.sli-library-category select { width:100%; min-height:43px; border:0; background:transparent; color:var(--ink); font:inherit; outline:none; }
+.sli-library-category { flex:0 1 210px; min-height:45px; padding:0 12px; border:1px solid var(--line); border-radius:6px; background:white; }
+.sli-library-category select { cursor:pointer; }
+.sli-library-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:15px; }
+.sli-library-card { display:grid; grid-template-columns:42px minmax(0,1fr); gap:0 14px; align-items:start; padding:21px; border:1px solid var(--line); border-radius:8px; background:white; }
+.sli-library-card-icon { display:grid; place-items:center; width:42px; height:42px; border-radius:7px; color:#8a6a3b; background:#f7f1e8; }
+.sli-library-card-content { min-width:0; }
+.sli-library-meta { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:9px; color:#7c6a4c; font-size:10px; }
+.sli-library-meta span { padding:4px 7px; border-radius:20px; background:#f7f3ed; }
+.sli-library-card h2 { font-family:var(--font-caslon); font-size:17px; line-height:1.35; }
+.sli-library-card p { margin-top:8px; color:var(--muted); font-size:12px; line-height:1.65; }
+.sli-library-card>.sli-button { grid-column:2; justify-self:start; margin-top:14px; }
+.sli-library-source { grid-column:2; margin-top:13px; color:#355c79; font-size:12px; font-weight:600; }
+.sli-library-empty { grid-column:1/-1; }
+.sli-library-footnote { margin-top:20px; color:var(--muted); font-size:11px; line-height:1.6; }
+.sli-library-admin-list { padding:0 24px; }
+.sli-library-admin-list>article { display:flex; justify-content:space-between; align-items:center; gap:18px; padding:19px 0; border-bottom:1px solid var(--line); }
+.sli-library-admin-list>article:last-child { border:0; }
+.sli-library-admin-list h3 { margin:5px 0; font-size:14px; }
+.sli-library-admin-list p { max-width:700px; color:var(--muted); font-size:12px; line-height:1.6; }
+.sli-library-admin-list a,.sli-library-private-file { display:inline-block; margin-top:8px; color:#355c79; font-size:11px; font-weight:600; }
+.sli-editor-form .sli-library-description { grid-column:1/-1; }
+@media(max-width:760px) { .sli-library-grid { grid-template-columns:1fr; }.sli-library-category { flex:1 1 100%; }.sli-library-admin-list { padding-inline:18px; }.sli-library-admin-list>article { align-items:flex-start; flex-direction:column; }.sli-library-admin-list>article form { align-self:flex-end; }.sli-editor-form .sli-library-description { grid-column:auto; } }
 .sli-editor-preview img { width:110px; height:90px; object-fit:cover; border-radius:8px; }
 .sli-editor-preview label { flex-direction:row; align-items:center; font-weight:400; }
 .sli-editor-lawyers { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; padding:24px; }

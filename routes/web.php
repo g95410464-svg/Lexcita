@@ -9,6 +9,7 @@ use App\Http\Controllers\ApiController;
 use App\Http\Controllers\VideoRoomController;
 use App\Http\Controllers\SliPublicController;
 use App\Http\Controllers\SliEditorController;
+use App\Http\Controllers\SliLibraryController;
 
 // Reject malformed identifiers before PHP type coercion or database queries.
 Route::pattern('id', '[0-9]+');
@@ -70,9 +71,14 @@ Route::get('/pago/crear-sesion/{id}', [ClienteController::class, 'procesarPago']
 Route::middleware(['auth', 'verified', 'rol:abogado', 'throttle:portal'])->prefix('abogado')->name('abogado.')->group(function () {
     Route::get('/dashboard', [AbogadoController::class, 'dashboard'])->name('dashboard');
     Route::get('/agenda',    [AbogadoController::class, 'agenda'])->name('agenda');
+    Route::get('/biblioteca', [SliLibraryController::class, 'index'])->name('biblioteca');
+    Route::get('/biblioteca/{document}/descargar', [SliLibraryController::class, 'download'])->name('biblioteca.download');
 });
 
 Route::middleware(['auth', 'verified', 'rol:admin', 'throttle:portal'])->prefix('interno')->name('interno.')->group(function () {
+    Route::get('/biblioteca', [SliLibraryController::class, 'manage'])->name('biblioteca');
+    Route::post('/biblioteca', [SliLibraryController::class, 'store'])->middleware('throttle:writes')->name('biblioteca.store');
+    Route::delete('/biblioteca/{document}', [SliLibraryController::class, 'destroy'])->middleware('throttle:writes')->name('biblioteca.destroy');
     Route::get('/personalizar', [SliEditorController::class, 'index'])->name('personalizar');
     Route::put('/personalizar', [SliEditorController::class, 'update'])->middleware('throttle:writes')->name('personalizar.update');
     Route::put('/personalizar/abogados/{id}', [SliEditorController::class, 'updateLawyer'])->middleware('throttle:writes')->name('personalizar.abogado');

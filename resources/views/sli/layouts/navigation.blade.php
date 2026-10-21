@@ -1,8 +1,8 @@
 @php
     $navigation = auth()->user()->esAdmin()
-        ? [['interno.dashboard', 'Resumen', 'space_dashboard'], ['interno.citas', 'Citas', 'calendar_month'], ['interno.abogados', 'Equipo legal', 'balance'], ['interno.personalizar', 'Editar sitio', 'palette'], ['interno.clientes', 'Clientes', 'group'], ['interno.estadisticas', 'Estadísticas', 'bar_chart']]
+        ? [['interno.dashboard', 'Resumen', 'space_dashboard'], ['interno.citas', 'Citas', 'calendar_month'], ['interno.abogados', 'Equipo legal', 'balance'], ['interno.biblioteca', 'Biblioteca legal', 'local_library'], ['interno.personalizar', 'Editar sitio', 'palette'], ['interno.clientes', 'Clientes', 'group'], ['interno.estadisticas', 'Estadísticas', 'bar_chart']]
         : (auth()->user()->esAbogado()
-            ? [['abogado.dashboard', 'Mi resumen', 'space_dashboard'], ['abogado.agenda', 'Mi agenda', 'calendar_month']]
+            ? [['abogado.dashboard', 'Mi resumen', 'space_dashboard'], ['abogado.agenda', 'Mi agenda', 'calendar_month'], ['abogado.biblioteca', 'Biblioteca legal', 'local_library']]
             : [['cliente.dashboard', 'Mi resumen', 'space_dashboard'], ['cliente.nueva-cita', 'Agendar consulta', 'add_circle'], ['cliente.mis-citas', 'Mis citas', 'calendar_month']]);
 @endphp
 @foreach($navigation as [$route, $label, $icon])
