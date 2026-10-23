@@ -85,7 +85,7 @@ class SliBookingHoldTest extends TestCase
         $this->assertInstanceOf(BookingHold::class, $nextHold);
     }
 
-    public function test_sli_appointment_keeps_the_original_hold_deadline_through_payment(): void
+    public function test_sli_appointment_keeps_the_details_step_hold_deadline_through_payment(): void
     {
         $hold = app(CitaService::class)->retenerHorario(
             $this->cliente->id, $this->abogado->id, '2026-10-23', '09:00'

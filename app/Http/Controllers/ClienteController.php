@@ -126,8 +126,8 @@ class ClienteController extends Controller
                     'descripcion' => $data['descripcion'] ?? null,
                     'estado' => 'pendiente_pago',
                     'monto' => 35.00,
-                    // Se conserva el vencimiento original de la retención:
-                    // los 15 minutos corren desde que eligió el horario.
+                    // Elegir el horario lleva directamente a Detalles; se
+                    // conserva ese mismo plazo hasta terminar el pago.
                     'hold_expires_at' => $sli ? $hold->expires_at : null,
                 ]);
 
