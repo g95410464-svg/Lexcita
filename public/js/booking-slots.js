@@ -89,6 +89,12 @@
             }, delay);
         }
 
-        return { select, reset };
+        function refresh(abogadoId, fecha) {
+            cache.delete(`${abogadoId}:${fecha}`);
+            reset();
+            select(abogadoId, fecha);
+        }
+
+        return { select, reset, refresh };
     };
 })();

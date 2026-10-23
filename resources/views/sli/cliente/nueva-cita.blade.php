@@ -166,6 +166,7 @@
             <input type="hidden" name="hora_inicio" id="hora_inicio">
             <input type="hidden" name="fecha" id="fecha_input">
             <input type="hidden" name="hold_token" id="hold_token">
+            <div id="booking-hold-error" class="hidden rounded border border-error-container bg-error-container/20 px-4 py-3 mt-4 text-sm text-error" role="alert" tabindex="-1"></div>
         </div>
     </div>
 </div>
@@ -227,7 +228,6 @@
 
         {{-- Botones --}}
         <div id="booking-hold-status" class="hidden rounded border border-outline-variant bg-surface-container-high px-4 py-3 mb-4 text-sm text-on-surface-variant" role="status" aria-live="polite"></div>
-        <div id="booking-hold-error" class="hidden rounded border border-error-container bg-error-container/20 px-4 py-3 mb-4 text-sm text-error" role="alert"></div>
         <div class="flex flex-wrap items-center gap-3">
             <button type="submit"
                 class="w-full sm:w-auto justify-center inline-flex items-center gap-2 bg-secondary text-on-secondary text-[11px] font-grotesk
@@ -521,6 +521,8 @@ window.addEventListener('load', function () {
         if (bookingHoldRequestInProgress) return;
         bookingHoldRequestInProgress = true;
         const store = Alpine.store('booking');
+        const requestedLawyer = store.abogadoId;
+        const requestedDate = store.fechaSeleccionada;
         holdError.classList.add('hidden');
         document.querySelectorAll('.slot-btn').forEach(button => button.disabled = true);
         await liberarRetencion();
@@ -530,24 +532,42 @@ window.addEventListener('load', function () {
             response = await fetch(@json(route('api.booking-holds.create')), {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json'},
-                body: JSON.stringify({abogado_id: store.abogadoId, fecha: store.fechaSeleccionada, hora_inicio: hora}),
+                body: JSON.stringify({abogado_id: requestedLawyer, fecha: requestedDate, hora_inicio: hora}),
             });
             data = await response.json();
         } catch (_) {
             data = {message: 'No se pudo apartar este horario. Revisa tu conexión e inténtalo de nuevo.'};
         }
-        if (!response?.ok) {
-            holdError.textContent = data.message || 'Ese horario ya no está disponible. Elige otro.';
+        const expiresAt = Date.parse(data?.expires_at);
+        if (!response?.ok || typeof data?.token !== 'string' || !data.token || !Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+            const safeMessage = [409, 422, 429, 503].includes(response?.status) && typeof data?.message === 'string';
+            holdError.textContent = safeMessage ? data.message : 'No pudimos apartar este horario. Inténtalo de nuevo. Si persiste, contacta con g95410464@proton.me.';
             holdError.classList.remove('hidden');
+            holdError.focus({preventScroll: true});
+            holdError.scrollIntoView({behavior: 'smooth', block: 'nearest'});
             bookingHoldRequestInProgress = false;
-            cargarSlots(store.fechaSeleccionada);
+            document.querySelectorAll('.slot-btn').forEach(button => button.disabled = false);
+            if (response?.status === 409) {
+                slotsLoader.refresh(store.abogadoId, store.fechaSeleccionada);
+            }
+            return;
+        }
+
+        if (store.abogadoId !== requestedLawyer || store.fechaSeleccionada !== requestedDate) {
+            await fetch(@json(route('api.booking-holds.delete')), {
+                method: 'DELETE',
+                headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json'},
+                body: JSON.stringify({token: data.token}),
+            }).catch(() => {});
+            bookingHoldRequestInProgress = false;
+            document.querySelectorAll('.slot-btn').forEach(button => button.disabled = false);
             return;
         }
 
         bookingHoldRequestInProgress = false;
         holdToken = data.token;
         holdTokenInput.value = data.token;
-        holdExpiresAt = new Date(data.expires_at).getTime();
+        holdExpiresAt = expiresAt;
         iniciarCuentaRegresiva();
         store.setHora(hora);
         document.getElementById('hora_inicio').value = hora;

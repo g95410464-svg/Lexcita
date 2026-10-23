@@ -9,6 +9,13 @@ cuando termine correctamente, desplegar `SLI-Lexcita`. El servicio web usa el ro
 `_app` sin permisos DDL: no ejecutar migraciones desde su consola ni darle
 credenciales del propietario.
 
+`SLI-Setup` es una tarea puntual: cuando finaliza no quedan instancias activas y
+su consola muestra «Disconnected». No necesita mantenerse encendido. En Railway,
+configurar su Start Command como `php scripts/migrate-organization.php`, desplegar
+el commit actual de `feat/sli-landing` y revisar los logs del despliegue. El mensaje
+de éxito es «Migraciones de la organización completadas, sin seeders». Un redeploy
+de una imagen antigua no incluye las migraciones añadidas en commits posteriores.
+
 Durante un despliegue con el esquema pendiente, los horarios se pueden consultar
 y las citas existentes conservan su apartado. Las nuevas reservas reciben un
 aviso temporal hasta que existan la tabla `booking_holds` y la columna
