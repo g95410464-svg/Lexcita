@@ -39,6 +39,16 @@ que puede retirar recursos. Todos los abogados consultan el mismo catálogo en
 `/abogado/biblioteca`; no existen cargas de libros desde ese portal.
 
 Los PDF cargados se abren en un lector PDF.js interno, sin botones de descarga.
+El catálogo muestra solo los PDF como libros: toda la tarjeta abre el lector.
+PDF.js dibuja la primera página como portada cuando se acerca al área visible,
+con un máximo de dos cargas simultáneas y lienzos limitados a 600 píxeles. Si una
+portada no se puede generar, permanece una cubierta con el título y el acceso al
+lector. No requiere columnas ni migraciones nuevas. Los portales externos se
+consultan en un apartado plegable «Fuentes oficiales» y no consumen páginas de
+libros. Administración dispone de un formulario principal para publicar PDF y
+otro independiente para añadir fuentes externas. Un enlace a una página web no
+se convierte automáticamente en un PDF.
+
 Incluye páginas, zoom, resaltado, subrayado, notas y marcadores. Las anotaciones
 se guardan por documento y usuario: no alteran el PDF ni aparecen a otro abogado.
 Los enlaces externos siguen abriendo la fuente original; para usar anotaciones

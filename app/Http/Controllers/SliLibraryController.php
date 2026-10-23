@@ -37,10 +37,14 @@ class SliLibraryController extends Controller
             $query->where('category', $category);
         }
 
-        $documents = $query->paginate(15)->withQueryString();
+        $documents = (clone $query)->whereNotNull('storage_path')->where('storage_path', '<>', '')
+            ->paginate(15)->withQueryString();
+        $sources = (clone $query)->where(function ($builder): void {
+            $builder->whereNull('storage_path')->orWhere('storage_path', '');
+        })->whereNotNull('source_url')->get();
         $categories = SliLibraryDocument::query()->distinct()->orderBy('category')->pluck('category');
 
-        return view('sli.abogado.biblioteca', compact('documents', 'categories', 'search', 'category'));
+        return view('sli.abogado.biblioteca', compact('documents', 'sources', 'categories', 'search', 'category'));
     }
 
     public function manage()

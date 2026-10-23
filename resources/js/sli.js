@@ -11,6 +11,12 @@ if (libraryReader) {
     });
 }
 
+const libraryCatalog = document.querySelector('[data-library-catalog]');
+if (libraryCatalog?.querySelector('[data-library-cover]')) {
+    import('./sli-library-catalog').then(({ mountCatalog }) => mountCatalog(libraryCatalog))
+        .catch(() => { /* Title covers and reader links work without previews. */ });
+}
+
 // CodingNepal sidebar interaction, adapted for SLI roles, keyboard access and persistence.
 const sidebar = document.getElementById('sli-sidebar');
 if (sidebar) {

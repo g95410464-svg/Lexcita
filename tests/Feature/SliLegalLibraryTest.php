@@ -59,6 +59,26 @@ class SliLegalLibraryTest extends TestCase
         $this->actingAs($this->user('cliente'))->get(route('abogado.biblioteca'))->assertRedirect(route('cliente.dashboard'));
     }
 
+    public function test_external_sources_do_not_replace_books_or_consume_their_pagination(): void
+    {
+        $this->enableSliViews();
+        for ($i = 0; $i < 16; $i++) {
+            SliLibraryDocument::create(['title' => 'Portal '.$i, 'category' => 'Civil',
+                'source_url' => 'https://example.test/portal/'.$i]);
+        }
+        $book = SliLibraryDocument::create(['title' => 'Libro con portada', 'category' => 'Civil',
+            'storage_path' => 'library/book.pdf']);
+        $this->actingAs($this->user('abogado'))->get(route('abogado.biblioteca'))
+            ->assertOk()->assertSee('Fuentes oficiales')->assertSee('data-library-cover', false)
+            ->assertSee(route('abogado.biblioteca.read', $book), false)
+            ->assertViewHas('documents', fn ($items) => $items->total() === 1 && $items->sole()->id === $book->id)
+            ->assertViewHas('sources', fn ($items) => $items->count() === 20);
+        $this->get(route('abogado.biblioteca', ['q' => 'Portal 15']))->assertOk()
+            ->assertViewHas('documents', fn ($items) => $items->isEmpty())
+            ->assertViewHas('sources', fn ($items) => $items->count() === 1)
+            ->assertDontSee('data-library-cover ', false);
+    }
+
     public function test_only_admin_can_publish_or_remove_a_book_and_all_lawyers_can_read_it(): void
     {
         $this->enableSliViews();
@@ -76,7 +96,7 @@ class SliLegalLibraryTest extends TestCase
         foreach (['guillermo', 'juan'] as $suffix) {
             $this->actingAs($this->user('abogado', $suffix));
             $this->get(route('abogado.biblioteca'))->assertOk()->assertSee('Libro compartido')
-                ->assertSee('Leer y anotar')->assertDontSee('Descargar PDF')->assertDontSee('Agregar a la biblioteca');
+                ->assertSee('Leer y anotar')->assertDontSee('Descargar PDF')->assertDontSee('Publicar libro');
             $this->get(route('abogado.biblioteca.read', $book))->assertOk()->assertSee('Mi espacio de lectura');
             $this->get(route('abogado.biblioteca.content', $book))->assertOk()
                 ->assertHeader('Content-Disposition', 'inline');
