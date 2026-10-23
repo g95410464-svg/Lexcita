@@ -340,7 +340,7 @@ window.addEventListener('load', function () {
             const minutes = String(Math.floor(seconds / 60)).padStart(2, '0');
             const rest = String(seconds % 60).padStart(2, '0');
             holdStatus.textContent = seconds
-                ? 'Horario apartado para ti durante ' + minutes + ':' + rest + '. Completa los detalles antes de que venza; al pasar a pago tendrás 15 minutos para pagar.'
+                ? 'Horario apartado para ti durante ' + minutes + ':' + rest + '. El tiempo sigue corriendo mientras completas los detalles y el pago.'
                 : 'La reserva temporal venció. Elige de nuevo un horario disponible.';
             holdStatus.classList.remove('hidden');
             if (seconds === 0) {

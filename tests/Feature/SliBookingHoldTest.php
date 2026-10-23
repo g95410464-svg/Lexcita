@@ -85,7 +85,7 @@ class SliBookingHoldTest extends TestCase
         $this->assertInstanceOf(BookingHold::class, $nextHold);
     }
 
-    public function test_sli_appointment_requires_the_unexpired_hold_and_transfers_it_to_pending_payment(): void
+    public function test_sli_appointment_keeps_the_original_hold_deadline_through_payment(): void
     {
         $hold = app(CitaService::class)->retenerHorario(
             $this->cliente->id, $this->abogado->id, '2026-10-23', '09:00'
@@ -103,14 +103,14 @@ class SliBookingHoldTest extends TestCase
 
         $cita = Cita::sole();
         $response->assertRedirect(route('cliente.pre-confirmacion', $cita->id));
-        $this->assertSame('2026-10-22 08:20', $cita->hold_expires_at->format('Y-m-d H:i'));
-        $this->assertTrue($cita->hold_expires_at->greaterThan($hold->expires_at));
+        $this->assertSame('2026-10-22 08:15', $cita->hold_expires_at->format('Y-m-d H:i'));
+        $this->assertTrue($cita->hold_expires_at->equalTo($hold->expires_at));
         $this->assertDatabaseMissing('booking_holds', ['token' => $hold->token]);
         $this->assertNotContains('09:00', array_column(
             app(CitaService::class)->getSlotsDisponibles($this->abogado->id, '2026-10-23'), 'hora'
         ));
 
-        Carbon::setTestNow('2026-10-22 08:21:00');
+        Carbon::setTestNow('2026-10-22 08:15:01');
         $this->assertContains('09:00', array_column(
             app(CitaService::class)->getSlotsDisponibles($this->abogado->id, '2026-10-23'), 'hora'
         ));

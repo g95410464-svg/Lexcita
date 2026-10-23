@@ -126,9 +126,9 @@ class ClienteController extends Controller
                     'descripcion' => $data['descripcion'] ?? null,
                     'estado' => 'pendiente_pago',
                     'monto' => 35.00,
-                    // El plazo para pagar comienza cuando la cita pasa a
-                    // pendiente de pago, no cuando el cliente eligió el slot.
-                    'hold_expires_at' => $sli ? now()->addMinutes(15) : null,
+                    // Se conserva el vencimiento original de la retención:
+                    // los 15 minutos corren desde que eligió el horario.
+                    'hold_expires_at' => $sli ? $hold->expires_at : null,
                 ]);
 
                 if ($sli) {
