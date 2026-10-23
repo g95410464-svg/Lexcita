@@ -22,8 +22,8 @@ conectado explícitamente a `lexcita_sli`. El script se limita a esa base, usa e
 propietario existente, crea el mismo esquema de la migración y concede únicamente
 los permisos de filas y secuencia del rol de aplicación. Registra la migración en
 la misma transacción; puede repetirse sin duplicar ese registro ni extender
-apartados existentes. No requiere reconstruir el servicio web. La biblioteca y
-otras migraciones siguen dependiendo del proceso privado de migración habitual.
+apartados existentes. No requiere reconstruir el servicio web. Este script no
+aplica las migraciones de biblioteca.
 
 Durante un despliegue con el esquema pendiente, los horarios se pueden consultar
 y las citas existentes conservan su apartado. Las nuevas reservas reciben un
@@ -45,8 +45,22 @@ Los enlaces externos siguen abriendo la fuente original; para usar anotaciones
 es necesario que administración cargue el PDF. Los escaneos sin capa de texto
 admiten notas de página y marcadores, pero no selección textual ni OCR.
 
-El despliegue debe ejecutar `php artisan migrate --force` para crear
-`sli_library_annotations`. Vite empaqueta el lector y copia las fuentes, CMaps
+El despliegue debe ejecutar las migraciones desde `SLI-Setup` con el rol propietario
+para crear `sli_library_documents` y `sli_library_annotations`. La consola del
+servicio web puede comprobar su existencia sin Tinker, cargando `bootstrap/app.php`
+y consultando `Schema::hasTable`. Si falta el catálogo, el controlador devuelve 503;
+si faltan las anotaciones, el lector devuelve 503.
+
+Si la tarea privada sigue sin aplicar esas migraciones, ejecutar
+`scripts/sql/repair-sli-library.sql` con psql como administrador de PostgreSQL,
+conectado a `lexcita_sli`. El script comprueba base y organización, crea ambas
+tablas, otorga permisos de filas y secuencias al rol de aplicación y registra ambas
+migraciones en una transacción. Conserva documentos y anotaciones existentes y
+no repone fuentes que administración haya retirado tras aplicar la migración.
+Puede repetirse y no requiere reconstruir la web. La consola de PostgreSQL no
+necesita curl ni wget: se puede pegar el contenido mediante un heredoc de psql.
+
+Vite empaqueta el lector y copia las fuentes, CMaps
 y WASM de PDF.js a `public/build/pdfjs`; se sirve con el mismo despliegue y
 el almacenamiento privado `sli-assets` existente, sin proveedor adicional.
 
