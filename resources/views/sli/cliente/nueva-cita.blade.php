@@ -122,7 +122,7 @@
 
 {{-- ── PASO 2: Fecha y hora ───────────────────────────── --}}
 <div id="paso2" x-cloak x-show="$store.booking.step >= 2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-4" class="mt-8">
-    <div class="flex items-center justify-between gap-4 flex-wrap mb-5"><p class="text-sm">Tu abogado: <strong x-text="$store.booking.abogadoNom"></strong></p><button type="button" class="sli-button sli-button-outline" @click="$store.booking.step = 1">Cambiar abogado</button></div>
+    <div class="flex items-center justify-between gap-4 flex-wrap mb-5"><p class="text-sm">Tu abogado: <strong x-text="$store.booking.abogadoNom"></strong></p><button type="button" class="sli-button sli-button-outline" onclick="window.cambiarAbogado()"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span> Volver a elegir abogado</button></div>
     <p class="text-[11px] font-grotesk font-semibold tracking-[.18em] uppercase text-outline mb-4">
         Paso 2 — Selecciona fecha y horario
     </p>
@@ -165,6 +165,7 @@
             </div>
             <input type="hidden" name="hora_inicio" id="hora_inicio">
             <input type="hidden" name="fecha" id="fecha_input">
+            <input type="hidden" name="hold_token" id="hold_token">
         </div>
     </div>
 </div>
@@ -225,6 +226,8 @@
         </div>
 
         {{-- Botones --}}
+        <div id="booking-hold-status" class="hidden rounded border border-outline-variant bg-surface-container-high px-4 py-3 mb-4 text-sm text-on-surface-variant" role="status" aria-live="polite"></div>
+        <div id="booking-hold-error" class="hidden rounded border border-error-container bg-error-container/20 px-4 py-3 mb-4 text-sm text-error" role="alert"></div>
         <div class="flex flex-wrap items-center gap-3">
             <button type="submit"
                 class="w-full sm:w-auto justify-center inline-flex items-center gap-2 bg-secondary text-on-secondary text-[11px] font-grotesk
@@ -237,7 +240,7 @@
                        text-[11px] font-grotesk font-bold tracking-widest uppercase px-5 py-3
                        hover:border-outline hover:text-on-surface transition-colors">
                 <span class="material-symbols-outlined text-[16px]">arrow_back</span>
-                Cambiar fecha
+                Elegir otro horario
             </button>
         </div>
     </div>
@@ -298,6 +301,72 @@ document.addEventListener('alpine:init', () => {
 });
 
 window.addEventListener('load', function () {
+    const holdTokenInput = document.getElementById('hold_token');
+    const holdStatus = document.getElementById('booking-hold-status');
+    const holdError = document.getElementById('booking-hold-error');
+    let holdToken = null;
+    let holdExpiresAt = null;
+    let holdTimer = null;
+    let bookingHoldRequestInProgress = false;
+
+    function csrfToken() {
+        return document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value || '';
+    }
+
+    async function liberarRetencion() {
+        const token = holdToken;
+        holdToken = null;
+        holdExpiresAt = null;
+        holdTokenInput.value = '';
+        if (holdTimer) clearInterval(holdTimer);
+        holdTimer = null;
+        holdStatus.classList.add('hidden');
+        if (token) {
+            try {
+                await fetch(@json(route('api.booking-holds.delete')), {
+                    method: 'DELETE',
+                    headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json'},
+                    body: JSON.stringify({token}),
+                    keepalive: true,
+                });
+            } catch (_) { /* El servidor vence la retención automáticamente. */ }
+        }
+    }
+
+    function iniciarCuentaRegresiva() {
+        if (holdTimer) clearInterval(holdTimer);
+        const tick = () => {
+            const seconds = Math.max(0, Math.ceil((holdExpiresAt - Date.now()) / 1000));
+            const minutes = String(Math.floor(seconds / 60)).padStart(2, '0');
+            const rest = String(seconds % 60).padStart(2, '0');
+            holdStatus.textContent = seconds
+                ? 'Horario apartado para ti durante ' + minutes + ':' + rest + '. Completa los detalles antes de que venza; al pasar a pago tendrás 15 minutos para pagar.'
+                : 'La reserva temporal venció. Elige de nuevo un horario disponible.';
+            holdStatus.classList.remove('hidden');
+            if (seconds === 0) {
+                clearInterval(holdTimer);
+                holdTimer = null;
+                holdToken = null;
+                holdTokenInput.value = '';
+                holdError.textContent = 'La reserva venció. Selecciona otro horario para continuar.';
+                holdError.classList.remove('hidden');
+                window.volverPaso2();
+            }
+        };
+        tick();
+        holdTimer = setInterval(tick, 1000);
+    }
+
+    window.cambiarAbogado = async function() {
+        await liberarRetencion();
+        const store = Alpine.store('booking');
+        store.step = 1;
+        store.abogadoId = null;
+        store.abogadoNom = '';
+        store.fechaSeleccionada = null;
+        store.horaSeleccionada = null;
+        window.limpiarSlots?.();
+    };
 
     // Helper: disparar animación de selección en elemento
     window.triggerSelectAnim = function(el) {
@@ -375,7 +444,9 @@ window.addEventListener('load', function () {
         window.renderCalendario();
     };
 
-    window.seleccionarFecha = function(fecha, el) {
+    window.seleccionarFecha = async function(fecha, el) {
+        const storeAntes = Alpine.store('booking');
+        if (storeAntes.fechaSeleccionada !== fecha) await liberarRetencion();
         Alpine.store('booking').setFecha(fecha);
         document.getElementById('fecha_input').value = fecha;
         document.getElementById('hora_inicio').value = '';
@@ -446,8 +517,39 @@ window.addEventListener('load', function () {
     };
     window.addEventListener('pagehide', () => slotsLoader.reset());
 
-    window.seleccionarSlot = function(hora, horaLabel, btn) {
-        Alpine.store('booking').setHora(hora);
+    window.seleccionarSlot = async function(hora, horaLabel, btn) {
+        if (bookingHoldRequestInProgress) return;
+        bookingHoldRequestInProgress = true;
+        const store = Alpine.store('booking');
+        holdError.classList.add('hidden');
+        document.querySelectorAll('.slot-btn').forEach(button => button.disabled = true);
+        await liberarRetencion();
+        let response;
+        let data;
+        try {
+            response = await fetch(@json(route('api.booking-holds.create')), {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken(), 'Accept': 'application/json'},
+                body: JSON.stringify({abogado_id: store.abogadoId, fecha: store.fechaSeleccionada, hora_inicio: hora}),
+            });
+            data = await response.json();
+        } catch (_) {
+            data = {message: 'No se pudo apartar este horario. Revisa tu conexión e inténtalo de nuevo.'};
+        }
+        if (!response?.ok) {
+            holdError.textContent = data.message || 'Ese horario ya no está disponible. Elige otro.';
+            holdError.classList.remove('hidden');
+            bookingHoldRequestInProgress = false;
+            cargarSlots(store.fechaSeleccionada);
+            return;
+        }
+
+        bookingHoldRequestInProgress = false;
+        holdToken = data.token;
+        holdTokenInput.value = data.token;
+        holdExpiresAt = new Date(data.expires_at).getTime();
+        iniciarCuentaRegresiva();
+        store.setHora(hora);
         document.getElementById('hora_inicio').value = hora;
         document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
@@ -457,7 +559,6 @@ window.addEventListener('load', function () {
         void btn.offsetWidth;
         btn.classList.add('animate-select');
 
-        const store = Alpine.store('booking');
         const fechaObj = new Date(store.fechaSeleccionada + 'T00:00:00');
         const opts = {weekday:'long', year:'numeric', month:'long', day:'numeric'};
         const resumen = document.getElementById('resumen');
@@ -499,12 +600,26 @@ window.addEventListener('load', function () {
         return line;
     }
 
-    window.volverPaso2 = function() {
+    window.volverPaso2 = async function() {
+        await liberarRetencion();
         Alpine.store('booking').volverPaso2();
         document.getElementById('hora_inicio').value = '';
+        document.getElementById('resumen').replaceChildren();
         document.getElementById('step-ind-3').classList.remove('step-active');
         document.getElementById('step-ind-3').classList.add('step-inactive');
+        const fecha = Alpine.store('booking').fechaSeleccionada;
+        if (fecha) cargarSlots(fecha);
     };
+
+    document.getElementById('formCita').addEventListener('submit', function(event) {
+        if (!holdToken || !holdExpiresAt || holdExpiresAt <= Date.now()) {
+            event.preventDefault();
+            holdError.textContent = 'La reserva temporal ya no está activa. Selecciona de nuevo el horario.';
+            holdError.classList.remove('hidden');
+            liberarRetencion();
+            Alpine.store('booking').volverPaso2();
+        }
+    });
 
     function activarStep(id) {
         const el = document.getElementById(id);

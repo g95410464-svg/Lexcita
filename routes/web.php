@@ -95,6 +95,8 @@ Route::middleware(['auth', 'verified', 'rol:admin', 'throttle:portal'])->prefix(
 
 Route::middleware(['auth', 'throttle:slots'])->prefix('api')->name('api.')->group(function () {
     Route::get('/slots', [ApiController::class, 'slots'])->name('slots');
+    Route::post('/booking-holds', [ApiController::class, 'retenerHorario'])->middleware(['rol:cliente', 'throttle:booking'])->name('booking-holds.create');
+    Route::delete('/booking-holds', [ApiController::class, 'liberarHorario'])->middleware(['rol:cliente', 'throttle:writes'])->name('booking-holds.delete');
 });
 
 // Sala de videollamada: accesible por cliente Y abogado de la misma cita.
