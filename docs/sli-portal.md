@@ -16,6 +16,15 @@ el commit actual de `feat/sli-landing` y revisar los logs del despliegue. El men
 de éxito es «Migraciones de la organización completadas, sin seeders». Un redeploy
 de una imagen antigua no incluye las migraciones añadidas en commits posteriores.
 
+Si el proceso privado sigue sin aplicar la migración, el administrador de
+PostgreSQL puede ejecutar `scripts/sql/repair-sli-booking-holds.sql` mediante psql
+conectado explícitamente a `lexcita_sli`. El script se limita a esa base, usa el rol
+propietario existente, crea el mismo esquema de la migración y concede únicamente
+los permisos de filas y secuencia del rol de aplicación. Registra la migración en
+la misma transacción; puede repetirse sin duplicar ese registro ni extender
+apartados existentes. No requiere reconstruir el servicio web. La biblioteca y
+otras migraciones siguen dependiendo del proceso privado de migración habitual.
+
 Durante un despliegue con el esquema pendiente, los horarios se pueden consultar
 y las citas existentes conservan su apartado. Las nuevas reservas reciben un
 aviso temporal hasta que existan la tabla `booking_holds` y la columna
