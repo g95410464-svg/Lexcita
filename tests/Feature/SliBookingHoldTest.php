@@ -10,6 +10,7 @@ use App\Services\CitaService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Illuminate\Support\Facades\Schema;
 
 class SliBookingHoldTest extends TestCase
 {
@@ -27,7 +28,6 @@ class SliBookingHoldTest extends TestCase
         $this->cliente = Usuario::create([
             'nombre' => 'Cliente test', 'email' => 'cliente-hold@example.test',
             'password' => 'ClaveLocal123', 'rol' => 'cliente', 'activo' => true,
-            'email_verified_at' => now(),
         ]);
         $this->abogado = Usuario::create([
             'nombre' => 'Abogado test', 'email' => 'abogado-hold@example.test',
@@ -125,5 +125,53 @@ class SliBookingHoldTest extends TestCase
             $anotherClient->id, $this->abogado->id, '2026-10-23', '09:00'
         );
         $this->assertSame($anotherClient->id, $newHold->cliente_id);
+    }
+
+    public function test_slots_keep_loading_before_the_booking_migration_without_allowing_unprotected_bookings(): void
+    {
+        $migration = require database_path('migrations/2026_10_22_120000_add_temporary_booking_holds.php');
+        $migration->down();
+        Cita::create([
+            'codigo' => 'LEGACY-001', 'cliente_id' => $this->cliente->id, 'abogado_id' => $this->abogado->id,
+            'fecha' => '2026-10-23', 'hora_inicio' => '10:00', 'hora_fin' => '11:00',
+            'tipo' => 'consulta_general', 'modalidad' => 'virtual', 'estado' => 'pendiente_pago', 'monto' => 35,
+        ]);
+        $this->actingAs($this->cliente);
+        $this->getJson(route('api.slots', ['abogado_id' => $this->abogado->id, 'fecha' => '2026-10-23']))
+            ->assertOk()->assertJsonCount(1)->assertJsonPath('0.hora', '09:00');
+        $this->postJson(route('api.booking-holds.create'), [
+            'abogado_id' => $this->abogado->id, 'fecha' => '2026-10-23', 'hora_inicio' => '09:00',
+        ])->assertStatus(503)->assertJsonFragment(['message' => (new \App\Exceptions\BookingSchemaNotReady())->getMessage()]);
+        $this->post(route('cliente.nueva-cita.post'), [
+            'abogado_id' => $this->abogado->id, 'fecha' => '2026-10-23', 'hora_inicio' => '09:00',
+            'tipo' => 'consulta_general', 'modalidad' => 'virtual',
+        ])->assertRedirect()->assertSessionHasErrors('hora_inicio');
+        $this->assertDatabaseCount('citas', 1);
+    }
+
+    public function test_slots_load_when_hold_table_exists_but_deadline_column_is_missing(): void
+    {
+        Schema::table('citas', function ($table): void {
+            $table->dropIndex(['hold_expires_at']);
+            $table->dropColumn('hold_expires_at');
+        });
+        $this->assertFalse(app(CitaService::class)->retencionesListas());
+        $this->actingAs($this->cliente)->getJson(route('api.slots', [
+            'abogado_id' => $this->abogado->id, 'fecha' => '2026-10-23',
+        ]))->assertOk()->assertJsonCount(2);
+    }
+
+    public function test_second_precision_schedule_formats_work_and_paid_appointments_do_not_expire(): void
+    {
+        HorarioDisponible::query()->update(['hora_inicio' => '09:00:00', 'hora_fin' => '11:00:00']);
+        $cita = Cita::create([
+            'codigo' => 'PAID-001', 'cliente_id' => $this->cliente->id, 'abogado_id' => $this->abogado->id,
+            'fecha' => '2026-10-23', 'hora_inicio' => '09:00:00', 'hora_fin' => '10:00:00',
+            'tipo' => 'consulta_general', 'modalidad' => 'virtual', 'estado' => 'pendiente_pago', 'monto' => 35,
+            'payment_status' => 'completed', 'hold_expires_at' => now()->subMinute(),
+        ]);
+        $slots = app(CitaService::class)->getSlotsDisponibles($this->abogado->id, '2026-10-23');
+        $this->assertSame(['10:00'], array_column($slots, 'hora'));
+        $this->assertSame('pendiente_pago', $cita->fresh()->estado);
     }
 }

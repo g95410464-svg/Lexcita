@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Database\QueryException;
 use App\Services\CitaService;
+use App\Exceptions\BookingSchemaNotReady;
+use Illuminate\Support\Facades\Log;
 
 class ApiController extends Controller
 {
@@ -41,9 +43,15 @@ class ApiController extends Controller
                 $data['fecha'],
                 $data['hora_inicio']
             );
+        } catch (BookingSchemaNotReady $e) {
+            Log::warning('SLI booking schema is not ready; run scripts/migrate-organization.php in the private setup service.');
+            return response()->json(['message' => $e->getMessage()], 503);
         } catch (\DomainException $e) {
             return response()->json(['message' => $e->getMessage()], 409);
         } catch (QueryException $e) {
+            if (!in_array((string) $e->getCode(), ['23505', '23000'], true)) {
+                throw $e;
+            }
             // La restricción UNIQUE protege también contra dos solicitudes
             // simultáneas al mismo abogado, fecha y hora.
             return response()->json(['message' => 'Ese horario acaba de ser apartado por otra persona. Elige otro.'], 409);

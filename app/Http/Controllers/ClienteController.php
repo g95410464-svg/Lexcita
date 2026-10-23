@@ -61,6 +61,9 @@ class ClienteController extends Controller
             'descripcion' => 'nullable|string|max:500',
         ];
         $sli = config('organization.id') === 'servicios-legales-integrados';
+        if ($sli && !$citaService->retencionesListas()) {
+            return back()->withErrors(['hora_inicio' => (new \App\Exceptions\BookingSchemaNotReady())->getMessage()])->withInput();
+        }
         if ($sli) {
             $rules['hold_token'] = 'required|uuid';
         }
@@ -88,7 +91,7 @@ class ClienteController extends Controller
                     }
 
                     $conflicto = Cita::where('abogado_id', $data['abogado_id'])
-                        ->where('fecha', $data['fecha'])
+                        ->whereDate('fecha', $data['fecha'])
                         ->where('hora_inicio', $data['hora_inicio'])
                         ->where(function ($query): void {
                             $query->where('estado', 'confirmada')

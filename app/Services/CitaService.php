@@ -3,14 +3,22 @@
 namespace App\Services;
 
 use App\Models\{BookingHold, Cita, HorarioDisponible, Usuario};
+use App\Exceptions\BookingSchemaNotReady;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class CitaService
 {
     // Excepción temporal de feria: reutiliza el horario activo del viernes.
     public const FECHA_FERIA = '2026-09-26';
+
+    public function retencionesListas(): bool
+    {
+        return config('organization.id') === 'servicios-legales-integrados'
+            && Schema::hasTable('booking_holds') && Schema::hasColumn('citas', 'hold_expires_at');
+    }
 
     /**
      * Retorna slots disponibles para un abogado en una fecha dada.
@@ -41,8 +49,9 @@ class CitaService
 
         // Confirmadas y solicitudes de pago que todavía están dentro de sus
         // 15 minutos de retención bloquean el mismo horario.
-        $citasQuery = Cita::where('abogado_id', $abogadoId)->where('fecha', $fecha);
-        if (config('organization.id') === 'servicios-legales-integrados') {
+        $holdsReady = $this->retencionesListas();
+        $citasQuery = Cita::where('abogado_id', $abogadoId)->whereDate('fecha', $fecha);
+        if ($holdsReady) {
             $citasQuery->where(function ($query): void {
                 $query->where('estado', 'confirmada')
                     ->orWhere(function ($pending): void {
@@ -59,9 +68,9 @@ class CitaService
         }
         $reservadas = $citasQuery->pluck('hora_inicio')->toArray();
 
-        $holds = config('organization.id') === 'servicios-legales-integrados'
+        $holds = $holdsReady
             ? BookingHold::where('abogado_id', $abogadoId)
-                ->where('fecha', $fecha)
+                ->whereDate('fecha', $fecha)
                 ->where('expires_at', '>', now())
                 ->pluck('hora_inicio')->toArray()
             : [];
@@ -69,8 +78,8 @@ class CitaService
 
         // Generar slots de 60 min
         $slots    = [];
-        $inicio   = Carbon::createFromFormat('H:i:s', $horario->hora_inicio);
-        $fin      = Carbon::createFromFormat('H:i:s', $horario->hora_fin);
+        $inicio   = Carbon::createFromTimeString($horario->hora_inicio);
+        $fin      = Carbon::createFromTimeString($horario->hora_fin);
         $horaFin  = $fin->copy()->subHour(); // último slot empieza 1h antes del cierre
 
         $ahora = Carbon::now();
@@ -95,6 +104,10 @@ class CitaService
     /** Retiene un horario para el cliente actual durante 15 minutos. */
     public function retenerHorario(int $clienteId, int $abogadoId, string $fecha, string $hora): BookingHold
     {
+        if (!$this->retencionesListas()) {
+            throw new BookingSchemaNotReady();
+        }
+
         return DB::transaction(function () use ($clienteId, $abogadoId, $fecha, $hora): BookingHold {
             Usuario::whereKey($abogadoId)
                 ->where('rol', 'abogado')
@@ -103,7 +116,7 @@ class CitaService
                 ->firstOrFail();
 
             BookingHold::where('abogado_id', $abogadoId)
-                ->where('fecha', $fecha)
+                ->whereDate('fecha', $fecha)
                 ->where('hora_inicio', $hora)
                 ->where('expires_at', '<=', now())
                 ->delete();
@@ -126,13 +139,16 @@ class CitaService
 
     public function liberarRetencion(int $clienteId, string $token): void
     {
+        if (!$this->retencionesListas()) {
+            return;
+        }
         BookingHold::where('cliente_id', $clienteId)->where('token', $token)->delete();
     }
 
     /** Marca como canceladas las citas SLI impagas cuyo plazo venció. */
     public function cancelarReservasVencidas(): int
     {
-        if (config('organization.id') !== 'servicios-legales-integrados') {
+        if (!$this->retencionesListas()) {
             return 0;
         }
 
@@ -165,7 +181,7 @@ class CitaService
         }
 
         return DB::transaction(function () use ($cita) {
-            if (config('organization.id') === 'servicios-legales-integrados') {
+            if ($this->retencionesListas()) {
                 Usuario::whereKey($cita->abogado_id)->lockForUpdate()->firstOrFail();
                 $cita = Cita::whereKey($cita->id)->lockForUpdate()->firstOrFail();
 
@@ -179,7 +195,7 @@ class CitaService
                 }
 
                 $conflictoCita = Cita::where('abogado_id', $cita->abogado_id)
-                    ->where('fecha', $cita->fecha)
+                    ->whereDate('fecha', $cita->fecha->toDateString())
                     ->where('hora_inicio', $cita->hora_inicio)
                     ->where('id', '!=', $cita->id)
                     ->where(function ($query): void {
@@ -195,7 +211,7 @@ class CitaService
                     })
                     ->exists();
                 $conflictoHold = BookingHold::where('abogado_id', $cita->abogado_id)
-                    ->where('fecha', $cita->fecha)
+                    ->whereDate('fecha', $cita->fecha->toDateString())
                     ->where('hora_inicio', $cita->hora_inicio)
                     ->where('expires_at', '>', now())
                     ->exists();

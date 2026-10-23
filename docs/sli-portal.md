@@ -1,5 +1,21 @@
 # Portal de Servicios Legales Integrados
 
+## Despliegue de la retención de horarios
+
+La actualización de horarios requiere la migración
+`2026_10_22_120000_add_temporary_booking_holds.php`. Desplegar primero `SLI-Setup`
+con el mismo commit y su comando privado `php scripts/migrate-organization.php`;
+cuando termine correctamente, desplegar `SLI-Lexcita`. El servicio web usa el rol
+`_app` sin permisos DDL: no ejecutar migraciones desde su consola ni darle
+credenciales del propietario.
+
+Durante un despliegue con el esquema pendiente, los horarios se pueden consultar
+y las citas existentes conservan su apartado. Las nuevas reservas reciben un
+aviso temporal hasta que existan la tabla `booking_holds` y la columna
+`citas.hold_expires_at`; no se permite reservar saltándose la retención. Al aplicar
+la migración, la función se activa sin cambios de configuración. Las horas admiten
+los formatos `H:i` y `H:i:s`. Solo las reservas impagas se liberan a los 15 minutos.
+
 ## Biblioteca comunitaria
 
 Administración publica PDF o enlaces en `/interno/biblioteca` y es el único rol
