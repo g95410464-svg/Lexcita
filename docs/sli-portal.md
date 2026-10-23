@@ -1,5 +1,23 @@
 # Portal de Servicios Legales Integrados
 
+## Biblioteca comunitaria
+
+Administración publica PDF o enlaces en `/interno/biblioteca` y es el único rol
+que puede retirar recursos. Todos los abogados consultan el mismo catálogo en
+`/abogado/biblioteca`; no existen cargas de libros desde ese portal.
+
+Los PDF cargados se abren en un lector PDF.js interno, sin botones de descarga.
+Incluye páginas, zoom, resaltado, subrayado, notas y marcadores. Las anotaciones
+se guardan por documento y usuario: no alteran el PDF ni aparecen a otro abogado.
+Los enlaces externos siguen abriendo la fuente original; para usar anotaciones
+es necesario que administración cargue el PDF. Los escaneos sin capa de texto
+admiten notas de página y marcadores, pero no selección textual ni OCR.
+
+El despliegue debe ejecutar `php artisan migrate --force` para crear
+`sli_library_annotations`. Vite empaqueta el lector y copia las fuentes, CMaps
+y WASM de PDF.js a `public/build/pdfjs`; se sirve con el mismo despliegue y
+el almacenamiento privado `sli-assets` existente, sin proveedor adicional.
+
 El frontend institucional se activa únicamente cuando la configuración del servidor
 contiene `ORGANIZATION_ID=servicios-legales-integrados`. `AppServiceProvider` prioriza
 las vistas de `resources/views/sli`; las demás organizaciones mantienen sus vistas.

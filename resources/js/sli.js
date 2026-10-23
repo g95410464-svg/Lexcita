@@ -3,6 +3,14 @@ import Alpine from 'alpinejs';
 window.Alpine = Alpine;
 Alpine.start();
 
+const libraryReader = document.querySelector('[data-library-reader]');
+if (libraryReader) {
+    import('./sli-library-reader').then(({ mountReader }) => mountReader(libraryReader)).catch(() => {
+        libraryReader.querySelector('[data-reader-status]').textContent =
+            'No pudimos abrir el lector. Recarga la página o contacta con g95410464@proton.me.';
+    });
+}
+
 // CodingNepal sidebar interaction, adapted for SLI roles, keyboard access and persistence.
 const sidebar = document.getElementById('sli-sidebar');
 if (sidebar) {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SliLibraryDocument;
+use App\Models\SliLibraryAnnotation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -94,23 +95,82 @@ class SliLibraryController extends Controller
         return back()->with('success', 'El recurso se agregó a la biblioteca de abogados.');
     }
 
-    public function download(SliLibraryDocument $document)
+    private function ensureReadable(SliLibraryDocument $document): void
     {
         $this->ensureSli();
         abort_unless($document->storage_path, 404);
+        abort_unless(DB::getSchemaBuilder()->hasTable('sli_library_annotations'), 503,
+            'La biblioteca no está disponible temporalmente. Contacta con g95410464@proton.me.');
+    }
+
+    public function read(SliLibraryDocument $document)
+    {
+        $this->ensureReadable($document);
+        return view('sli.abogado.lector', compact('document'));
+    }
+
+    public function content(SliLibraryDocument $document)
+    {
+        $this->ensureReadable($document);
         $disk = Storage::disk('sli-assets');
         abort_unless($disk->exists($document->storage_path), 404);
 
-        return response()->streamDownload(
+        return response()->stream(
             function () use ($disk, $document): void {
                 $stream = $disk->readStream($document->storage_path);
                 abort_unless(is_resource($stream), 404);
                 fpassthru($stream);
                 fclose($stream);
             },
-            Str::slug($document->title).'.pdf',
-            ['Content-Type' => 'application/pdf', 'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store'],
+            200,
+            ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'inline',
+                'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store'],
         );
+    }
+
+    public function annotations(Request $request, SliLibraryDocument $document)
+    {
+        $this->ensureReadable($document);
+        return response()->json(SliLibraryAnnotation::where('document_id', $document->id)
+            ->where('usuario_id', $request->user()->id)->orderBy('page')->orderBy('id')
+            ->get(['id', 'page', 'kind', 'quote', 'note', 'rects']))
+            ->header('Cache-Control', 'private, no-store');
+    }
+
+    public function annotate(Request $request, SliLibraryDocument $document)
+    {
+        $this->ensureReadable($document);
+        $data = $request->validate([
+            'page' => ['required', 'integer', 'min:1', 'max:100000'],
+            'kind' => ['required', 'in:highlight,underline,bookmark'],
+            'quote' => ['nullable', 'string', 'max:10000'],
+            'note' => ['nullable', 'string', 'max:2000'],
+            'rects' => ['required_unless:kind,bookmark', 'array', 'max:200'],
+            'rects.*' => ['array:x,y,width,height'],
+            'rects.*.x' => ['required', 'numeric', 'between:0,1'],
+            'rects.*.y' => ['required', 'numeric', 'between:0,1'],
+            'rects.*.width' => ['required', 'numeric', 'gt:0', 'max:1'],
+            'rects.*.height' => ['required', 'numeric', 'gt:0', 'max:1'],
+        ]);
+        foreach ($data['rects'] ?? [] as $rect) {
+            abort_if($rect['x'] + $rect['width'] > 1.001 || $rect['y'] + $rect['height'] > 1.001, 422);
+        }
+        if ($data['kind'] !== 'bookmark' && empty($data['rects'])) {
+            return response()->json(['message' => 'Selecciona texto del documento para marcarlo.'], 422);
+        }
+        $annotation = SliLibraryAnnotation::create([
+            ...$data, 'document_id' => $document->id, 'usuario_id' => $request->user()->id,
+        ]);
+        return response()->json($annotation->only(['id', 'page', 'kind', 'quote', 'note', 'rects']), 201);
+    }
+
+    public function removeAnnotation(Request $request, SliLibraryDocument $document, SliLibraryAnnotation $annotation)
+    {
+        $this->ensureReadable($document);
+        abort_unless((int) $annotation->document_id === (int) $document->id
+            && (int) $annotation->usuario_id === (int) $request->user()->id, 404);
+        $annotation->delete();
+        return response()->noContent();
     }
 
     public function destroy(SliLibraryDocument $document)

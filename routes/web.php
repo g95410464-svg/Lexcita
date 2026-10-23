@@ -72,7 +72,11 @@ Route::middleware(['auth', 'verified', 'rol:abogado', 'throttle:portal'])->prefi
     Route::get('/dashboard', [AbogadoController::class, 'dashboard'])->name('dashboard');
     Route::get('/agenda',    [AbogadoController::class, 'agenda'])->name('agenda');
     Route::get('/biblioteca', [SliLibraryController::class, 'index'])->name('biblioteca');
-    Route::get('/biblioteca/{document}/descargar', [SliLibraryController::class, 'download'])->name('biblioteca.download');
+    Route::get('/biblioteca/{document}/leer', [SliLibraryController::class, 'read'])->name('biblioteca.read');
+    Route::get('/biblioteca/{document}/contenido', [SliLibraryController::class, 'content'])->name('biblioteca.content');
+    Route::get('/biblioteca/{document}/anotaciones', [SliLibraryController::class, 'annotations'])->name('biblioteca.annotations');
+    Route::post('/biblioteca/{document}/anotaciones', [SliLibraryController::class, 'annotate'])->middleware('throttle:writes')->name('biblioteca.annotate');
+    Route::delete('/biblioteca/{document}/anotaciones/{annotation}', [SliLibraryController::class, 'removeAnnotation'])->middleware('throttle:writes')->name('biblioteca.annotations.destroy');
 });
 
 Route::middleware(['auth', 'verified', 'rol:admin', 'throttle:portal'])->prefix('interno')->name('interno.')->group(function () {

@@ -1,9 +1,9 @@
 @extends('layouts.app')
 @section('title', 'Administrar biblioteca legal')
 @section('content')
-<div class="sli-page-heading"><div><span class="sli-eyebrow">ADMINISTRACIÓN DEL DESPACHO</span><h1>Biblioteca legal</h1><p>Agrega enlaces a legislación, libros y recursos jurídicos para que estén disponibles a todas las cuentas con rol de abogado.</p></div></div>
+<div class="sli-page-heading"><div><span class="sli-eyebrow">ADMINISTRACIÓN DEL DESPACHO</span><h1>Biblioteca legal</h1><p>Solo administración puede publicar y retirar libros. Cada recurso publicado aparece en la biblioteca de todos los abogados.</p></div></div>
 
-<section class="sli-panel sli-editor-section"><header class="sli-panel-head"><div><h2>Agregar recurso</h2><p>Prioriza enlaces HTTPS a portales oficiales. También puedes adjuntar un PDF propio autorizado.</p></div></header>
+<section class="sli-panel sli-editor-section"><header class="sli-panel-head"><div><h2>Agregar recurso</h2><p>Sube un PDF para habilitar el lector con subrayados y notas. Los enlaces externos se consultan en su sitio de origen.</p></div></header>
 <form class="sli-editor-form" action="{{ route('interno.biblioteca.store') }}" method="POST" enctype="multipart/form-data">@csrf
     <fieldset>
         <label>Título<input name="title" value="{{ old('title') }}" maxlength="180" required placeholder="Ej. Constitución de la República"></label>

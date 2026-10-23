@@ -19,6 +19,7 @@
         "@fontsource/material-symbols-outlined": "5.3.9",
         "alpinejs": "3.17.4",
         "laravel-echo": "^2.4.0",
+        "pdfjs-dist": "6.4.299",
         "pusher-js": "^8.6.0"
     }
 }
