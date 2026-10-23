@@ -116,5 +116,14 @@ class SliBookingHoldTest extends TestCase
         ));
         $this->assertSame('cancelada', $cita->fresh()->estado);
         $this->assertSame('expired', $cita->fresh()->payment_status);
+
+        $anotherClient = Usuario::create([
+            'nombre' => 'Segundo cliente', 'email' => 'cliente2-hold@example.test',
+            'password' => 'ClaveLocal123', 'rol' => 'cliente', 'activo' => true,
+        ]);
+        $newHold = app(CitaService::class)->retenerHorario(
+            $anotherClient->id, $this->abogado->id, '2026-10-23', '09:00'
+        );
+        $this->assertSame($anotherClient->id, $newHold->cliente_id);
     }
 }
