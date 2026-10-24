@@ -16,6 +16,7 @@ class ClienteController extends Controller
 {
     public function dashboard()
     {
+        app(CitaService::class)->cancelarReservasVencidas();
         $cliente = Auth::user();
         $proximasCitas = $cliente->citasComoCliente()
             ->where('estado', 'confirmada')
@@ -51,56 +52,104 @@ class ClienteController extends Controller
 
     public function crearCita(Request $request, CitaService $citaService)
     {
-        $data = $request->validate([
+        $rules = [
             'abogado_id'  => ['required', 'integer', Rule::exists('usuarios', 'id')->where('rol', 'abogado')->where('activo', true)],
             'fecha'       => 'required|date_format:Y-m-d|after_or_equal:today',
             'hora_inicio' => 'required|date_format:H:i',
             'tipo'        => 'required|in:consulta_general,derecho_familiar,derecho_penal,derecho_laboral,derecho_civil,otro',
             'modalidad'   => 'required|in:presencial,virtual',
             'descripcion' => 'nullable|string|max:500',
-        ]);
-
-        // Revalidar el horario al guardar: disponibilidad, fecha y hora futura.
-        $slots = $citaService->getSlotsDisponibles((int) $data['abogado_id'], $data['fecha']);
-        if (!in_array($data['hora_inicio'], array_column($slots, 'hora'), true)) {
-            return back()->withErrors([
-                'hora_inicio' => 'Ese horario ya no está disponible. Por favor elige otro.',
-            ])->withInput();
+        ];
+        $sli = config('organization.id') === 'servicios-legales-integrados';
+        if ($sli && !$citaService->retencionesListas()) {
+            return back()->withErrors(['hora_inicio' => (new \App\Exceptions\BookingSchemaNotReady())->getMessage()])->withInput();
         }
-
-        // Calcular hora_fin (slots de 60 min)
-        $horaFin = Carbon::createFromFormat('H:i', $data['hora_inicio'])->addHour()->format('H:i');
-
-        // Validar que el slot siga libre (doble check server-side)
-        $conflicto = Cita::where('abogado_id', $data['abogado_id'])
-            ->where('fecha', $data['fecha'])
-            ->where('estado', '!=', 'cancelada')
-            ->where('hora_inicio', $data['hora_inicio'])
-            ->exists();
-
-        if ($conflicto) {
-            return back()->withErrors(['hora_inicio' => 'Ese horario ya fue reservado. Por favor elige otro.'])->withInput();
+        if ($sli) {
+            $rules['hold_token'] = 'required|uuid';
         }
+        $data = $request->validate($rules);
 
-        $cita = Cita::create([
-            'codigo'      => Cita::generarCodigo(),
-            'cliente_id'  => Auth::id(),
-            'abogado_id'  => $data['abogado_id'],
-            'fecha'       => $data['fecha'],
-            'hora_inicio' => $data['hora_inicio'],
-            'hora_fin'    => $horaFin,
-            'tipo'        => $data['tipo'],
-            'modalidad'   => $data['modalidad'],
-            'descripcion' => $data['descripcion'] ?? null,
-            'estado'      => 'pendiente_pago',
-            'monto'       => 35.00,
-        ]);
+        try {
+            $cita = DB::transaction(function () use ($data, $sli, $citaService): Cita {
+                if ($sli) {
+                    Usuario::whereKey($data['abogado_id'])
+                        ->where('rol', 'abogado')
+                        ->where('activo', true)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+
+                    $hold = \App\Models\BookingHold::where('token', $data['hold_token'])
+                        ->where('cliente_id', Auth::id())
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (!$hold || $hold->expires_at->lte(now())
+                        || (int) $hold->abogado_id !== (int) $data['abogado_id']
+                        || $hold->fecha->format('Y-m-d') !== $data['fecha']
+                        || substr($hold->hora_inicio, 0, 5) !== $data['hora_inicio']) {
+                        throw new \DomainException('La reserva temporal venció. Selecciona de nuevo el horario para continuar.');
+                    }
+
+                    $conflicto = Cita::where('abogado_id', $data['abogado_id'])
+                        ->whereDate('fecha', $data['fecha'])
+                        ->where('hora_inicio', $data['hora_inicio'])
+                        ->where(function ($query): void {
+                            $query->where('estado', 'confirmada')
+                                ->orWhere(function ($pending): void {
+                                    $pending->where('estado', 'pendiente_pago')
+                                        ->where(function ($payment): void {
+                                            $payment->where('payment_status', 'completed')
+                                                ->orWhereNull('hold_expires_at')
+                                                ->orWhere('hold_expires_at', '>', now());
+                                        });
+                                });
+                        })
+                        ->exists();
+
+                    if ($conflicto) {
+                        throw new \DomainException('Ese horario ya no está disponible. Elige otro.');
+                    }
+                } else {
+                    $slots = $citaService->getSlotsDisponibles((int) $data['abogado_id'], $data['fecha']);
+                    if (!in_array($data['hora_inicio'], array_column($slots, 'hora'), true)) {
+                        throw new \DomainException('Ese horario ya no está disponible. Por favor elige otro.');
+                    }
+                }
+
+                $horaFin = Carbon::createFromFormat('H:i', $data['hora_inicio'])->addHour()->format('H:i');
+                $cita = Cita::create([
+                    'codigo' => Cita::generarCodigo(),
+                    'cliente_id' => Auth::id(),
+                    'abogado_id' => $data['abogado_id'],
+                    'fecha' => $data['fecha'],
+                    'hora_inicio' => $data['hora_inicio'],
+                    'hora_fin' => $horaFin,
+                    'tipo' => $data['tipo'],
+                    'modalidad' => $data['modalidad'],
+                    'descripcion' => $data['descripcion'] ?? null,
+                    'estado' => 'pendiente_pago',
+                    'monto' => 35.00,
+                    // Elegir el horario lleva directamente a Detalles; se
+                    // conserva ese mismo plazo hasta terminar el pago.
+                    'hold_expires_at' => $sli ? $hold->expires_at : null,
+                ]);
+
+                if ($sli) {
+                    $hold->delete();
+                }
+
+                return $cita;
+            });
+        } catch (\DomainException $e) {
+            return back()->withErrors(['hora_inicio' => $e->getMessage()])->withInput();
+        }
 
         return redirect()->route('cliente.pre-confirmacion', $cita->id)->with('success', 'Cita agendada: ' . $cita->codigo . '. Por favor confirma el pago.');
     }
 
     public function misCitas()
     {
+        app(CitaService::class)->cancelarReservasVencidas();
         $citas = Auth::user()->citasComoCliente()
             ->with(['abogado', 'videoRoom'])
             ->orderByDesc('fecha')
@@ -133,6 +182,11 @@ class ClienteController extends Controller
             ->where('estado', 'pendiente_pago')
             ->firstOrFail();
 
+        if ($this->retencionVencida($cita)) {
+            return redirect()->route('cliente.mis-citas')
+                ->withErrors(['pago' => 'El tiempo para pagar venció y el horario volvió a estar disponible. Agenda otra cita para continuar.']);
+        }
+
         return view('cliente.pre-confirmacion', compact('cita'));
     }
 
@@ -163,6 +217,11 @@ class ClienteController extends Controller
             ->where('cliente_id', Auth::id())
             ->where('estado', 'pendiente_pago')
             ->firstOrFail();
+
+        if ($this->retencionVencida($cita)) {
+            return redirect()->route('cliente.mis-citas')
+                ->withErrors(['pago' => 'El tiempo de reserva venció. Agenda otra cita para continuar.']);
+        }
 
         try {
             $result = app(PayPalService::class)->createOrder($cita);
@@ -368,6 +427,19 @@ class ClienteController extends Controller
             ->firstOrFail();
     }
 
+    protected function retencionVencida(Cita $cita): bool
+    {
+        if ($cita->hold_expires_at === null || $cita->hold_expires_at->gt(now()) || $cita->pagoCompletado()) {
+            return false;
+        }
+
+        if (config('organization.id') === 'servicios-legales-integrados' && $cita->estaPendiente()) {
+            $cita->update(['estado' => 'cancelada', 'payment_status' => 'expired']);
+        }
+
+        return true;
+    }
+
     // ─── Captura compartida (redirect + AJAX) ──────────────────────────────
 
     /**
@@ -379,43 +451,44 @@ class ClienteController extends Controller
      */
     protected function capturarYPersistir(Cita $cita, string $orderId): array
     {
-        try {
-            $order = app(PayPalService::class)->captureOrder($orderId);
-        } catch (\Throwable $e) {
-            Log::error('[PayPal] capture: error al capturar', ['cita' => $cita->id, 'order' => $orderId, 'error' => $e->getMessage()]);
-            return ['ok' => false, 'message' => 'No se pudo completar el pago. Tu cita sigue pendiente; inténtalo de nuevo.'];
-        }
+        return DB::transaction(function () use ($cita, $orderId): array {
+            // La misma fila del abogado serializa nuevas retenciones mientras
+            // se verifica y captura el pago, cerrando la carrera con el vencimiento.
+            Usuario::whereKey($cita->abogado_id)->lockForUpdate()->first();
+            $locked = Cita::whereKey($cita->id)->lockForUpdate()->first();
 
-        if (!$this->pagoValido($order, $cita)) {
-            Log::warning('[PayPal] capture: validaciones fallidas', ['cita' => $cita->id, 'order' => $orderId]);
-            return ['ok' => false, 'message' => 'El pago no pudo validarse. Tu cita sigue pendiente de pago.'];
-        }
+            if (!$locked || $locked->cliente_id !== $cita->cliente_id
+                || $locked->paypal_order_id !== $orderId) {
+                return ['ok' => false, 'message' => 'No encontramos esta reserva de pago. Agenda otra cita si el horario venció.'];
+            }
+            if ($locked->pagoCompletado() && $locked->transaction_id && $locked->estaConfirmada()) {
+                return ['ok' => true, 'message' => 'Pago confirmado.'];
+            }
+            if ($this->retencionVencida($locked)) {
+                return ['ok' => false, 'message' => 'El tiempo de reserva venció. No se capturó el pago y el horario volvió a estar disponible.'];
+            }
 
-        // Persistir bajo lock: se vuelve a leer la cita bloqueada; si otro
-        // request concurrente completó mientras capturábamos, NO repetimos
-        // efectos secundarios (no confirma dos veces ni duplica VideoRoom).
-        DB::transaction(function () use ($cita, $order, $orderId) {
-            $locked = Cita::where('paypal_order_id', $orderId)
-                ->where('cliente_id', $cita->cliente_id)
-                ->lockForUpdate()
-                ->first();
+            try {
+                $order = app(PayPalService::class)->captureOrder($orderId);
+            } catch (\Throwable $e) {
+                Log::error('[PayPal] capture: error al capturar', ['cita' => $locked->id, 'order' => $orderId, 'error' => $e->getMessage()]);
+                return ['ok' => false, 'message' => 'No se pudo completar el pago. Tu cita sigue pendiente; inténtalo de nuevo.'];
+            }
 
-            // Fila borrada o ya procesada por otro request → sin efectos.
-            if (!$locked || ($locked->pagoCompletado() && $locked->transaction_id)) {
-                return;
+            if (!$this->pagoValido($order, $locked)) {
+                Log::warning('[PayPal] capture: validaciones fallidas', ['cita' => $locked->id, 'order' => $orderId]);
+                return ['ok' => false, 'message' => 'El pago no pudo validarse. Tu cita sigue pendiente de pago.'];
             }
 
             $locked->update([
-                'payment_status'   => 'completed',
-                'paypal_order_id'  => $orderId,
-                'transaction_id'   => $this->captureId($order),
-                'paid_at'          => now(),
+                'payment_status' => 'completed',
+                'transaction_id' => $this->captureId($order),
+                'paid_at' => now(),
             ]);
 
             app(CitaService::class)->confirmar($locked);
+            return ['ok' => true, 'message' => 'Pago confirmado.'];
         });
-
-        return ['ok' => true, 'message' => 'Pago confirmado.'];
     }
 
     // ─── Endpoints AJAX (JS SDK inline) ────────────────────────────────────
@@ -428,6 +501,9 @@ class ClienteController extends Controller
     public function crearOrdenAjax(int $id)
     {
         $cita = $this->citaPropiaPendiente($id);
+        if ($this->retencionVencida($cita)) {
+            return response()->json(['success' => false, 'message' => 'El tiempo de reserva venció. Agenda otra cita para continuar.'], 409);
+        }
 
         try {
             $result = app(PayPalService::class)->createOrder($cita);

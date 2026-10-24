@@ -43,7 +43,8 @@
 * **Base de Datos:** PostgreSQL / MySQL 8.0+
 * **Real-time / WebSockets:** Laravel Reverb + WebRTC Nativo
 * **Pasarela de Pagos:** PayPal REST API
-* **Mensajería & Correo:** Twilio API (WhatsApp Business) / Resend Mail API
+* **Mensajería & Correo:** WhatsApp mediante Twilio Messaging API y correo mediante Twilio SendGrid Email API.
+  En SLI, LexCita genera y valida los códigos OTP; Twilio transporta los mensajes y SendGrid el correo.
 * **Frontend:** Tailwind CSS, Alpine.js, FullCalendar API & JavaScript Asíncrono (Fetch API)
 
 ---

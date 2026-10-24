@@ -1,5 +1,14 @@
 <?php
 
+$mailScheme = strtolower((string) env('MAIL_SCHEME', ''));
+$mailScheme = match ($mailScheme) {
+    // Older SMTP setup guides call STARTTLS "tls"; Symfony expects smtp://
+    // and negotiates STARTTLS automatically when the server supports it.
+    'tls' => 'smtp',
+    'ssl' => 'smtps',
+    default => $mailScheme,
+};
+
 return [
 
     /*
@@ -39,7 +48,7 @@ return [
 
         'smtp' => [
             'transport' => 'smtp',
-            'scheme' => env('MAIL_SCHEME'),
+            'scheme' => $mailScheme !== '' ? $mailScheme : null,
             'url' => env('MAIL_URL'),
             'host' => env('MAIL_HOST', '127.0.0.1'),
             'port' => env('MAIL_PORT', 2525),

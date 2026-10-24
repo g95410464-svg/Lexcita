@@ -82,6 +82,7 @@ class AdminController extends Controller
 
     public function citas(Request $request)
     {
+        app(\App\Services\CitaService::class)->cancelarReservasVencidas();
         $data = $request->validate([
             'estado' => 'nullable|string|in:pendiente_pago,confirmada,cancelada,completada',
             'abogado_id' => 'nullable|integer|min:1',

@@ -18,7 +18,7 @@
     <header class="sli-sidebar-header">
         <a class="sli-sidebar-logo" href="{{ route($homeRoute) }}" aria-label="Servicios Legales Integrados, inicio">
             <img class="sli-sidebar-full-logo" src="{{ asset('images/sli-firma.png') }}" alt="G.C. Tu Conexión Legal · Abogados y Notarios" width="1536" height="585">
-            <span class="sli-sidebar-mini" aria-hidden="true">SLI</span>
+            <span class="sli-sidebar-mini" aria-hidden="true">G.C</span>
         </a>
         <button class="sli-sidebar-toggler" type="button" data-sidebar-toggle aria-label="Contraer barra lateral" aria-controls="sli-sidebar-navigation" aria-expanded="true"><span class="material-symbols-outlined" aria-hidden="true">chevron_left</span></button>
         <button class="sli-menu-toggler" type="button" data-sidebar-menu-toggle aria-label="Mostrar menú" aria-controls="sli-sidebar-navigation" aria-expanded="false"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>
