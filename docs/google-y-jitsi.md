@@ -35,7 +35,9 @@ JAAS_KEY_ID=vpaas-magic-cookie-IDENTIFICADOR/CLAVE
 JAAS_PRIVATE_KEY="CLAVE PRIVADA PEM"
 ```
 
-Lexcita firma con RS256 un JWT distinto por participante, limitado al nombre exacto de su sala, sin comodines ni expresiones regulares. Solo el abogado asignado recibe permiso de moderador. El JWT vence como máximo en treinta minutos o al finalizar la cita, lo que ocurra antes. El vencimiento limita nuevos ingresos; no garantiza expulsar una llamada que ya está conectada. Recargar la página dentro del horario genera otra credencial.
+Lexcita firma con RS256 un JWT distinto por participante, limitado al nombre exacto de su sala, sin comodines ni expresiones regulares. Solo el abogado asignado recibe permiso de moderador. El JWT permanece válido hasta la fecha y hora de finalización de la cita; no tiene un límite adicional de cinco o treinta minutos. El acceso sigue sujeto a la ventana de la cita y a la autorización de cada participante. El vencimiento limita nuevos ingresos; no garantiza expulsar una llamada que ya está conectada. Recargar la página dentro del horario genera otra credencial.
+
+La vigencia del JWT no sustituye las condiciones de la cuenta JaaS ni garantiza por sí sola la duración efectiva de la llamada. Verificar una sesión real con dos participantes durante el tiempo requerido; si se utiliza Jitsi público, sus límites y su autenticación son independientes de las credenciales de Lexcita.
 
 Se deshabilitan en el JWT grabación, transcripción, streaming, llamadas telefónicas y carga de archivos. No se incluye correo, teléfono ni descripción del caso. La respuesta se marca privada, sin caché y sin referente. Si faltan claves o la firma falla, devuelve 503: nunca cambia automáticamente a una sala pública.
 

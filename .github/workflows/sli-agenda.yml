@@ -1,0 +1,66 @@
+name: SLI agenda and controlled concurrency
+on:
+  push:
+    branches: [feat/sli-landing]
+    paths: ['app/**', 'database/**', 'resources/**', 'tests/**', 'scripts/agenda-concurrency.php', '.github/workflows/sli-agenda.yml', 'deploy/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: sli-agenda-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  controlled-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      APP_ENV: testing
+      APP_DEBUG: 'false'
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      ORGANIZATION_ISOLATED: 'false'
+      ORGANIZATION_ID: servicios-legales-integrados
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: '5432'
+      DB_DATABASE: lexcita_sli_loadtest
+      DB_USERNAME: postgres
+      DB_PASSWORD: local-ci-only
+      DB_SSLMODE: disable
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      MAIL_MAILER: array
+      BROADCAST_CONNECTION: 'null'
+      QUEUE_CONNECTION: sync
+      BCRYPT_ROUNDS: '4'
+      AGENDA_LOAD_CONFIRM: isolated-test-database
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_pgsql, pdo_sqlite, mbstring, xml, pcntl, posix
+          coverage: none
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: composer install --no-interaction --prefer-dist
+      - run: npm ci && npm test && npm run build
+      - name: PHP features (isolated SQLite)
+        run: DB_CONNECTION=sqlite DB_DATABASE=:memory: php artisan test --compact --filter='SmartAgendaTest|JitsiConfigurationTest|SliBookingHoldTest|SlotsRevalidacionTest|CitaServiceConfirmarTest|PayPalAjaxCheckoutTest|SliLegalLibraryTest|SliVerificationEmailTest'
+      - name: PostgreSQL on the GitHub runner only
+        run: |
+          docker run -d --name sli-test-postgres -e POSTGRES_PASSWORD=local-ci-only -e POSTGRES_DB=lexcita_sli_loadtest -p 5432:5432 postgres:16 -c max_connections=160
+          for attempt in $(seq 1 30); do
+            if docker exec sli-test-postgres pg_isready -U postgres; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: 100 synchronized workers, exclusive hold and simulated expiry
+        run: php scripts/agenda-concurrency.php > concurrency-report.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sli-concurrency-report
+          path: concurrency-report.json
+          if-no-files-found: ignore

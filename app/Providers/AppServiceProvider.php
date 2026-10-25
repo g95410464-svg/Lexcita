@@ -14,6 +14,8 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(CitaService::class);
         $this->app->singleton(HorarioService::class);
+        $this->app->singleton(\App\Support\AgendaModule::class);
+        $this->app->singleton(\App\Services\Agenda\Routing\OpenRouteServiceProvider::class);
     }
 
     public function boot(): void

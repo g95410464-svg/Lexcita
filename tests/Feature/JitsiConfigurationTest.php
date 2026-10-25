@@ -89,7 +89,7 @@ class JitsiConfigurationTest extends TestCase
             $this->assertSame($user->id === $lawyer->id ? 'true' : 'false', $claims['context']['user']['moderator']);
             $this->assertFalse($claims['context']['features']['recording']);
             $this->assertFalse($claims['context']['features']['transcription']);
-            $this->assertSame(now()->addMinutes(30)->timestamp, $claims['exp']);
+            $this->assertSame(now()->setTime(13, 0)->timestamp, $claims['exp']);
             $this->assertSame('jitsi', $claims['aud']);
             $this->assertSame('chat', $claims['iss']);
         }

@@ -1,4 +1,9 @@
 import Alpine from 'alpinejs';
+import { mountAgenda, mountAvailabilityForms } from './sli-agenda';
+
+const smartAgenda = document.querySelector('[data-smart-agenda]');
+if (smartAgenda) mountAgenda(smartAgenda);
+mountAvailabilityForms();
 
 window.Alpine = Alpine;
 Alpine.start();

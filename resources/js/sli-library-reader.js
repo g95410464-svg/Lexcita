@@ -16,6 +16,12 @@ export async function mountReader(root) {
     let pdf, annotations = [], pageNumber = 1, renderVersion = 0, renderTask, textLayer;
     let selection = null, busy = false, ready = false;
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+    const readingKey = `sli.reading.${root.dataset.readerUser}.${root.dataset.documentId}`;
+    find('focus').addEventListener('click', () => {
+        const focused = root.classList.toggle('is-reading-focus');
+        find('focus').setAttribute('aria-pressed', String(focused));
+        find('focus').textContent = focused ? 'Mostrar notas' : 'Ocultar notas';
+    });
 
     function message(text, error = false) {
         status.textContent = text;
@@ -57,6 +63,7 @@ export async function mountReader(root) {
     }
     function listNotes() {
         const container = find('notes');
+        find('note-count').textContent = annotations.length;
         container.replaceChildren();
         if (!annotations.length) {
             const empty = document.createElement('p');
@@ -139,6 +146,10 @@ export async function mountReader(root) {
             await textLayer.render();
             if (version !== renderVersion) return;
             ready = true; controls(); paintMarks();
+            const percent = Math.round(pageNumber / pdf.numPages * 100);
+            find('progress').setAttribute('aria-valuenow', String(percent));
+            find('progress').firstElementChild.style.width = `${percent}%`;
+            try { localStorage.setItem(readingKey, String(pageNumber)); } catch (_) { /* Optional local reading position. */ }
             scroller.scrollTo({top: 0, left: 0});
             message(`Página ${pageNumber} de ${pdf.numPages}. Selecciona texto para marcarlo.`);
         } catch (error) {
@@ -183,6 +194,11 @@ export async function mountReader(root) {
     find('next').addEventListener('click', () => render(pageNumber + 1));
     pageInput.addEventListener('change', () => render(pageInput.value));
     zoom.addEventListener('change', () => render(pageNumber));
+    scroller.addEventListener('keydown', event => {
+        if (!ready || window.getSelection()?.toString()) return;
+        if (event.key === 'ArrowRight' && pageNumber < pdf.numPages) { event.preventDefault(); render(pageNumber + 1); }
+        if (event.key === 'ArrowLeft' && pageNumber > 1) { event.preventDefault(); render(pageNumber - 1); }
+    });
     let resizeTimer;
     let previousWidth = scroller.clientWidth;
     new ResizeObserver(() => {
@@ -201,7 +217,9 @@ export async function mountReader(root) {
         ]);
         find('pages').textContent = `de ${pdf.numPages}`;
         pageInput.max = pdf.numPages;
-        listNotes(); await render(1);
+        let lastPage = 1;
+        try { lastPage = Number(localStorage.getItem(readingKey)) || 1; } catch (_) { /* Optional local reading position. */ }
+        listNotes(); await render(lastPage);
     } catch (_) {
         message('No pudimos abrir el libro. Vuelve a iniciar sesión e inténtalo de nuevo. Si persiste, contacta con g95410464@proton.me.', true);
     }

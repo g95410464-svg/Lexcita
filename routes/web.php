@@ -52,6 +52,9 @@ Route::middleware(['auth', 'verified', 'rol:cliente', 'throttle:portal'])->prefi
     Route::get('/nueva-cita',      [ClienteController::class, 'nuevaCita'])->name('nueva-cita');
     Route::post('/nueva-cita',     [ClienteController::class, 'crearCita'])->middleware('throttle:booking')->name('nueva-cita.post');
     Route::get('/mis-citas',       [ClienteController::class, 'misCitas'])->name('mis-citas');
+    Route::get('/cambios-horario', [\App\Http\Controllers\ReschedulingController::class, 'index'])->name('agenda.cambios');
+    Route::post('/propuestas/{proposal}/aceptar', [\App\Http\Controllers\ReschedulingController::class, 'accept'])->middleware('throttle:writes')->name('agenda.aceptar');
+    Route::post('/propuestas/{proposal}/responder', [\App\Http\Controllers\ReschedulingController::class, 'respond'])->middleware('throttle:writes')->name('agenda.responder');
     Route::get('/ticket/{id}',     [ClienteController::class, 'ticket'])->name('ticket');
     Route::get('/hacer-pago/{id}', [ClienteController::class, 'hacerPago'])->name('hacer-pago');
     Route::get('/pre-confirmacion/{id}', [ClienteController::class, 'preConfirmacion'])->name('pre-confirmacion');
@@ -71,6 +74,17 @@ Route::get('/pago/crear-sesion/{id}', [ClienteController::class, 'procesarPago']
 Route::middleware(['auth', 'verified', 'rol:abogado', 'throttle:portal'])->prefix('abogado')->name('abogado.')->group(function () {
     Route::get('/dashboard', [AbogadoController::class, 'dashboard'])->name('dashboard');
     Route::get('/agenda',    [AbogadoController::class, 'agenda'])->name('agenda');
+    Route::get('/agenda/eventos', [\App\Http\Controllers\AgendaController::class, 'feed'])->name('agenda.eventos');
+    Route::post('/agenda/eventos', [\App\Http\Controllers\AgendaController::class, 'storeEvent'])->middleware('throttle:writes')->name('agenda.eventos.store');
+    Route::patch('/agenda/eventos/{event}', [\App\Http\Controllers\AgendaController::class, 'updateEvent'])->middleware('throttle:writes')->name('agenda.eventos.update');
+    Route::delete('/agenda/eventos/{event}', [\App\Http\Controllers\AgendaController::class, 'destroyEvent'])->middleware('throttle:writes')->name('agenda.eventos.destroy');
+    Route::post('/agenda/ubicaciones', [\App\Http\Controllers\AgendaController::class, 'saveLocation'])->middleware('throttle:writes')->name('agenda.ubicaciones');
+    Route::patch('/agenda/ubicaciones/{location}', [\App\Http\Controllers\AgendaController::class, 'saveLocation'])->middleware('throttle:writes')->name('agenda.ubicaciones.update');
+    Route::post('/agenda/preferencias', [\App\Http\Controllers\AgendaController::class, 'saveSettings'])->middleware('throttle:writes')->name('agenda.preferencias');
+    Route::post('/agenda/trayectos', [\App\Http\Controllers\AgendaController::class, 'saveManualRoute'])->middleware('throttle:writes')->name('agenda.trayectos');
+    Route::get('/agenda/conflictos/{conflict}/opciones', [\App\Http\Controllers\AgendaController::class, 'suggestions'])->name('agenda.opciones');
+    Route::post('/agenda/conflictos/{conflict}/propuestas', [\App\Http\Controllers\AgendaController::class, 'sendProposal'])->middleware('throttle:writes')->name('agenda.propuestas');
+    Route::post('/agenda/propuestas/{proposal}/retirar', [\App\Http\Controllers\ReschedulingController::class, 'withdraw'])->middleware('throttle:writes')->name('agenda.retirar');
     Route::get('/biblioteca', [SliLibraryController::class, 'index'])->name('biblioteca');
     Route::get('/biblioteca/{document}/leer', [SliLibraryController::class, 'read'])->name('biblioteca.read');
     Route::get('/biblioteca/{document}/contenido', [SliLibraryController::class, 'content'])->name('biblioteca.content');
@@ -80,6 +94,7 @@ Route::middleware(['auth', 'verified', 'rol:abogado', 'throttle:portal'])->prefi
 });
 
 Route::middleware(['auth', 'verified', 'rol:admin', 'throttle:portal'])->prefix('interno')->name('interno.')->group(function () {
+    Route::get('/agenda/conflictos',[\App\Http\Controllers\AgendaController::class,'administrator'])->name('agenda.conflictos');
     Route::get('/biblioteca', [SliLibraryController::class, 'manage'])->name('biblioteca');
     Route::post('/biblioteca', [SliLibraryController::class, 'store'])->middleware('throttle:writes')->name('biblioteca.store');
     Route::delete('/biblioteca/{document}', [SliLibraryController::class, 'destroy'])->middleware('throttle:writes')->name('biblioteca.destroy');
@@ -102,6 +117,9 @@ Route::middleware(['auth', 'throttle:slots'])->prefix('api')->name('api.')->grou
     Route::post('/booking-holds', [ApiController::class, 'retenerHorario'])->middleware(['rol:cliente', 'throttle:booking'])->name('booking-holds.create');
     Route::delete('/booking-holds', [ApiController::class, 'liberarHorario'])->middleware(['rol:cliente', 'throttle:writes'])->name('booking-holds.delete');
 });
+
+Route::post('/agenda/avisos/{notification}/leido', [\App\Http\Controllers\AgendaController::class, 'readNotification'])
+    ->whereNumber('notification')->middleware(['auth','verified','rol:cliente,abogado,admin','throttle:writes'])->name('agenda.avisos.leido');
 
 // Sala de videollamada: accesible por cliente Y abogado de la misma cita.
 // La autorización se resuelve server-side en VideoRoomController::salaAccesible

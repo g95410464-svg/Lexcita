@@ -31,6 +31,9 @@ class AbogadoController extends Controller
 
     public function agenda()
     {
+        if (app(\App\Support\AgendaModule::class)->ready()) {
+            return app(AgendaController::class)->index(request());
+        }
         $abogado = Auth::user();
 
         $citasQuery = $abogado->citasComoAbogado()

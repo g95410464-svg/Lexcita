@@ -109,6 +109,12 @@ class ClienteController extends Controller
                     if ($conflicto) {
                         throw new \DomainException('Ese horario ya no está disponible. Elige otro.');
                     }
+                    // Recheck activities and directed travel after Details;
+                    // exclude only this client's already validated hold.
+                    $slots = $citaService->getSlotsDisponibles((int) $data['abogado_id'], $data['fecha'], null, $hold->id);
+                    if (!in_array($data['hora_inicio'], array_column($slots, 'hora'), true)) {
+                        throw new \DomainException('La disponibilidad cambió. Tu horario no puede confirmarse; selecciona otra opción.');
+                    }
                 } else {
                     $slots = $citaService->getSlotsDisponibles((int) $data['abogado_id'], $data['fecha']);
                     if (!in_array($data['hora_inicio'], array_column($slots, 'hora'), true)) {
@@ -117,7 +123,11 @@ class ClienteController extends Controller
                 }
 
                 $horaFin = Carbon::createFromFormat('H:i', $data['hora_inicio'])->addHour()->format('H:i');
+                $agendaLocation = app(\App\Support\AgendaModule::class)->ready()
+                    ? ['agenda_location_id' => DB::table('agenda_settings')->where('abogado_id', $data['abogado_id'])->value('base_location_id')]
+                    : [];
                 $cita = Cita::create([
+                    ...$agendaLocation,
                     'codigo' => Cita::generarCodigo(),
                     'cliente_id' => Auth::id(),
                     'abogado_id' => $data['abogado_id'],

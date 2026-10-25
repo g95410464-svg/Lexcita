@@ -97,7 +97,7 @@ class SliLegalLibraryTest extends TestCase
             $this->actingAs($this->user('abogado', $suffix));
             $this->get(route('abogado.biblioteca'))->assertOk()->assertSee('Libro compartido')
                 ->assertSee('Leer y anotar')->assertDontSee('Descargar PDF')->assertDontSee('Publicar libro');
-            $this->get(route('abogado.biblioteca.read', $book))->assertOk()->assertSee('Mi espacio de lectura');
+            $this->get(route('abogado.biblioteca.read', $book))->assertOk()->assertSee('Mi cuaderno')->assertSee('Ocultar notas')->assertDontSee('Descargar PDF');
             $this->get(route('abogado.biblioteca.content', $book))->assertOk()
                 ->assertHeader('Content-Disposition', 'inline');
             $this->post(route('interno.biblioteca.store'), [])->assertRedirect(route('abogado.dashboard'));

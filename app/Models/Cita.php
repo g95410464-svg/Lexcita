@@ -14,7 +14,7 @@ class Cita extends Model
         'fecha', 'hora_inicio', 'hora_fin',
         'tipo', 'modalidad', 'descripcion',
         'estado', 'monto',
-        'payment_status', 'paypal_order_id', 'transaction_id', 'paid_at', 'hold_expires_at',
+        'payment_status', 'paypal_order_id', 'transaction_id', 'paid_at', 'hold_expires_at', 'agenda_location_id',
     ];
 
     protected $casts = [

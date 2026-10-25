@@ -25,80 +25,10 @@ class CitaService
      * Genera slots de 60 min dentro del horario disponible del día,
      * excluyendo los ya reservados.
      */
-    public function getSlotsDisponibles(int $abogadoId, string $fecha): array
+    public function getSlotsDisponibles(int $abogadoId, string $fecha, ?int $ignoreAppointment = null, ?int $ignoreHold = null): array
     {
-        $this->cancelarReservasVencidas();
-
-        $carbon   = Carbon::parse($fecha);
-        $diaNombre = $carbon->toDateString() === self::FECHA_FERIA
-            ? 'viernes'
-            : $this->carbonDayToSpanish($carbon->dayOfWeekIso);
-
-        if (!$diaNombre) {
-            return []; // fin de semana
-        }
-
-        $horario = HorarioDisponible::where('abogado_id', $abogadoId)
-            ->where('dia_semana', $diaNombre)
-            ->where('activo', true)
-            ->first();
-
-        if (!$horario) {
-            return [];
-        }
-
-        // Confirmadas y solicitudes de pago que todavía están dentro de sus
-        // 15 minutos de retención bloquean el mismo horario.
-        $holdsReady = $this->retencionesListas();
-        $citasQuery = Cita::where('abogado_id', $abogadoId)->whereDate('fecha', $fecha);
-        if ($holdsReady) {
-            $citasQuery->where(function ($query): void {
-                $query->where('estado', 'confirmada')
-                    ->orWhere(function ($pending): void {
-                        $pending->where('estado', 'pendiente_pago')
-                            ->where(function ($payment): void {
-                                $payment->where('payment_status', 'completed')
-                                    ->orWhereNull('hold_expires_at')
-                                    ->orWhere('hold_expires_at', '>', now());
-                            });
-                    });
-            });
-        } else {
-            $citasQuery->where('estado', '!=', 'cancelada');
-        }
-        $reservadas = $citasQuery->pluck('hora_inicio')->toArray();
-
-        $holds = $holdsReady
-            ? BookingHold::where('abogado_id', $abogadoId)
-                ->whereDate('fecha', $fecha)
-                ->where('expires_at', '>', now())
-                ->pluck('hora_inicio')->toArray()
-            : [];
-        $reservadas = array_merge($reservadas, $holds);
-
-        // Generar slots de 60 min
-        $slots    = [];
-        $inicio   = Carbon::createFromTimeString($horario->hora_inicio);
-        $fin      = Carbon::createFromTimeString($horario->hora_fin);
-        $horaFin  = $fin->copy()->subHour(); // último slot empieza 1h antes del cierre
-
-        $ahora = Carbon::now();
-
-        while ($inicio <= $horaFin) {
-            $hora = $inicio->format('H:i');
-            $inicioSlot = $carbon->copy()->setTimeFromTimeString($hora . ':00');
-            if ($inicioSlot->gt($ahora)
-                && !in_array($hora . ':00', $reservadas)
-                && !in_array($hora, $reservadas)) {
-                $slots[] = [
-                    'hora'       => $hora,
-                    'hora_label' => $inicio->format('g:i A'),
-                ];
-            }
-            $inicio->addHour();
-        }
-
-        return $slots;
+        $this->cancelarReservasVencidas($abogadoId);
+        return app(\App\Services\Agenda\AvailabilityService::class)->slots($abogadoId, $fecha, $ignoreAppointment, $ignoreHold);
     }
 
     /** Retiene un horario para el cliente actual durante 15 minutos. */
@@ -146,15 +76,17 @@ class CitaService
     }
 
     /** Marca como canceladas las citas SLI impagas cuyo plazo venció. */
-    public function cancelarReservasVencidas(): int
+    public function cancelarReservasVencidas(?int $abogadoId = null): int
     {
         if (!$this->retencionesListas()) {
             return 0;
         }
 
-        BookingHold::where('expires_at', '<=', now())->delete();
+        BookingHold::where('expires_at', '<=', now())
+            ->when($abogadoId, fn ($query) => $query->where('abogado_id', $abogadoId))->delete();
 
         return Cita::where('estado', 'pendiente_pago')
+            ->when($abogadoId, fn ($query) => $query->where('abogado_id', $abogadoId))
             ->where(function ($query): void {
                 $query->whereNull('payment_status')->orWhere('payment_status', '!=', 'completed');
             })
@@ -173,7 +105,7 @@ class CitaService
      */
     public function confirmar(Cita $cita): Cita
     {
-        $this->cancelarReservasVencidas();
+        $this->cancelarReservasVencidas($cita->abogado_id);
 
         // Solo se puede confirmar si está pendiente de pago
         if (!$cita->estaPendiente()) {
@@ -222,6 +154,12 @@ class CitaService
             }
 
             $cita->update(['estado' => 'confirmada']);
+
+            // A new activity must not discard a payment already captured. Keep
+            // the confirmed booking and open a conflict requiring consent.
+            if (app(\App\Support\AgendaModule::class)->ready()) {
+                app(\App\Services\Agenda\AgendaConflictService::class)->reconcile($cita->abogado_id);
+            }
 
             // Si es virtual, delegar la creación de la sala al VideoRoomService
             if ($cita->esVirtual()) {

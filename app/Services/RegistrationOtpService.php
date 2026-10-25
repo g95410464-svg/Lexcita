@@ -204,6 +204,7 @@ class RegistrationOtpService
                 ],
                 'to' => [['email' => $email]],
                 'subject' => 'Código de verificación de tu cuenta SLI',
+                'htmlContent' => view('emails.sli-verification', ['code'=>$code])->render(),
                 'textContent' => "Tu código de verificación de Servicios Legales Integrados es {$code}. Vence en 10 minutos. Si no solicitaste esta cuenta, ignora este correo.",
             ]);
 
