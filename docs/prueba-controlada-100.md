@@ -1,5 +1,23 @@
 # Prueba controlada de 100 usuarios
 
+## Resultado del 25 de octubre de 2026
+
+[Ejecución aprobada en GitHub](https://github.com/g95410464-svg/Lexcita/actions/runs/40196918176),
+commit `1473e2f`, PHP 8.3.36, PostgreSQL 16 aislado. Informe original en el
+artefacto `sli-concurrency-report`; copia de métricas en
+`docs/resultados-concurrencia-2026-10-25.json`.
+
+- 100/100 lecturas correctas. p95: 2411.57 ms.
+- Competencia de 100 clientes por una hora: un apartado y 99 rechazos esperados.
+  p95: 4206.38 ms, incluyendo espera por el cerrojo.
+- Vencimiento adelantando el reloj: otro cliente pudo reservar el espacio impago;
+  la cita pagada siguió ocupando su horario. No se esperaron quince minutos reales.
+
+Esto comprueba exclusión y vencimiento del backend bajo concurrencia en esa base
+de pruebas. No demuestra capacidad HTTP ni rendimiento del servicio Railway.
+
+## Escenarios
+
 `scripts/agenda-concurrency.php` libera 100 procesos PHP desde una barrera común,
 primero para consultar disponibilidad y después para competir por el mismo horario.
 Comprueba 100 lecturas correctas, exactamente un apartado y 99 rechazos normales.

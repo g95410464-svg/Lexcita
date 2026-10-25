@@ -22,6 +22,10 @@ Resultado esperado en esta línea: PHP 8.3.36 o parche posterior y upload_progre
 No se instalaron paquetes ni se crearon contenedores en la PC. El conector Railway
 pidió reautenticación durante este trabajo; la actualización efectiva no se puede
 marcar completada sin logs del nuevo build/arranque o esa salida de consola.
+Tras la reconexión confirmada por el propietario, las acciones del plugin
+devolvieron `Unknown tool`. El fallback de navegador tampoco pudo usarse:
+Computer Use se detuvo porque la comprobación de URL no está soportada en el
+navegador Windows disponible. No se realizaron cambios de producción por esas vías.
 
 Referencias oficiales consultadas el 25/10/2026:
 

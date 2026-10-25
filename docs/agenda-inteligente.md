@@ -109,8 +109,9 @@ hay avisos push de fondo, y el flujo funciona con los avisos internos.
   y dos expectativas antiguas del portal); la expectativa antigua de JWT se
   corrigió para corresponder al final real de la cita. No se afirma suite global verde.
 
-La prueba remota de 100 procesos y PostgreSQL se describe en
-`docs/prueba-controlada-100.md`. Su informe se obtiene del workflow; las pruebas
-SQLite no demuestran concurrencia entre conexiones PostgreSQL. Tampoco se afirma
+La prueba remota de 100 procesos y PostgreSQL fue aprobada en el run
+40196918176 (`1473e2f`): 100 lecturas correctas, un apartado, 99 rechazos y reloj
+simulado correcto para impagos/pagados. Informe en `docs/prueba-controlada-100.md`.
+Las pruebas SQLite no demuestran por sí mismas concurrencia PostgreSQL. No se afirma
 que estos cambios estén desplegados o que PHP efectivo esté actualizado hasta
 tener evidencia de Railway. Véase `docs/php-railway-verificacion.md`.
