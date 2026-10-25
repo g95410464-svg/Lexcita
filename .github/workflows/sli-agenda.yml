@@ -47,7 +47,8 @@ jobs:
       - run: composer install --no-interaction --prefer-dist
       - run: npm ci && npm test && npm run build
       - name: PHP features (isolated SQLite)
-        run: DB_CONNECTION=sqlite DB_DATABASE=:memory: php artisan test --compact --filter='SmartAgendaTest|JitsiConfigurationTest|SliBookingHoldTest|SlotsRevalidacionTest|CitaServiceConfirmarTest|PayPalAjaxCheckoutTest|SliLegalLibraryTest|SliVerificationEmailTest'
+        run: |
+          DB_CONNECTION=sqlite DB_DATABASE=:memory: php artisan test --compact --filter='SmartAgendaTest|JitsiConfigurationTest|SliBookingHoldTest|SlotsRevalidacionTest|CitaServiceConfirmarTest|PayPalAjaxCheckoutTest|SliLegalLibraryTest|SliVerificationEmailTest'
       - name: PostgreSQL on the GitHub runner only
         run: |
           docker run -d --name sli-test-postgres -e POSTGRES_PASSWORD=local-ci-only -e POSTGRES_DB=lexcita_sli_loadtest -p 5432:5432 postgres:16 -c max_connections=160
