@@ -14,7 +14,7 @@ class Cita extends Model
         'fecha', 'hora_inicio', 'hora_fin',
         'tipo', 'modalidad', 'descripcion',
         'estado', 'monto',
-        'payment_status', 'paypal_order_id', 'transaction_id', 'paid_at',
+        'payment_status', 'paypal_order_id', 'transaction_id', 'paid_at', 'hold_expires_at', 'agenda_location_id',
     ];
 
     protected $casts = [
@@ -23,6 +23,7 @@ class Cita extends Model
         'cliente_consintio'   => 'boolean',
         'abogado_consintio'   => 'boolean',
         'paid_at'             => 'datetime',
+        'hold_expires_at'     => 'datetime',
     ];
 
     // ─── Helpers de pago ─────────────────────────────────────

@@ -4,6 +4,9 @@
 @section('content')
 
 {{-- Encabezado --}}
+@if(app(\App\Support\AgendaModule::class)->ready())
+<a class="sli-button sli-button-outline" style="margin-bottom:20px" href="{{ route('cliente.agenda.cambios') }}">Ver solicitudes de cambio de horario</a>
+@endif
 <div class="mb-8">
     <p class="text-[11px] font-grotesk font-semibold tracking-[.18em] uppercase text-outline mb-2">Portal del Cliente</p>
     <h1 class="font-caslon text-4xl font-normal text-on-surface">Mis Citas</h1>

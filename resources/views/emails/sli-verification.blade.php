@@ -1,0 +1,11 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Confirma tu correo · SLI</title></head>
+<body style="margin:0;background:#f3f5f8;color:#19394e;font-family:Arial,Helvetica,sans-serif">
+<div style="display:none;max-height:0;overflow:hidden">Tu código para continuar con tu cuenta de Servicios Legales Integrados.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f5f8"><tr><td align="center" style="padding:36px 16px">
+<table role="presentation" width="520" cellpadding="0" cellspacing="0" style="width:100%;max-width:520px;background:#fff;border:1px solid #dce3eb;border-radius:16px;overflow:hidden">
+<tr><td style="padding:28px 32px;background:#1d2a44;color:#fff"><span style="font-family:Georgia,serif;font-size:30px;color:#efd2a4">G.C</span><br><span style="display:inline-block;margin-top:12px;font-size:11px;letter-spacing:2px;line-height:1.7">SERVICIOS LEGALES INTEGRADOS</span></td></tr>
+<tr><td style="padding:34px 32px"><p style="margin:0 0 12px;font-size:11px;letter-spacing:2px;color:#a47c39;font-weight:bold">VERIFICA TU CUENTA</p><h1 style="margin:0 0 18px;font-family:Georgia,serif;font-size:30px;line-height:1.2;font-weight:normal">Un paso más para estar cerca.</h1><p style="margin:0;font-size:15px;line-height:1.8;color:#64748b">Ingresa este código en el portal SLI para confirmar tu correo electrónico y continuar con tu registro.</p>
+<div style="margin:28px 0;padding:24px 12px;text-align:center;background:#f7f2e9;border:1px solid #e9ddca;border-radius:12px"><span style="font-size:34px;font-weight:bold;letter-spacing:8px;color:#1d2a44;white-space:nowrap">{{ $code }}</span><p style="margin:14px 0 0;font-size:12px;color:#796947">Válido durante 10 minutos</p></div>
+<p style="margin:0;font-size:13px;line-height:1.8;color:#64748b">No compartas este código. Si no solicitaste una cuenta, puedes ignorar este correo.</p></td></tr>
+<tr><td style="padding:22px 32px;border-top:1px solid #e4e9ef;font-size:11px;line-height:1.8;color:#7b8797">Tu confianza, nuestra responsabilidad legal.<br>Servicios Legales Integrados S.A. de C.V.</td></tr>
+</table></td></tr></table></body></html>

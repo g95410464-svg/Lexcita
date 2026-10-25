@@ -36,7 +36,9 @@ class JitsiMeetingService
             && filled($privateKey), 503, 'La videollamada privada todavía no está configurada.');
 
         $end = Carbon::parse($room->cita->fecha->format('Y-m-d').' '.$room->cita->hora_fin)->timestamp;
-        $expires = min(now()->addMinutes(30)->timestamp, $end);
+        // Keep the JaaS token valid for the full booked appointment. The public
+        // meet.jit.si iframe is only a demo and disconnects embedded calls.
+        $expires = $end;
         abort_if($expires <= now()->timestamp, 403, 'La videollamada está fuera del horario permitido.');
         $claims = [
             'aud' => 'jitsi',

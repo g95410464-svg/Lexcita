@@ -33,7 +33,7 @@
 * 📹 **Videoconsultas Integradas:** Salas de videoconferencia virtuales privadas nativas con WebRTC y comunicación en tiempo real con Laravel Reverb.
 * 💬 **Chat y Transferencia de Documentos:** Envío de mensajes y archivos dentro de la sesión de consulta jurídica.
 * 📝 **Notas de Consulta Privadas:** Registro de anotaciones confidenciales exclusivas para el abogado responsable de la cita.
-* 📲 **Notificaciones:** Confirmación automática vía correo electrónico y mensajería en WhatsApp.
+* 📲 **Verificación de registro (SLI):** Códigos OTP por correo electrónico mediante la API HTTPS de Brevo.
 
 ---
 
@@ -43,7 +43,8 @@
 * **Base de Datos:** PostgreSQL / MySQL 8.0+
 * **Real-time / WebSockets:** Laravel Reverb + WebRTC Nativo
 * **Pasarela de Pagos:** PayPal REST API
-* **Mensajería & Correo:** Twilio API (WhatsApp Business) / Resend Mail API
+* **Correo de verificación (SLI):** Brevo mediante su API HTTPS, con `BREVO_API_KEY` y un remitente verificado en `MAIL_FROM_ADDRESS`.
+  LexCita genera y valida los códigos OTP; Brevo entrega el correo de verificación.
 * **Frontend:** Tailwind CSS, Alpine.js, FullCalendar API & JavaScript Asíncrono (Fetch API)
 
 ---

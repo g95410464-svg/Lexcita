@@ -22,6 +22,8 @@ ENV VITE_REVERB_APP_KEY=$VITE_REVERB_APP_KEY \
 RUN npm ci && npm run build
 
 FROM php-app
+RUN php -r 'if (version_compare(PHP_VERSION, "8.3.36", "<")) { fwrite(STDERR, "PHP base image must be at least 8.3.36\n"); exit(1); }'
+COPY deploy/php-security.ini /usr/local/etc/php/conf.d/zz-lexcita-security.ini
 COPY --from=frontend /app/public/build /app/public/build
 COPY deploy/Caddyfile.organization /etc/caddy/Caddyfile
 RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
@@ -33,4 +35,4 @@ ENV PORT=8080
 EXPOSE 8080
 # Laravel credentials are provided at runtime, never baked into this image.
 ENTRYPOINT []
-CMD ["sh", "-c", "php artisan config:clear && php artisan organization:check && exec frankenphp run --config /etc/caddy/Caddyfile"]
+CMD ["sh", "-c", "php -v && php artisan config:clear && php artisan organization:check && exec frankenphp run --config /etc/caddy/Caddyfile"]

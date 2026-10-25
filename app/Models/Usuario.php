@@ -19,6 +19,10 @@ class Usuario extends Authenticatable
         'telefono_whatsapp',
         'especialidad',
         'activo',
+        'email_verified_at',
+        'telefono_verified_at',
+        'perfil_biografia',
+        'perfil_imagen',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -26,6 +30,8 @@ class Usuario extends Authenticatable
     protected $casts = [
         'activo'   => 'boolean',
         'password' => 'hashed',
+        'email_verified_at' => 'datetime',
+        'telefono_verified_at' => 'datetime',
     ];
 
     // ─── Helpers de rol ───────────────────────────────────────

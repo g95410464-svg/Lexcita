@@ -69,6 +69,20 @@ test('caché breve separa abogados y vuelve a consultar tras caducar', async (t)
     assert.equal(requests.length, 3);
 });
 
+test('un conflicto de reserva permite actualizar horarios sin reutilizar la caché', async (t) => {
+    let hora = '09:00';
+    const { loader, requests, shown } = setup(t, async () => ok(hora));
+    loader.select(1, '2026-10-23');
+    t.mock.timers.tick(200);
+    await setImmediate();
+    hora = '10:00';
+    loader.refresh(1, '2026-10-23');
+    t.mock.timers.tick(200);
+    await setImmediate();
+    assert.equal(requests.length, 2);
+    assert.deepEqual(shown, ['09:00', '10:00']);
+});
+
 test('una respuesta antigua no sustituye los horarios del abogado nuevo', async (t) => {
     const resolves = [];
     const { loader, requests, shown, errors } = setup(t, () => new Promise((resolve) => resolves.push(resolve)));

@@ -5,6 +5,9 @@
     <div class="sli-page-heading"><div><span class="sli-eyebrow">UN PASO MÁS</span><h1>Confirma tu consulta.</h1><p>Revisa los detalles y completa el pago para confirmar tu cita.</p></div></div>
     <div class="sli-document-card"><span class="sli-status sli-status-pendiente_pago">Pendiente de pago</span><h2 class="text-2xl font-caslon mt-5 mb-6">Detalles de tu consulta</h2>@include('cliente.detalle-cita')<div class="sli-payment-total"><span>Total a pagar <small>USD · Dólares estadounidenses</small></span><strong>${{ number_format($cita->monto, 2) }}</strong></div></div>
     <div class="sli-document-card"><h2 class="text-xl font-caslon mb-4">Completa tu pago</h2>
+        @if($cita->hold_expires_at)
+            <div id="payment-hold-countdown" class="sli-note mb-4" data-expires="{{ $cita->hold_expires_at->toIso8601String() }}" role="status" aria-live="polite"></div>
+        @endif
         <div id="paypal-mensaje" role="status" class="text-sm mb-4"></div><div id="paypal-error" role="alert" class="sli-alert sli-alert-error hidden"></div>
         @if(config('services.paypal.client_id'))
             <div id="paypal-button-container"></div><p class="sli-auth-help">Pago procesado por PayPal.</p><a class="sli-text-link" href="{{ route('cliente.paypal-pago', $cita->id) }}">Abrir la página completa de PayPal</a>
@@ -23,6 +26,21 @@
         var csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         var msj = document.getElementById('paypal-mensaje');
         var err = document.getElementById('paypal-error');
+        var holdCountdown = document.getElementById('payment-hold-countdown');
+
+        if (holdCountdown) {
+            var expiry = new Date(holdCountdown.dataset.expires).getTime();
+            var tick = function () {
+                var seconds = Math.max(0, Math.ceil((expiry - Date.now()) / 1000));
+                var remaining = String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
+                holdCountdown.textContent = seconds
+                    ? 'Este horario está apartado para ti durante ' + remaining + '. Completa el pago antes de que venza.'
+                    : 'La reserva venció y el horario volvió a estar disponible. No inicies el pago; agenda otra cita.';
+                if (!seconds) holdCountdown.classList.add('sli-alert', 'sli-alert-error');
+            };
+            tick();
+            window.setInterval(tick, 1000);
+        }
 
         function mostrarMensaje(texto) { if (msj) msj.textContent = texto; }
         function mostrarError(texto) {

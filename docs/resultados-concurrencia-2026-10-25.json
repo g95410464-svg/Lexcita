@@ -1,0 +1,11 @@
+{
+  "source": "https://github.com/g95410464-svg/Lexcita/actions/runs/40196918176",
+  "commit": "1473e2ff817041474ba761b330de6b431a8e95fa",
+  "scope": "isolated PostgreSQL functional concurrency, not production HTTP capacity",
+  "php": "8.3.36",
+  "results": {
+    "read": {"workers":100,"read_ok":100,"elapsed_ms":3065.75,"p50_ms":1938.6,"p95_ms":2411.57,"max_ms":2678.37},
+    "compete": {"workers":100,"held":1,"unavailable":99,"elapsed_ms":4467.38,"p50_ms":2493.17,"p95_ms":4206.38,"max_ms":4401.19},
+    "simulated_clock": {"expired_unpaid_reused":true,"paid_still_occupied":true,"waited_fifteen_minutes":false}
+  }
+}

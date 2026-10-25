@@ -1,7 +1,26 @@
 import Alpine from 'alpinejs';
+import { mountAgenda, mountAvailabilityForms } from './sli-agenda';
+
+const smartAgenda = document.querySelector('[data-smart-agenda]');
+if (smartAgenda) mountAgenda(smartAgenda);
+mountAvailabilityForms();
 
 window.Alpine = Alpine;
 Alpine.start();
+
+const libraryReader = document.querySelector('[data-library-reader]');
+if (libraryReader) {
+    import('./sli-library-reader').then(({ mountReader }) => mountReader(libraryReader)).catch(() => {
+        libraryReader.querySelector('[data-reader-status]').textContent =
+            'No pudimos abrir el lector. Recarga la página o contacta con g95410464@proton.me.';
+    });
+}
+
+const libraryCatalog = document.querySelector('[data-library-catalog]');
+if (libraryCatalog?.querySelector('[data-library-cover]')) {
+    import('./sli-library-catalog').then(({ mountCatalog }) => mountCatalog(libraryCatalog))
+        .catch(() => { /* Title covers and reader links work without previews. */ });
+}
 
 // CodingNepal sidebar interaction, adapted for SLI roles, keyboard access and persistence.
 const sidebar = document.getElementById('sli-sidebar');
